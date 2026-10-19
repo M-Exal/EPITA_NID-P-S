@@ -20,6 +20,10 @@ echo "==> Suppression des données générées (logs, alertes, analyses)"
 rm -rf data/cowrie/log/* data/cowrie/dl/* data/nids/* data/pentest/* data/analysis/*
 rm -f mail/secret.key nids/secret.key
 
+# Recrée la structure (et les droits d'écriture attendus par Cowrie).
+mkdir -p data/cowrie/log data/cowrie/dl data/nids data/pentest data/analysis
+chmod 777 data/cowrie/log data/cowrie/dl
+
 echo "==> Nettoyage des traces Python / tests"
 find . -type d -name __pycache__ -prune -exec rm -rf {} + 2>/dev/null || true
 rm -rf .pytest_cache

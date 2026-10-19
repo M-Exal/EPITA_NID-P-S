@@ -31,18 +31,24 @@ done
 
 etape() { printf '\n\033[1;34m==> %s\033[0m\n' "$1"; }
 
+# Cowrie s'exécute sous l'uid 999 : les dossiers montés doivent être
+# inscriptibles, sinon l'écriture de cowrie.json échoue (PermissionError).
+mkdir -p data/cowrie/log data/cowrie/dl data/nids data/pentest data/analysis
+chmod 777 data/cowrie/log data/cowrie/dl
+
 # ------------------------------------------------------------------ #
 # Étapes 1 et 2 : honeypot + NIDS + attaques
 # ------------------------------------------------------------------ #
 if [ "$ARRET_SEUL" -eq 0 ]; then
     etape "Démarrage du honeypot (Cowrie) et du NIDS"
-    docker compose up -d --build honeypot nids
+    # --force-recreate : repart d'un conteneur sain à chaque démonstration.
+    docker compose up -d --build --force-recreate honeypot nids
     echo "Attente du démarrage de Cowrie (15 s)..."
     sleep 15
     docker compose ps
 
     etape "Lancement du pentest automatisé (conteneur d'attaque)"
-    docker compose run --rm pentest
+    docker compose run --rm --build pentest
 
     etape "Laisse le NIDS capter le trafic et Cowrie journaliser (15 s)"
     sleep 15
@@ -63,7 +69,7 @@ fi
 # Étape 4 : analyse des logs du honeypot (conteneur d'analyse)
 # ------------------------------------------------------------------ #
 etape "Analyse des données du honeypot (pandas + graphiques)"
-docker compose run --rm analysis
+docker compose run --rm --build analysis
 
 # ------------------------------------------------------------------ #
 # Étape 5 : affichage des résultats

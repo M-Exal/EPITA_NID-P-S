@@ -1,12 +1,15 @@
-# userdb.txt — identifiants acceptés par le honeypot Cowrie.
+# userdb.txt - identifiants acceptes par le honeypot Cowrie.
 #
 # Format : login:x:mot_de_passe
 #   *  = n'importe quel mot de passe
 #   !  = refuser explicitement ce mot de passe
 #
+# (fichier lu par Cowrie en ASCII : pas d'accents ni de caracteres speciaux)
+#
 # On autorise quelques combinaisons FAIBLES pour que le brute-force du script
-# de pentest "réussisse" parfois : l'attaquant obtient alors un faux shell et
-# Cowrie enregistre les commandes qu'il tape (données précieuses pour l'analyse).
+# de pentest "reussisse" parfois : l'attaquant obtient alors un faux shell et
+# Cowrie enregistre les commandes qu'il tape (donnees precieuses pour
+# l'analyse).
 
 root:x:123456
 root:x:root
@@ -14,5 +17,5 @@ root:x:toor
 admin:x:admin
 user:x:password
 
-# On refuse ce mot de passe trop évident pour varier les résultats.
+# On refuse ce mot de passe trop evident pour varier les resultats.
 root:x:!12345
