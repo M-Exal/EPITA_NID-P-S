@@ -1,0 +1,138 @@
+name: CI/CD Pipeline - EPITA NID-P-S
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: ["**"]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # --------------------------------------------------------------------------
+  # 1. QUALITÉ DE CODE & SYNTAXE
+  # --------------------------------------------------------------------------
+  lint:
+    name: Lint & Code Style
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: Install Linting Tools
+        run: |
+          python -m pip install --upgrade pip
+          pip install flake8
+
+      - name: Run Flake8 (Syntax & Style Check)
+        run: |
+          # Arrête le build si erreurs de syntaxe critiques ou variables indéfinies
+          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+          # Avertissements de style tolérants pour le projet
+          flake8 . --count --exit-zero --max-complexity=15 --max-line-length=120 --statistics
+
+  # --------------------------------------------------------------------------
+  # 2. BATTERIE DE TESTS UNITAIRES (PYTEST)
+  # --------------------------------------------------------------------------
+  test:
+    name: Pytest Suite (Python ${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11"]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install System Dependencies (libpcap, tcpdump)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libpcap-dev tcpdump
+
+      - name: Install Python Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install scapy cryptography pytest pytest-cov paramiko
+
+      - name: Run Tests (sans dépendance pentest réseau externe)
+        run: |
+          pytest -v --cov=. --cov-report=term --cov-report=xml:coverage.xml
+
+      - name: Upload Test Coverage Artifact
+        uses: actions/upload-artifact@v4
+        if: matrix.python-version == '3.10'
+        with:
+          name: code-coverage-report
+          path: coverage.xml
+
+  # --------------------------------------------------------------------------
+  # 3. AUDIT DE SÉCURITÉ STATIQUE (SAST)
+  # --------------------------------------------------------------------------
+  security:
+    name: Security Audit (Bandit)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: Install Bandit
+        run: |
+          python -m pip install --upgrade pip
+          pip install bandit
+
+      - name: Run Bandit Scan
+        run: |
+          # Ignore les tests et nids_service pour faux positifs de raw socket
+          bandit -r . -x ./tests -ll --exit-zero
+
+  # --------------------------------------------------------------------------
+  # 4. VALIDATION & BUILD DES CONTENEURS DOCKER
+  # --------------------------------------------------------------------------
+  docker-build:
+    name: Docker Images Build & Validation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Validate Docker Compose Configuration
+        run: |
+          docker compose config
+
+      - name: Build NIDS / NIPS Docker Image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./nids
+          file: ./nids/Dockerfile
+          push: false
+          tags: epita-nids:latest
+
+      - name: Build Pentest Docker Image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./pentest
+          file: ./pentest/Dockerfile
+          push: false
+          tags: epita-pentest:latest

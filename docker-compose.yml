@@ -1,0 +1,79 @@
+# ============================================================================
+#  Architecture Sécurité : Honeypot (Cowrie) + NIDS / NIPS + Pentest
+# ============================================================================
+
+services:
+
+  # -------------------------------------------------------------------- #
+  #  1. HONEYPOT — Cowrie (SSH/Telnet)
+  # -------------------------------------------------------------------- #
+  honeypot:
+    image: cowrie/cowrie:latest
+    container_name: cowrie_honeypot
+    restart: unless-stopped
+    ports:
+      - "2222:2222"
+      - "2223:2223"
+    volumes:
+      - ./data/cowrie/log:/cowrie/cowrie-git/var/log/cowrie
+      - ./data/cowrie/dl:/cowrie/cowrie-git/var/lib/cowrie/downloads
+      - ./honeypot/userdb.txt:/cowrie/cowrie-git/etc/userdb.txt:ro
+    networks:
+      - honeynet
+
+  # -------------------------------------------------------------------- #
+  #  2. NIDS / NIPS — Détection & Prévention (Scapy + iptables)
+  # -------------------------------------------------------------------- #
+  nids:
+    build: ./nids
+    container_name: nids_service
+    restart: unless-stopped
+    # Partage la pile réseau de la cible pour inspecter et bloquer le trafic
+    network_mode: "service:honeypot"
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    environment:
+      - NIDS_IFACE=eth0
+      - NIDS_DATA_DIR=/app/data
+      - NIPS_ENABLED=true
+      - NIDS_SCAN_THRESHOLD=15
+      - NIDS_DOS_THRESHOLD=200
+      - NIDS_BRUTE_THRESHOLD=10
+      - SMTP_HOST=${SMTP_HOST:-smtp.gmail.com}
+      - SMTP_PORT=${SMTP_PORT:-587}
+      - SMTP_USER=${SMTP_USER:-}
+      - SMTP_PASSWORD=${SMTP_PASSWORD:-}
+      - REPORT_SENDER=${REPORT_SENDER:-}
+      - REPORT_RECEIVER=${REPORT_RECEIVER:-}
+      - NIDS_FERNET_KEY=${NIDS_FERNET_KEY:-}
+    volumes:
+      - ./data/nids:/app/data
+    depends_on:
+      - honeypot
+    stop_grace_period: 20s
+
+  # -------------------------------------------------------------------- #
+  #  3. PENTEST — Conteneur d'attaque à la demande
+  # -------------------------------------------------------------------- #
+  pentest:
+    build: ./pentest
+    container_name: pentest_runner
+    environment:
+      - TARGET_HOST=honeypot
+      - SSH_PORT=2222
+      - TELNET_PORT=2223
+    cap_add:
+      - NET_RAW
+    volumes:
+      - ./data/pentest:/app/data
+    networks:
+      - honeynet
+    depends_on:
+      - honeypot
+    profiles:
+      - attaque
+
+networks:
+  honeynet:
+    driver: bridge

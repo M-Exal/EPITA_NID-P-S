@@ -1,0 +1,15 @@
+# Liste d'identifiants acceptés par le honeypot Cowrie
+# Format : <nom_utilisateur>:<groupe>:<mot_de_passe>
+root:x:root
+root:x:toor
+root:x:password
+root:x:123456
+admin:x:admin
+admin:x:admin123
+user:x:user
+test:x:test
+guest:x:guest
+support:x:support
+oracle:x:oracle
+ubuntu:x:ubuntu
+pi:x:raspberry
