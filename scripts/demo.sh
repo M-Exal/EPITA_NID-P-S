@@ -12,6 +12,9 @@
 #    ./scripts/demo.sh --sans-mail  # ignore l'envoi du rapport chiffré
 #    ./scripts/demo.sh --arret      # ne fait que les étapes 3 à 5
 #
+#  Remarque : les journaux (honeypot, NIDS) s'accumulent d'une exécution à
+#  l'autre ; lancez ./scripts/clean.sh avant pour repartir de zéro.
+#
 #  Pré-requis : Docker + Docker Compose ; un fichier .env renseigné si vous
 #  voulez réellement recevoir le rapport chiffré par courriel.
 # ============================================================================
