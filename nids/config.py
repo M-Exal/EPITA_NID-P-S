@@ -78,3 +78,8 @@ class Config:
     REPORT_SENDER = os.getenv("REPORT_SENDER", "")
     REPORT_RECEIVER = os.getenv("REPORT_RECEIVER", "")
     NIDS_FERNET_KEY = os.getenv("NIDS_FERNET_KEY", "")
+
+    # ------------------------------------------------------------------
+    # Notification Discord (Webhook)
+    # ------------------------------------------------------------------
+    DISCORD_WEBHOOK_URL = os.getenv("DISCORD_WEBHOOK_URL", "")
