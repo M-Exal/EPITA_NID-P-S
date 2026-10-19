@@ -26,3 +26,6 @@ data/
 .idea/
 .DS_Store
 *.swp
+
+# Environnement local
+.env

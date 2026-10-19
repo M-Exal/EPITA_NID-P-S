@@ -3,12 +3,15 @@ Système d'alertes du NIDS.
 
 Enregistre les alertes dans un fichier texte (format lisible)
 et dans un fichier JSON (pour analyse automatique ou SIEM).
+Notifie optionnellement un channel Discord via webhook.
 """
 
 import json
 import logging
 import os
 from datetime import datetime
+
+from discord_notifier import DiscordNotifier
 
 
 class AlertManager:
@@ -17,6 +20,9 @@ class AlertManager:
     def __init__(self, config):
         self.cfg = config
         os.makedirs(self.cfg.DATA_DIR, exist_ok=True)
+
+        # Notifier Discord (optionnel — actif si DISCORD_WEBHOOK_URL est défini)
+        self.discord = DiscordNotifier()
 
         # Logger texte standard
         self.logger = logging.getLogger("NIDS_Alerts")
@@ -55,6 +61,9 @@ class AlertManager:
             "details": details,
         }
         self._append_json(entree)
+
+        # 3. Notification Discord
+        self.discord.envoyer_alerte(type_attaque, ip_src, details)
 
     def _append_json(self, entree):
         """Ajoute atomiquement une entrée dans le fichier JSON d'alertes."""

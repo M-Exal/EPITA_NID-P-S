@@ -39,6 +39,9 @@ class NIDSService:
         print("\n[*] Arrêt du NIDS/NIPS en cours...")
         self.en_cours = False
 
+        # Notification Discord d'arrêt (synchrone pour garantir l'envoi)
+        self.alertes.discord.envoyer_arret()
+
         # Chiffrement du rapport final
         if os.path.exists(self.cfg.ALERT_LOG):
             taille = chiffrer_fichier(
@@ -72,6 +75,9 @@ class NIDSService:
         print(f"  Prévention NIPS active : {self.cfg.NIPS_ENABLED}")
         print(f"  Fichier alertes : {self.cfg.ALERT_LOG}")
         print("=" * 60)
+
+        # Notification Discord de démarrage
+        self.alertes.discord.envoyer_demarrage()
 
         try:
             sniff(

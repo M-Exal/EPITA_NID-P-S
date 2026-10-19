@@ -48,6 +48,7 @@ services:
       - REPORT_SENDER=${REPORT_SENDER:-}
       - REPORT_RECEIVER=${REPORT_RECEIVER:-}
       - NIDS_FERNET_KEY=${NIDS_FERNET_KEY:-}
+      - DISCORD_WEBHOOK_URL=${DISCORD_WEBHOOK_URL:-}
     volumes:
       - ./data/nids:/app/data
     depends_on:
