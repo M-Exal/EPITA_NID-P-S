@@ -1,0 +1,32 @@
+# --- Python ---
+__pycache__/
+*.py[cod]
+*.egg-info/
+
+# --- Tests / outillage ---
+.pytest_cache/
+.coverage
+htmlcov/
+
+# --- Configuration secrète ---
+.env
+*.enc
+secret.key
+**/secret.key
+
+# --- Données générées par la démonstration ---
+data/cowrie/log/*
+data/cowrie/dl/*
+data/nids/*
+data/pentest/*
+data/analysis/*
+!data/**/.gitkeep
+
+# --- Captures réseau ---
+*.pcap
+*.pcapng
+
+# --- Éditeur / OS ---
+.vscode/
+.idea/
+.DS_Store

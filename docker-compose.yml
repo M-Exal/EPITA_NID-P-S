@@ -1,16 +1,18 @@
 # ============================================================================
-#  Projet Sécurité — Honeypot (Cowrie) + NIDS (Scapy) + Pentest
+#  Projet Sécurité — Honeypot (Cowrie) + NIDS (Scapy) + Pentest + Analyse
 # ============================================================================
 #  Architecture :
 #    - honeypot : Cowrie, expose SSH (2222) et Telnet (2223) ;
 #    - nids     : partage la pile réseau du honeypot pour sniffer TOUT le
 #                 trafic qui lui est destiné (network_mode: service:honeypot) ;
-#    - pentest  : conteneur d'attaque, sur le même réseau, cible "honeypot".
+#    - pentest  : conteneur d'attaque, sur le même réseau, cible "honeypot" ;
+#    - analysis : conteneur d'analyse des logs Cowrie (pandas + matplotlib).
 #
-#  Démarrage :
+#  Démarrage (voir aussi scripts/demo.sh qui enchaîne toutes les étapes) :
 #    docker compose up -d honeypot nids      # cible + sonde
 #    docker compose run --rm pentest         # lance les attaques
 #    docker compose stop nids                # -> génère le rapport chiffré
+#    docker compose run --rm analysis        # analyse des logs du honeypot
 # ============================================================================
 
 services:
@@ -80,6 +82,8 @@ services:
       - TARGET_HOST=honeypot      # résout vers le conteneur Cowrie
       - SSH_PORT=2222
       - TELNET_PORT=2223
+      # Écrit pentest_results.json à la racine du volume monté.
+      - PENTEST_DATA_DIR=/app/data
     cap_add:
       - NET_RAW                   # pour le scan SYN Scapy (optionnel)
     volumes:
@@ -91,6 +95,19 @@ services:
     # Ne tourne pas en service permanent : `docker compose run --rm pentest`.
     profiles:
       - attaque
+
+  # -------------------------------------------------------------------- #
+  #  ANALYSIS — analyse des logs du honeypot (à lancer à la demande)
+  # -------------------------------------------------------------------- #
+  analysis:
+    build: ./analysis
+    container_name: analysis
+    environment:
+      - MPLBACKEND=Agg          # génération PNG sans serveur graphique
+    volumes:
+      - ./data:/data            # lit cowrie.json, écrit data/analysis/
+    profiles:
+      - analyse
 
 networks:
   honeynet:

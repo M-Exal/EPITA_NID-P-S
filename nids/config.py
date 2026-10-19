@@ -67,7 +67,10 @@ class Config:
     # Signatures (détection par signature)
     # ------------------------------------------------------------------
     # Motifs recherchés dans la charge utile (payload) des paquets.
-    SIGNATURES_SQL = ["SELECT", "UNION", "DROP", "OR 1=1", "' OR '", "--", "INSERT INTO"]
+    # Remarque : "--" tout seul serait trop large (faux positifs fréquents),
+    # on cherche donc la séquence SQL "; --" (commentaire de fin de requête).
+    SIGNATURES_SQL = ["SELECT", "UNION", "DROP", "OR 1=1", "' OR '",
+                      "INSERT INTO", "; --"]
     SIGNATURES_XSS = ["<script>", "onerror=", "javascript:"]
     SIGNATURES_TRAVERSAL = ["../../", "/etc/passwd", "..\\..\\"]
 

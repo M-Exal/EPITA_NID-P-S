@@ -1,0 +1,9 @@
+# Dépendances nécessaires aux tests (pytest) et à l'analyse locale.
+# Les modules du projet étant chargés depuis les dossiers nids/, pentest/,
+# analysis/ et mail/, il faut installer les dépendances de ces services :
+pytest>=8.0
+scapy>=2.5.0
+paramiko>=3.4.0
+cryptography>=42.0.5
+pandas>=2.2.2
+matplotlib>=3.8.4
