@@ -164,7 +164,7 @@ class DiscordNotifier:
             })
 
         payload = {
-            "username": "🛡️ NIDS Alert Bot",
+            "username": "🛡️ NIDS CyBear Bot",
             "content": self._mention_si_critique(severite),
             "embeds": [embed],
         }
@@ -186,7 +186,7 @@ class DiscordNotifier:
             return
 
         payload = {
-            "username": "🛡️ NIDS Alert Bot",
+            "username": "🛡️ NIDS CyBear Bot",
             "embeds": [{
                 "title": "✅ NIDS/NIPS Démarré",
                 "description": "Le système de détection d'intrusions est actif et surveille le réseau.",
@@ -211,7 +211,7 @@ class DiscordNotifier:
             return
 
         payload = {
-            "username": "🛡️ NIDS Alert Bot",
+            "username": "🛡️ NIDS CyBear Bot",
             "embeds": [{
                 "title": "🔴 NIDS/NIPS Arrêté",
                 "description": "Le système de détection d'intrusions a été arrêté.",
