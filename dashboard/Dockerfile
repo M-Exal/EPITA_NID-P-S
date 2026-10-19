@@ -7,7 +7,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-EXPOSE 5000
+EXPOSE 5050
 ENV PYTHONUNBUFFERED=1
+ENV PORT=5050
 
 CMD ["python", "app.py"]

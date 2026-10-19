@@ -86,10 +86,10 @@ services:
     container_name: siem_dashboard
     restart: unless-stopped
     ports:
-      - "5000:5000"
+      - "5050:5050"
     environment:
       - NIDS_ALERT_JSON=/app/data/nids_alerts.json
-      - FLASK_APP=app.py
+      - PORT=5050
     volumes:
       - ./data/nids:/app/data:ro
     networks:
