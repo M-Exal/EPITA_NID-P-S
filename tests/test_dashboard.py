@@ -11,6 +11,8 @@ import pytest
 RACINE = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(RACINE / "dashboard"))
 
+pytest.importorskip("flask")
+
 from app import app, calculer_statistiques, SEVERITE_MAP
 
 
