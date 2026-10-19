@@ -148,7 +148,7 @@ Le passage du mode détection passive (**NIDS**) au mode prévention active (**N
 
 ### Le Processus de Neutralisation
 
-1. **Déclenchement** : Dès qu'une menace est qualifiée (anomalie critique ou signature confirmée), le moteur appelle le sous-système de prévention.
+1. **Déclenchement** : Dès qu'une menace est qualifiée (anomalie critique ou signature confirmée), le moteur appelle le sous-système de prévention si `NIPS_ENABLED=true`.
 2. **Capacités Linux requises** : Le conteneur NIDS dispose des capacités `cap_add: [NET_ADMIN, NET_RAW]`.
 3. **Application de la règle** :
    ```bash
@@ -156,6 +156,43 @@ Le passage du mode détection passive (**NIDS**) au mode prévention active (**N
    ```
    L'option `-I INPUT` insère la règle en **toute première position** de la chaîne `INPUT`. Dès lors, le noyau Linux rejette immédiatement (`DROP`) tout paquet provenant de cette IP, sans réponse TCP RST ni ICMP.
 4. **Dé-doublonnage des blocages** : Les adresses IP bloquées sont mémorisées dans un ensemble (`set`) pour éviter l'exécution redondante de commandes système.
+
+---
+
+### NIDS (Détection) vs NIPS (Prévention) : Quand Activer Chaque Mode ?
+
+Le système propose deux modes opératoires selon le contexte :
+
+| Mode | Variable d'environnement | Comportement | Cas d'usage recommandé |
+| :--- | :--- | :--- | :--- |
+| **NIDS (Démo / Validation)** | `NIPS_ENABLED=false` *(par défaut)* | **Détection pure** : les alertes sont levées, loguées, notifiées sur Discord et affichées sur le SIEM, **sans bloquer l'IP source**. | **Soutenance & Démonstration** : permet de dérouler l'intégralité du pentest (les 7 attaques consécutives) d'un seul run sans interruption. |
+| **NIPS (Production / Mitigation)** | `NIPS_ENABLED=true` | **Prévention active** : dès la première alerte qualifiée, l'IP source est immédiatement bloquée via `iptables DROP`. | **Environnement de production / Démonstration isolée du blocage** : mitigation immédiate de l'attaquant au niveau noyau. |
+
+> [!WARNING]
+> En mode **NIPS actif** (`NIPS_ENABLED=true`), dès que la première attaque du conteneur `pentest` est détectée (ex: `SCAN_PORTS`), son adresse IP est bannie au niveau du noyau. Par conséquent, les 6 attaques suivantes ne parviendront plus à Metasploitable 2. C'est pourquoi le mode démo (`NIPS_ENABLED=false`) est activé par défaut dans `docker-compose.yml`.
+
+#### Activer le Mode Production (NIPS actif) :
+```bash
+# Via variable en ligne de commande :
+NIPS_ENABLED=true docker compose up -d
+
+# Ou en modifiant le fichier .env :
+# NIPS_ENABLED=true
+```
+
+#### Débloquer Manuellement une IP en Soutenance (sans redémarrer) :
+Pour démontrer le blocage puis réautoriser l'IP de test sans redémarrer les conteneurs :
+```bash
+# 1. Lister les règles de filtrage actives :
+docker exec -it metasploitable iptables -L INPUT -n --line-numbers
+
+# 2. Supprimer la règle de blocage pour une IP spécifique :
+docker exec -it metasploitable iptables -D INPUT -s <IP_ATTAQUANT> -j DROP
+
+# 3. Ou supprimer la règle par son numéro de ligne (ex: règle n°1) :
+docker exec -it metasploitable iptables -D INPUT 1
+```
+*(Note : le conteneur NIDS et Metasploitable 2 partageant la même pile réseau, la commande peut également s'exécuter via `docker exec -it nids_service iptables ...`).*
 
 ---
 
