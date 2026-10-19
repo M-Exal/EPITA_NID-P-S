@@ -37,6 +37,15 @@ Dans cette architecture, **Metasploitable 2** est utilisé comme honeypot / cibl
                       │  • nids_alerts.json / log         │
                       │  • Chiffrement Fernet (AES/HMAC)  │
                       │  • Notification par mail (SMTP)   │
+                      │  • Bot Discord (Webhook temps réel)│
+                      └─────────────┬─────────────────────┘
+                                    │ (Volume partagé /app/data)
+                                    ▼
+                      ┌───────────────────────────────────┐
+                      │    Dashboard SIEM (SOC Web)       │
+                      │  • Flask + SSE (Temps Réel)       │
+                      │  • Interface accessible port 5050 │
+                      │  • KPI, Matrice Kill-Chain, Live  │
                       └───────────────────────────────────┘
 ```
 
@@ -158,41 +167,86 @@ Conformément au cahier des charges, les données sensibles recueillies par le N
   * Chiffrement symétrique **AES-128 en mode CBC**.
   * Signature d'intégrité et d'authenticité **HMAC-SHA256**.
 * **Transmission du Rapport** : À l'arrêt gracieux du service (`SIGTERM`/`SIGINT`), le journal d'alertes est chiffré (`nids_alerts.enc`) puis transmis par e-mail au destinataire désigné via un canal SMTP sécurisé en TLS.
+* **Notifications Discord en Temps Réel** : Relais instantané de toute détection vers un channel Discord via Webhook (`DISCORD_WEBHOOK_URL`), avec embeds stylisés par niveau de gravité (`CRITIQUE`, `HAUTE`, `MOYENNE`), tags d'alerte et mention `@here` automatique pour les attaques critiques (DoS, Brute-Force, SQLi).
 * **Déchiffrement** : L'administrateur déchiffre le rapport à l'aide de l'utilitaire `decrypt_report.py` et de la clé secrète partagée.
 
 ---
 
-## 5. Guide d'Utilisation
+## 5. Supervision SIEM en Temps Réel (CyBear SIEM)
+
+Un module de supervision web type **SOC / SIEM** est inclus dans le projet (`dashboard/`) :
+* **Technologie** : Backend Flask avec flux **SSE (*Server-Sent Events*)** pour la transmission instantanée sans rechargement de page.
+* **Interface** : Thème sombre typé cybersécurité, autonome sans dépendance CDN externe.
+* **Indicateurs & Visualisations** :
+  * **Compteurs KPI** : Total des détections, nombre d'IPs hostiles uniques, alertes critiques, dernière détection horodatée.
+  * **Chronologie des Attaques** : Diagramme en barres dynamique par tranche de minute.
+  * **Jauge de Sévérité** : Répartition proportionnelle CSS *conic-gradient* (*Critique / Haute / Moyenne*).
+  * **Typologie des 7 Attaques Pentest** : Statut d'apparition, volume et pourcentages.
+  * **Matrice Kill-Chain** : Corrélation multi-étapes croisant chaque IP source avec les 7 vecteurs d'attaque.
+  * **Flux d'Alertes en Direct** : Défilement animé des intrusions au fil de leur détection par Scapy.
+
+L'interface est accessible par défaut sur **`http://localhost:5050`** (port 5050 choisi pour éviter tout conflit avec AirPlay sur macOS).
+
+---
+
+## 6. Guide d'Utilisation
 
 ### Prérequis
 * Docker Engine 20.10+
 * Docker Compose v2+
 
-### A. Démarrer l'Environnement (Honeypot + NIDS)
+### A. Configuration Préalable (.env)
 
+Copiez le modèle de configuration et renseignez vos variables si souhaité :
 ```bash
-# Lancement en tâche de fond de Metasploitable 2 et du service NIDS/NIPS
-docker-compose up -d
+cp .env.example .env
 ```
-
-Pour vérifier que les conteneurs sont actifs :
-```bash
-docker-compose ps
-```
-
-Pour observer la capture et les alertes du NIDS en direct :
-```bash
-docker-compose logs -f nids
+Pour activer les alertes Discord, ajoutez simplement l'URL de votre webhook :
+```env
+DISCORD_WEBHOOK_URL=https://discord.com/api/webhooks/...
 ```
 
 ---
 
-### B. Lancer le Pentest Automatisé
+### B. Démarrer l'Environnement Complet (Honeypot + NIDS + SIEM Dashboard)
 
-Le pentest exécute les 7 types d'attaques contre Metasploitable 2 :
+```bash
+# Lancement en arrière-plan : Metasploitable 2, NIDS/NIPS et Dashboard SIEM
+docker compose up -d
+```
+
+Pour vérifier que les trois conteneurs sont actifs :
+```bash
+docker compose ps
+```
+
+Ouvrez immédiatement votre navigateur sur le SIEM :
+👉 **[http://localhost:5050](http://localhost:5050)**
+
+Pour observer les journaux du NIDS en direct :
+```bash
+docker compose logs -f nids
+```
+
+---
+
+### C. Tester la Supervision en Temps Réel (Simulation Rapide)
+
+Vous pouvez simuler l'injection successive des 7 attaques du pentest pour vérifier l'affichage direct sur le dashboard :
+```bash
+# Exécution du simulateur d'attaques
+python3 scripts/simulate_attacks.py
+```
+Les indicateurs, la matrice et le flux de `http://localhost:5050` se mettront à jour instantanément à chaque seconde sous vos yeux.
+
+---
+
+### D. Lancer le Pentest Automatisé
+
+Le conteneur de pentest exécute les 7 types d'attaques réelles contre Metasploitable 2 :
 ```bash
 # Exécution du conteneur d'attaque via son profil dédié
-docker-compose --profile attaque run --rm pentest
+docker compose --profile attaque run --rm pentest
 ```
 
 Le script exécute successivement :
@@ -206,7 +260,7 @@ Le script exécute successivement :
 
 ---
 
-### C. Analyse et Consolidation des Résultats
+### E. Analyse et Consolidation des Résultats
 
 Pour générer la synthèse consolidée entre les attaques subies par la cible et les détections du NIDS :
 ```bash
@@ -220,9 +274,9 @@ python3 analysis/analyze.py --json
 
 ---
 
-### D. Exécution des Tests Unitaires
+### F. Exécution des Tests Unitaires
 
-Pour valider l'intégrité de l'ensemble des modules (détecteurs, prévention NIPS, gestion des alertes, chiffrement, configuration) :
+Pour valider l'intégrité de l'ensemble des modules (détecteurs, prévention NIPS, gestion des alertes, notification Discord, dashboard SIEM, chiffrement, configuration) :
 ```bash
-pytest -v
+python3 -m pytest -v
 ```
