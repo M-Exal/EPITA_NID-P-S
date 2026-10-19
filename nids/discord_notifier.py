@@ -100,7 +100,10 @@ class DiscordNotifier:
             req = urllib_request.Request(
                 self.webhook_url,
                 data=data,
-                headers={"Content-Type": "application/json"},
+                headers={
+                    "Content-Type": "application/json",
+                    "User-Agent": "NIDS-Bot/1.0",
+                },
                 method="POST",
             )
 
@@ -230,7 +233,10 @@ class DiscordNotifier:
             req = urllib_request.Request(
                 self.webhook_url,
                 data=data,
-                headers={"Content-Type": "application/json"},
+                headers={
+                    "Content-Type": "application/json",
+                    "User-Agent": "NIDS-Bot/1.0",
+                },
                 method="POST",
             )
             with urllib_request.urlopen(req, timeout=10) as response:
