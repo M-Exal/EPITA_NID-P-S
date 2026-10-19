@@ -78,6 +78,26 @@ services:
     profiles:
       - attaque
 
+  # -------------------------------------------------------------------- #
+  #  4. SIEM DASHBOARD — Supervision web en temps réel
+  # -------------------------------------------------------------------- #
+  dashboard:
+    build: ./dashboard
+    container_name: siem_dashboard
+    restart: unless-stopped
+    ports:
+      - "5050:5050"
+    environment:
+      - NIDS_ALERT_JSON=/app/data/nids_alerts.json
+      - PORT=5050
+    volumes:
+      - ./data/nids:/app/data:ro
+    networks:
+      - honeynet
+    depends_on:
+      - nids
+
+
 networks:
   honeynet:
     driver: bridge
