@@ -8,7 +8,6 @@ de détection, et génère un rapport chiffré à l'arrêt du service.
 import os
 import signal
 import sys
-import time
 from scapy.all import sniff
 
 from alerting import AlertManager

@@ -18,7 +18,6 @@ coverage.xml
 data/
 *.log
 *.json
-!userdb.txt
 *.key
 *.enc
 

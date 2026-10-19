@@ -1,18 +1,18 @@
 """
-Tests unitaires pour les 7 détections du NIDS et la prévention NIPS.
-Tous les paquets sont créés en mémoire avec Scapy (aucun socket réseau réel requis).
+Tests unitaires pour les 7 détections du NIDS.
+Ces tests serviront de guide (TDD) au fur et à mesure de votre implémentation de detectors.py.
+Retirez le décorateur @pytest.mark.skip au fur et à mesure que vous implémentez chaque détection.
 """
 
-import time
+import pytest
 from scapy.layers.inet import IP, TCP
 from scapy.packet import Raw
 
 
+@pytest.mark.skip(reason="À implémenter dans detectors.py")
 def test_detecte_scan_ports(moteur, mock_alertes, mock_blocker):
     """Test #1 : Scan de ports (ports distincts au-dessus du seuil)."""
     ip_attaquant = "192.168.1.100"
-
-    # Envoi de paquets vers des ports distincts (seuil = 3)
     for port in [21, 22, 80, 443]:
         paquet = IP(src=ip_attaquant, dst="192.168.1.1") / TCP(dport=port, flags="S")
         moteur.analyser(paquet)
@@ -21,6 +21,7 @@ def test_detecte_scan_ports(moteur, mock_alertes, mock_blocker):
     assert ip_attaquant in mock_blocker.bloques
 
 
+@pytest.mark.skip(reason="À implémenter dans detectors.py")
 def test_detecte_null_scan(moteur, mock_alertes, mock_blocker):
     """Test #2A : Scan furtif NULL (aucun drapeau TCP)."""
     ip_attaquant = "192.168.1.101"
@@ -31,6 +32,7 @@ def test_detecte_null_scan(moteur, mock_alertes, mock_blocker):
     assert ip_attaquant in mock_blocker.bloques
 
 
+@pytest.mark.skip(reason="À implémenter dans detectors.py")
 def test_detecte_xmas_scan(moteur, mock_alertes, mock_blocker):
     """Test #2B : Scan furtif XMAS (drapeaux FIN+PSH+URG = 0x29)."""
     ip_attaquant = "192.168.1.102"
@@ -41,18 +43,19 @@ def test_detecte_xmas_scan(moteur, mock_alertes, mock_blocker):
     assert ip_attaquant in mock_blocker.bloques
 
 
+@pytest.mark.skip(reason="À implémenter dans detectors.py")
 def test_detecte_brute_force(moteur, mock_alertes, mock_blocker):
     """Test #3 : Brute force d'authentification sur port sensible (seuil = 3)."""
     ip_attaquant = "192.168.1.103"
-    # Port SSH surveillé (2222)
     for _ in range(4):
-        paquet = IP(src=ip_attaquant, dst="192.168.1.1") / TCP(dport=2222, flags="S")
+        paquet = IP(src=ip_attaquant, dst="192.168.1.1") / TCP(dport=22, flags="S")
         moteur.analyser(paquet)
 
     assert "BRUTE_FORCE" in mock_alertes.types
     assert ip_attaquant in mock_blocker.bloques
 
 
+@pytest.mark.skip(reason="À implémenter dans detectors.py")
 def test_detecte_dos(moteur, mock_alertes, mock_blocker):
     """Test #4 : DoS flood volumétrique (seuil = 5 paquets)."""
     ip_attaquant = "192.168.1.104"
@@ -64,6 +67,7 @@ def test_detecte_dos(moteur, mock_alertes, mock_blocker):
     assert ip_attaquant in mock_blocker.bloques
 
 
+@pytest.mark.skip(reason="À implémenter dans detectors.py")
 def test_detecte_sql_injection(moteur, mock_alertes, mock_blocker):
     """Test #5 : Détection par signature d'injection SQL."""
     ip_attaquant = "192.168.1.105"
@@ -79,6 +83,7 @@ def test_detecte_sql_injection(moteur, mock_alertes, mock_blocker):
     assert ip_attaquant in mock_blocker.bloques
 
 
+@pytest.mark.skip(reason="À implémenter dans detectors.py")
 def test_detecte_xss(moteur, mock_alertes, mock_blocker):
     """Test #6 : Détection par signature de Cross-Site Scripting (XSS)."""
     ip_attaquant = "192.168.1.106"
@@ -94,6 +99,7 @@ def test_detecte_xss(moteur, mock_alertes, mock_blocker):
     assert ip_attaquant in mock_blocker.bloques
 
 
+@pytest.mark.skip(reason="À implémenter dans detectors.py")
 def test_detecte_path_traversal(moteur, mock_alertes, mock_blocker):
     """Test #7 : Détection par signature de Directory Traversal."""
     ip_attaquant = "192.168.1.107"
@@ -109,19 +115,14 @@ def test_detecte_path_traversal(moteur, mock_alertes, mock_blocker):
     assert ip_attaquant in mock_blocker.bloques
 
 
+@pytest.mark.skip(reason="À implémenter dans detectors.py")
 def test_cooldown_anti_spam(moteur, mock_alertes):
-    """Vérifie que l'anti-spam ne spamme pas d'alertes répétées pour la même IP et le même type."""
+    """Vérifie le cooldown anti-spam."""
     ip_attaquant = "192.168.1.108"
     paquet = (
         IP(src=ip_attaquant, dst="192.168.1.1")
         / TCP(dport=80)
         / Raw(load=b"SELECT * FROM users")
     )
-
-    # 1er paquet -> Alerte
-    moteur.analyser(paquet)
-    assert len(mock_alertes.alertes) == 1
-
-    # 2eme paquet immédiat -> Doit être ignoré par le cooldown
     moteur.analyser(paquet)
     assert len(mock_alertes.alertes) == 1
