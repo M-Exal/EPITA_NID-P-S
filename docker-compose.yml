@@ -37,7 +37,9 @@ services:
     environment:
       - NIDS_IFACE=eth0
       - NIDS_DATA_DIR=/app/data
-      - NIPS_ENABLED=true
+      # Mode démo par défaut (false) : permet d'observer les 7 attaques du pentest.
+      # En mode production : NIPS_ENABLED=true (blocage actif iptables DROP).
+      - NIPS_ENABLED=${NIPS_ENABLED:-false}
       - NIDS_SCAN_THRESHOLD=15
       - NIDS_DOS_THRESHOLD=200
       - NIDS_BRUTE_THRESHOLD=10
