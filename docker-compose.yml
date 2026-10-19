@@ -1,0 +1,97 @@
+# ============================================================================
+#  Projet Sécurité — Honeypot (Cowrie) + NIDS (Scapy) + Pentest
+# ============================================================================
+#  Architecture :
+#    - honeypot : Cowrie, expose SSH (2222) et Telnet (2223) ;
+#    - nids     : partage la pile réseau du honeypot pour sniffer TOUT le
+#                 trafic qui lui est destiné (network_mode: service:honeypot) ;
+#    - pentest  : conteneur d'attaque, sur le même réseau, cible "honeypot".
+#
+#  Démarrage :
+#    docker compose up -d honeypot nids      # cible + sonde
+#    docker compose run --rm pentest         # lance les attaques
+#    docker compose stop nids                # -> génère le rapport chiffré
+# ============================================================================
+
+services:
+
+  # -------------------------------------------------------------------- #
+  #  HONEYPOT — Cowrie (SSH/Telnet à faible/moyenne interaction)
+  # -------------------------------------------------------------------- #
+  honeypot:
+    image: cowrie/cowrie:latest
+    container_name: cowrie_honeypot
+    restart: unless-stopped
+    ports:
+      - "2222:2222"     # SSH leurre
+      - "2223:2223"     # Telnet leurre
+    volumes:
+      # Persistance des logs JSON (lus par l'analyse).
+      - ./data/cowrie/log:/cowrie/cowrie-git/var/log/cowrie
+      - ./data/cowrie/dl:/cowrie/cowrie-git/var/lib/cowrie/downloads
+      # Identifiants faibles acceptés (voir honeypot/userdb.txt).
+      - ./honeypot/userdb.txt:/cowrie/cowrie-git/etc/userdb.txt:ro
+    networks:
+      - honeynet
+
+  # -------------------------------------------------------------------- #
+  #  NIDS — sonde de détection d'intrusion (Scapy)
+  # -------------------------------------------------------------------- #
+  nids:
+    build: ./nids
+    container_name: nids
+    restart: unless-stopped
+    # Partage la pile réseau du honeypot : le NIDS voit exactement le même
+    # trafic (interface eth0 du honeypot). Impose de NE PAS définir ports/
+    # networks ici (ils sont hérités du honeypot).
+    network_mode: "service:honeypot"
+    cap_add:
+      - NET_ADMIN       # requis par Scapy pour capturer en mode promiscuité
+      - NET_RAW
+    environment:
+      - NIDS_IFACE=eth0
+      - NIDS_DATA_DIR=/app/data
+      # Seuils (ajustables sans rebuild).
+      - NIDS_SCAN_THRESHOLD=15
+      - NIDS_DOS_THRESHOLD=200
+      - NIDS_BRUTE_THRESHOLD=10
+      # Envoi du rapport chiffré (renseigner le .env).
+      - SMTP_HOST=${SMTP_HOST:-smtp.gmail.com}
+      - SMTP_PORT=${SMTP_PORT:-587}
+      - SMTP_USER=${SMTP_USER:-}
+      - SMTP_PASSWORD=${SMTP_PASSWORD:-}
+      - REPORT_SENDER=${REPORT_SENDER:-}
+      - REPORT_RECEIVER=${REPORT_RECEIVER:-}
+      - NIDS_FERNET_KEY=${NIDS_FERNET_KEY:-}
+    volumes:
+      - ./data/nids:/app/data
+    depends_on:
+      - honeypot
+    # Laisse le temps à Scapy de flusher + envoyer le rapport sur docker stop.
+    stop_grace_period: 30s
+
+  # -------------------------------------------------------------------- #
+  #  PENTEST — conteneur d'attaque (à lancer à la demande)
+  # -------------------------------------------------------------------- #
+  pentest:
+    build: ./pentest
+    container_name: pentest
+    environment:
+      - TARGET_HOST=honeypot      # résout vers le conteneur Cowrie
+      - SSH_PORT=2222
+      - TELNET_PORT=2223
+    cap_add:
+      - NET_RAW                   # pour le scan SYN Scapy (optionnel)
+    volumes:
+      - ./data/pentest:/app/data
+    networks:
+      - honeynet
+    depends_on:
+      - honeypot
+    # Ne tourne pas en service permanent : `docker compose run --rm pentest`.
+    profiles:
+      - attaque
+
+networks:
+  honeynet:
+    driver: bridge
