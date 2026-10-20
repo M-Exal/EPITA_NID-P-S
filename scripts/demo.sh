@@ -50,11 +50,20 @@ if [ "$ARRET_SEUL" -eq 0 ]; then
     sleep 15
     docker compose ps
 
+    etape "Démarrage du démon Metasploit (msfrpcd)"
+    # msfrpcd met ~20-40 s à s'initialiser ; le pentest réessaie la connexion.
+    docker compose --profile attaque up -d metasploit
+    echo "Initialisation de Metasploit (25 s)..."
+    sleep 25
+
     etape "Lancement du pentest automatisé (conteneur d'attaque)"
     docker compose run --rm --build pentest
 
     etape "Laisse le NIDS capter le trafic et Cowrie journaliser (15 s)"
     sleep 15
+
+    # Le démon Metasploit n'est plus utile une fois le pentest terminé.
+    docker compose stop metasploit 2>/dev/null || true
 fi
 
 # ------------------------------------------------------------------ #

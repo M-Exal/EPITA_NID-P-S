@@ -1,8 +1,9 @@
 # Projet Sécurité — Honeypot, Pentest automatisé et NIDS
 
 Système intégrant un **honeypot** (Cowrie), un **script de pentest automatisé**
-(Python) et un **NIDS** (Network Intrusion Detection System) développé en
-Python avec Scapy. L'ensemble tourne sous **Docker**.
+(Python, incluant l'automatisation de **Metasploit**) et un **NIDS** (Network
+Intrusion Detection System) développé en Python avec Scapy. L'ensemble tourne
+sous **Docker**.
 
 Le pentest attaque le honeypot, le honeypot journalise les attaques, le NIDS
 capture le trafic et alerte sur les menaces détectées ; le rapport final est
@@ -10,12 +11,18 @@ envoyé par courriel **chiffré** (Fernet).
 
 ## Architecture
 
-| Service    | Rôle                                                        | Image / Techno                     |
-|------------|-------------------------------------------------------------|------------------------------------|
-| `honeypot` | Honeypot SSH/Telnet, journalise tout (JSON)                 | `cowrie/cowrie`                    |
-| `nids`     | Capture du trafic (Scapy) + détection + alertes + rapport   | `python:3.12-slim` (Dockerfile)    |
-| `pentest`  | Conteneur d'attaque : scan, brute-force, DoS, SQLi          | `python:3.12-slim` (Dockerfile)    |
-| `analysis` | Analyse des logs Cowrie : pandas + graphiques matplotlib    | `python:3.12-slim` (Dockerfile)    |
+| Service      | Rôle                                                         | Image / Techno                     |
+|--------------|--------------------------------------------------------------|------------------------------------|
+| `honeypot`   | Honeypot SSH/Telnet, journalise tout (JSON)                  | `cowrie/cowrie`                    |
+| `nids`       | Capture du trafic (Scapy) + détection + alertes + rapport    | `python:3.12-slim` (Dockerfile)    |
+| `metasploit` | Démon `msfrpcd` piloté par le pentest (module `ssh_login`)   | `metasploitframework/metasploit-framework` |
+| `pentest`    | Conteneur d'attaque : scan, brute-force, DoS, SQLi, Metasploit | `python:3.12-slim` (Dockerfile)  |
+| `analysis`   | Analyse des logs Cowrie : pandas + graphiques matplotlib     | `python:3.12-slim` (Dockerfile)    |
+
+Le script de pentest **automatise un outil de test de vulnérabilités**
+(Metasploit) en plus de ses attaques « maison » : il pilote le module
+`auxiliary/scanner/ssh/ssh_login` du démon `msfrpcd` via l'API RPC
+(bibliothèque `pymetasploit3`), conformément au cahier des charges.
 
 Le NIDS partage la pile réseau du honeypot (`network_mode: service:honeypot`) :
 il voit exactement le trafic qui lui est destiné, sans passer par la pile
@@ -56,8 +63,9 @@ Arrêt et nettoyage : `./scripts/clean.sh` (ajoutez `--images` pour les images).
 
 ## Tests
 
-45 tests unitaires et d'intégration couvrent le NIDS, le pentest, l'analyse
-et le chiffrement, dont un scénario « trafic normal sans fausse alerte ».
+51 tests unitaires et d'intégration couvrent le NIDS, le pentest (y compris
+l'automatisation Metasploit, simulée par un client RPC factice), l'analyse et
+le chiffrement, dont un scénario « trafic normal sans fausse alerte ».
 
 ```bash
 python3 -m venv --system-site-packages .venv
@@ -68,9 +76,10 @@ python3 -m venv --system-site-packages .venv
 ## Structure du dépôt
 
 ```
-├── docker-compose.yml    # orchestration des 4 services
+├── docker-compose.yml    # orchestration des 5 services
 ├── honeypot/             # userdb.txt : identifiants faibles acceptés
-├── pentest/              # pentest.py : attaques modulaires (1 méthode / attaque)
+├── pentest/              # pentest.py : attaques modulaires (1 méthode / attaque,
+│                         # dont l'automatisation Metasploit via pymetasploit3)
 ├── nids/                 # capture (nids.py), détection (detectors.py),
 │                         # alertes (alerting.py), chiffrement (crypto_utils.py)
 ├── analysis/             # récupération + analyse des logs Cowrie

@@ -2,17 +2,19 @@
 #  Projet Sécurité — Honeypot (Cowrie) + NIDS (Scapy) + Pentest + Analyse
 # ============================================================================
 #  Architecture :
-#    - honeypot : Cowrie, expose SSH (2222) et Telnet (2223) ;
-#    - nids     : partage la pile réseau du honeypot pour sniffer TOUT le
-#                 trafic qui lui est destiné (network_mode: service:honeypot) ;
-#    - pentest  : conteneur d'attaque, sur le même réseau, cible "honeypot" ;
-#    - analysis : conteneur d'analyse des logs Cowrie (pandas + matplotlib).
+#    - honeypot   : Cowrie, expose SSH (2222) et Telnet (2223) ;
+#    - nids       : partage la pile réseau du honeypot pour sniffer TOUT le
+#                   trafic qui lui est destiné (network_mode: service:honeypot) ;
+#    - metasploit : démon msfrpcd piloté par le pentest (API RPC) ;
+#    - pentest    : conteneur d'attaque, sur le même réseau, cible "honeypot" ;
+#    - analysis   : conteneur d'analyse des logs Cowrie (pandas + matplotlib).
 #
 #  Démarrage (voir aussi scripts/demo.sh qui enchaîne toutes les étapes) :
-#    docker compose up -d honeypot nids      # cible + sonde
-#    docker compose run --rm pentest         # lance les attaques
-#    docker compose stop nids                # -> génère le rapport chiffré
-#    docker compose run --rm analysis        # analyse des logs du honeypot
+#    docker compose up -d honeypot nids            # cible + sonde
+#    docker compose --profile attaque up -d metasploit   # démon Metasploit
+#    docker compose run --rm pentest               # lance les attaques
+#    docker compose stop nids                      # -> génère le rapport chiffré
+#    docker compose run --rm analysis              # analyse des logs du honeypot
 # ============================================================================
 
 services:
@@ -73,6 +75,28 @@ services:
     stop_grace_period: 30s
 
   # -------------------------------------------------------------------- #
+  #  METASPLOIT — démon RPC (msfrpcd) piloté par le pentest via pymetasploit3
+  # -------------------------------------------------------------------- #
+  metasploit:
+    image: metasploitframework/metasploit-framework:latest
+    container_name: metasploit
+    # Lance le démon RPC en clair (-S = SSL désactivé), accessible sur le
+    # réseau honeynet au port 55553. `-f` : reste au premier plan (conteneur).
+    entrypoint: ""
+    command: ./msfrpcd -U msf -P epita_nid -S -a 0.0.0.0 -f
+    volumes:
+      # Même dossier que le pentest, monté au même chemin : msfrpcd lit les
+      # dictionnaires (msf_users.txt / msf_pass.txt) écrits par le pentest.
+      - ./data/pentest:/app/data
+    networks:
+      - honeynet
+    depends_on:
+      - honeypot
+    # Démon d'attaque : démarré uniquement avec le profil "attaque".
+    profiles:
+      - attaque
+
+  # -------------------------------------------------------------------- #
   #  PENTEST — conteneur d'attaque (à lancer à la demande)
   # -------------------------------------------------------------------- #
   pentest:
@@ -84,6 +108,12 @@ services:
       - TELNET_PORT=2223
       # Écrit pentest_results.json à la racine du volume monté.
       - PENTEST_DATA_DIR=/app/data
+      # Pilotage de Metasploit via l'API RPC (conteneur "metasploit").
+      - MSF_RPC_HOST=metasploit
+      - MSF_RPC_PORT=55553
+      - MSF_RPC_USER=msf
+      - MSF_RPC_PASSWORD=epita_nid
+      - MSF_RPC_SSL=false
     cap_add:
       - NET_RAW                   # pour le scan SYN Scapy (optionnel)
     volumes:
@@ -92,6 +122,7 @@ services:
       - honeynet
     depends_on:
       - honeypot
+      - metasploit
     # Ne tourne pas en service permanent : `docker compose run --rm pentest`.
     profiles:
       - attaque
