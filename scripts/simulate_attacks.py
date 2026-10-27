@@ -90,7 +90,7 @@ def main():
     print(f"  Fichier cible : {FICHIER_ALERTES}")
     print(f"  Intervalle    : {delai} secondes")
     print("=" * 65)
-    print("Ouvrez http://localhost:5000 dans votre navigateur pour observer le direct !\n")
+    print("Ouvrez http://localhost:5050 dans votre navigateur pour observer le direct !\n")
 
     for i, s in enumerate(SCENARIOS, 1):
         time.sleep(delai)
