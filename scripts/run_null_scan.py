@@ -43,9 +43,10 @@ def main():
 
     try:
         pentester.null_scan()
-        pentester.sauvegarder()
         stats = pentester.resultats["attaques"].get("null_scan", {})
-        print(f"[+] Résultat NULL : {stats.get('status', 'inconnu')} ({stats.get('paquets_envoyes', 0)} paquets)", flush=True)
+        statut = stats.get('status', 'inconnu')
+        nb_pkts = stats.get('paquets_envoyes', 0)
+        print(f"[+] Résultat NULL : {statut} ({nb_pkts} paquets)", flush=True)
     except Exception as exc:
         print(f"[!] Erreur durant l'attaque : {exc}", file=sys.stderr, flush=True)
         sys.exit(1)
