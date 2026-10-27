@@ -2,14 +2,17 @@
 Backend Flask pour le Dashboard SIEM CyBear.
 Fournit une interface web temps réel et des endpoints API / SSE
 pour la supervision des alertes NIDS / NIPS.
+Inclut également le Panneau d'Attaque (pentest automatisé).
 """
 
 import json
 import os
+import subprocess
+import sys
 import time
 from collections import defaultdict, Counter
 from datetime import datetime
-from flask import Flask, Response, jsonify, render_template
+from flask import Flask, Response, jsonify, render_template, request
 
 app = Flask(__name__)
 
@@ -173,6 +176,137 @@ def api_stream():
     response.headers["X-Accel-Buffering"] = "no"
     response.headers["Connection"] = "keep-alive"
     return response
+
+
+# ===========================================================================
+# Panneau d'Attaque — gestion des processus de pentest
+# ===========================================================================
+
+# Répertoire contenant les scripts d'attaque standalone
+SCRIPTS_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "scripts"))
+
+# Registre des attaques disponibles : nom_clé -> fichier script
+ATTAQUES_DISPONIBLES = {
+    "brute_force_ssh": "run_brute_force_ssh.py",
+}
+
+# État en mémoire des attaques lancées
+# { nom_attaque: {"pid": int, "log": str, "status": "en_cours"|"terminee", "debut": str} }
+_attaques_en_cours: dict = {}
+_attaques_terminees: list = []
+
+
+def _nettoyer_terminees():
+    """Déplace dans _attaques_terminees les processus qui ont fini."""
+    global _attaques_en_cours, _attaques_terminees
+    finies = []
+    for nom, info in list(_attaques_en_cours.items()):
+        proc: subprocess.Popen = info.get("proc")
+        if proc and proc.poll() is not None:
+            finies.append(nom)
+            _attaques_terminees.append({
+                "attaque": nom,
+                "debut": info["debut"],
+                "fin": datetime.now().isoformat(timespec="seconds"),
+                "code_retour": proc.returncode,
+                "log": info["log"],
+            })
+    for nom in finies:
+        del _attaques_en_cours[nom]
+
+
+@app.route("/attaques")
+def panneau_attaques():
+    """Affiche le Panneau d'Attaques CyBear Pentest."""
+    return render_template("attack_panel.html")
+
+
+@app.route("/api/attaques/lancer", methods=["POST"])
+def api_lancer_attaque():
+    """Lance une attaque en background via subprocess.
+
+    Corps JSON attendu : {"attaque": "brute_force_ssh"}
+    Retourne : {"status": "started", "attaque": "...", "log": "..."}
+    """
+    _nettoyer_terminees()
+
+    data = request.get_json(silent=True) or {}
+    nom = data.get("attaque", "").strip()
+
+    if not nom:
+        return jsonify({"error": "Paramètre 'attaque' manquant"}), 400
+
+    if nom not in ATTAQUES_DISPONIBLES:
+        return jsonify({
+            "error": f"Attaque '{nom}' non implémentée",
+            "disponibles": list(ATTAQUES_DISPONIBLES.keys()),
+        }), 400
+
+    if nom in _attaques_en_cours:
+        return jsonify({
+            "error": f"L'attaque '{nom}' est déjà en cours",
+            "status": "already_running",
+        }), 409
+
+    script_path = os.path.join(SCRIPTS_DIR, ATTAQUES_DISPONIBLES[nom])
+    timestamp = int(time.time())
+    log_path = f"/tmp/attack_{nom}_{timestamp}.log"
+
+    try:
+        log_file = open(log_path, "w", encoding="utf-8")  # noqa: WPS515
+        proc = subprocess.Popen(
+            [sys.executable, script_path],
+            stdout=log_file,
+            stderr=subprocess.STDOUT,
+            env={**os.environ},
+        )
+    except Exception as exc:
+        return jsonify({"error": f"Impossible de démarrer le subprocess : {exc}"}), 500
+
+    _attaques_en_cours[nom] = {
+        "proc": proc,
+        "log": log_path,
+        "debut": datetime.now().isoformat(timespec="seconds"),
+        "status": "en_cours",
+    }
+
+    return jsonify({
+        "status": "started",
+        "attaque": nom,
+        "log": log_path,
+        "pid": proc.pid,
+    })
+
+
+@app.route("/api/attaques/status")
+def api_status_attaques():
+    """Retourne l'état de toutes les attaques (en cours + terminées)."""
+    _nettoyer_terminees()
+
+    en_cours = []
+    for nom, info in _attaques_en_cours.items():
+        # Lecture des dernières lignes du log
+        log_extrait = _lire_log(info["log"])
+        en_cours.append({
+            "attaque": nom,
+            "debut": info["debut"],
+            "log_extrait": log_extrait,
+        })
+
+    return jsonify({
+        "en_cours": en_cours,
+        "terminees": _attaques_terminees[-20:],  # 20 dernières
+    })
+
+
+def _lire_log(path: str, nb_lignes: int = 50) -> str:
+    """Retourne les dernières lignes d'un fichier log d'attaque."""
+    try:
+        with open(path, "r", encoding="utf-8", errors="replace") as f:
+            lignes = f.readlines()
+        return "".join(lignes[-nb_lignes:])
+    except Exception:
+        return ""
 
 
 if __name__ == "__main__":

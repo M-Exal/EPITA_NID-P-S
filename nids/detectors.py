@@ -47,14 +47,21 @@ class MoteurDetection:
         return True
 
     def bloquer_ip(self, ip_src, type_attaque):
-        """Déclenche la prévention active NIPS (à implémenter)."""
-        # TODO: Implémenter la logique de blocage NIPS
-        pass
+        """Déclenche la prévention active NIPS."""
+        if self.cfg.NIPS_ENABLED and ip_src not in self.ips_bloquees:
+            self.ips_bloquees.add(ip_src)
+            self.blocker(ip_src)
+            print(f"[NIPS] IP {ip_src} bloquée ({type_attaque})")
 
     def declencher_alerte_et_prevention(self, type_attaque, ip_src, details, maintenant):
-        """Émet l'alerte NIDS et déclenche le blocage NIPS (à implémenter)."""
-        # TODO: Enregistrer l'alerte via self.alertes.log_alert() et appeler bloquer_ip()
-        pass
+        """Émet l'alerte NIDS et déclenche le blocage NIPS avec cooldown anti-spam."""
+        cle = (ip_src, type_attaque)
+        derniere = self._dernieres_alertes.get(cle)
+        if derniere is not None and (maintenant - derniere) < self.cfg.ALERT_COOLDOWN:
+            return
+        self._dernieres_alertes[cle] = maintenant
+        self.alertes.log_alert(type_attaque, ip_src, details)
+        self.bloquer_ip(ip_src, type_attaque)
 
     # ------------------------------------------------------------------
     # Détections
@@ -71,8 +78,21 @@ class MoteurDetection:
 
     def detecte_brute_force(self, paquet, maintenant):
         """3. Brute force d'authentification (SSH / Telnet / FTP)."""
-        # TODO: À implémenter
-        pass
+        if not paquet.haslayer(TCP):
+            return
+        ip_src = paquet[IP].src
+        if paquet[TCP].flags != "S" or paquet[TCP].dport not in self.cfg.MONITORED_PORTS:
+            return
+        self.brute_tracker[ip_src].append(maintenant)
+        # Purger les entrées hors fenêtre
+        while self.brute_tracker[ip_src] and self.brute_tracker[ip_src][0] < maintenant - self.cfg.BRUTE_WINDOW:
+            self.brute_tracker[ip_src].popleft()
+        if len(self.brute_tracker[ip_src]) > self.cfg.BRUTE_THRESHOLD:
+            details = (
+                f"Brute force détecté : {len(self.brute_tracker[ip_src])} tentatives SYN "
+                f"sur port {paquet[TCP].dport} en {self.cfg.BRUTE_WINDOW}s"
+            )
+            self.declencher_alerte_et_prevention("BRUTE_FORCE", ip_src, details, maintenant)
 
     def detecte_dos(self, paquet, maintenant):
         """4. Déni de service (DoS Flood volumétrique)."""

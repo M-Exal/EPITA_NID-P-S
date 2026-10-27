@@ -84,6 +84,26 @@
             font-size: 0.9rem;
         }
 
+        .btn-attack-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 7px 16px;
+            border-radius: 8px;
+            background: rgba(239, 68, 68, 0.15);
+            border: 1px solid rgba(239, 68, 68, 0.4);
+            color: #f87171;
+            font-weight: 600;
+            font-size: 0.82rem;
+            text-decoration: none;
+            transition: background 0.2s, border-color 0.2s;
+        }
+
+        .btn-attack-link:hover {
+            background: rgba(239, 68, 68, 0.28);
+            border-color: rgba(239, 68, 68, 0.7);
+        }
+
         .status-badge {
             display: flex;
             align-items: center;
@@ -535,6 +555,7 @@
             <span class="brand-tag">NIDS / NIPS SOC</span>
         </div>
         <div class="header-meta">
+            <a href="/attaques" class="btn-attack-link">⚔️ Attaques</a>
             <div id="liveClock" style="font-family: monospace; color: var(--text-muted);">--:--:--</div>
             <div id="connectionStatus" class="status-badge">
                 <span class="status-dot"></span>
