@@ -44,7 +44,8 @@ Dans cette architecture, **Metasploitable 2** est utilisé comme honeypot / cibl
                       ┌───────────────────────────────────┐
                       │    Dashboard SIEM (SOC Web)       │
                       │  • Flask + SSE (Temps Réel)       │
-                      │  • Interface accessible port 5050 │
+                      │  • SOC : http://localhost:5050/   │
+                      │  • Attaques : /attaques           │
                       │  • KPI, Matrice Kill-Chain, Live  │
                       └───────────────────────────────────┘
 ```
@@ -224,6 +225,15 @@ Un module de supervision web type **SOC / SIEM** est inclus dans le projet (`das
 
 L'interface est accessible par défaut sur **`http://localhost:5050`** (port 5050 choisi pour éviter tout conflit avec AirPlay sur macOS).
 
+### Panneau d'Attaques Web Interactif (`/attaques`)
+
+En complément de la supervision passive, une interface offensive dédiée est intégrée au dashboard :
+* **Accès** : Bouton **"⚔️ Attaques"** dans le bandeau du SIEM ou directement via **`http://localhost:5050/attaques`**.
+* **Cartes interactives** : Présente les 7 scénarios de test d'intrusion avec sévérité, cible et état.
+* **Déclenchement à la demande** : Bouton **"▶ Lancer l'attaque"** pour exécuter un vecteur en arrière-plan sans passer par la ligne de commande.
+* **Console d'audit en direct** : Terminal intégré à défilement automatique affichant le flux de logs et le code de retour du processus.
+* **Force Brute SSH (`#15`)** : Entièrement opérationnelle via cette interface. Dès son lancement, les 25 tentatives d'authentification s'affichent dans la console, et le NIDS lève immédiatement l'alerte `BRUTE_FORCE` répercutée en direct sur la vue SOC.
+
 ---
 
 ## 6. Guide d'Utilisation
@@ -316,4 +326,29 @@ python3 analysis/analyze.py --json
 Pour valider l'intégrité de l'ensemble des modules (détecteurs, prévention NIPS, gestion des alertes, notification Discord, dashboard SIEM, chiffrement, configuration) :
 ```bash
 python3 -m pytest -v
+```
+
+---
+
+### G. Développement et Démonstration en Local (hors Docker)
+
+Le projet s'adapte automatiquement à l'environnement hôte (macOS / Linux) sans nécessiter Docker pour le prototypage rapide :
+* Détection automatique de l'interface réseau : bascule transparente sur `lo0` (macOS) ou `lo` (Linux).
+* Résolution automatique de la cible : repli sur `127.0.0.1` si `metasploitable` n'est pas joignable en DNS.
+* Chargement automatique du `.env` en local.
+
+```bash
+# 1. Démarrer le moteur de détection NIDS (écoute loopback) :
+python3 nids/nids.py
+
+# 2. Dans un second terminal, démarrer le Dashboard SIEM SOC :
+python3 dashboard/app.py
+
+# 3. Ouvrir l'interface dans votre navigateur :
+#    • SOC Temps Réel : http://localhost:5050/
+#    • Panneau d'Attaque : http://localhost:5050/attaques
+
+# 4. Lancer une attaque :
+#    • Soit depuis le bouton "▶ Lancer" sur http://localhost:5050/attaques
+#    • Soit en ligne de commande : python3 scripts/run_brute_force_ssh.py
 ```
