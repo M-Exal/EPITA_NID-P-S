@@ -53,6 +53,7 @@ services:
       - DISCORD_WEBHOOK_URL=${DISCORD_WEBHOOK_URL:-}
     volumes:
       - ./data/nids:/app/data
+      - ./nids:/app
     depends_on:
       - metasploitable
     stop_grace_period: 20s
@@ -84,16 +85,28 @@ services:
   #  4. SIEM DASHBOARD — Supervision web en temps réel
   # -------------------------------------------------------------------- #
   dashboard:
-    build: ./dashboard
+    build:
+      context: .
+      dockerfile: dashboard/Dockerfile
     container_name: siem_dashboard
     restart: unless-stopped
     ports:
       - "5050:5050"
+    cap_add:
+      - NET_RAW
     environment:
       - NIDS_ALERT_JSON=/app/data/nids_alerts.json
       - PORT=5050
+      - TARGET_HOST=metasploitable
+      - SSH_PORT=22
+      - TELNET_PORT=23
+      - HTTP_PORT=80
+      - FTP_PORT=21
     volumes:
       - ./data/nids:/app/data:ro
+      - ./dashboard:/app
+      - ./scripts:/app/scripts
+      - ./pentest:/app/pentest
     networks:
       - honeynet
     depends_on:

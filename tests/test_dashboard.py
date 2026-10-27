@@ -90,3 +90,34 @@ def test_calculer_statistiques_vide():
     assert stats["unique_ips"] == 0
     assert stats["latest_alerts"] == []
     assert stats["derniere_alerte"] is None
+
+
+def test_panneau_attaques_route(client):
+    """Vérifie que la page /attaques se charge correctement."""
+    res = client.get("/attaques")
+    assert res.status_code == 200
+    assert b"Panneau d'Attaque" in res.data or b"CyBear" in res.data
+
+
+def test_api_attaques_status_vide(client):
+    """Vérifie que /api/attaques/status renvoie la structure attendue."""
+    res = client.get("/api/attaques/status")
+    assert res.status_code == 200
+    data = res.get_json()
+    assert "en_cours" in data
+    assert "terminees" in data
+    assert isinstance(data["en_cours"], list)
+    assert isinstance(data["terminees"], list)
+
+
+def test_api_attaques_lancer_validation(client):
+    """Vérifie la validation des paramètres de /api/attaques/lancer."""
+    # Requête sans body ou sans clé 'attaque'
+    res = client.post("/api/attaques/lancer", json={})
+    assert res.status_code == 400
+    assert "error" in res.get_json()
+
+    # Attaque inconnue
+    res = client.post("/api/attaques/lancer", json={"attaque": "attaque_inconnue"})
+    assert res.status_code == 400
+    assert "error" in res.get_json()

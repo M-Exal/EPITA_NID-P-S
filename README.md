@@ -166,11 +166,11 @@ Le système propose deux modes opératoires selon le contexte :
 
 | Mode | Variable d'environnement | Comportement | Cas d'usage recommandé |
 | :--- | :--- | :--- | :--- |
-| **NIDS (Démo / Validation)** | `NIPS_ENABLED=false` *(par défaut)* | **Détection pure** : les alertes sont levées, loguées, notifiées sur Discord et affichées sur le SIEM, **sans bloquer l'IP source**. | **Soutenance & Démonstration** : permet de dérouler l'intégralité du pentest (les 7 attaques consécutives) d'un seul run sans interruption. |
+| **NIDS (Démo / Validation)** | `NIPS_ENABLED=false` *(par défaut)* | **Détection pure** : les alertes sont levées, loguées, notifiées sur Discord et affichées sur le SIEM, **sans bloquer l'IP source**. | **Soutenance & Démonstration** : permet de dérouler l'intégralité du pentest d'un seul run sans interruption. |
 | **NIPS (Production / Mitigation)** | `NIPS_ENABLED=true` | **Prévention active** : dès la première alerte qualifiée, l'IP source est immédiatement bloquée via `iptables DROP`. | **Environnement de production / Démonstration isolée du blocage** : mitigation immédiate de l'attaquant au niveau noyau. |
 
 > [!WARNING]
-> En mode **NIPS actif** (`NIPS_ENABLED=true`), dès que la première attaque du conteneur `pentest` est détectée (ex: `SCAN_PORTS`), son adresse IP est bannie au niveau du noyau. Par conséquent, les 6 attaques suivantes ne parviendront plus à Metasploitable 2. C'est pourquoi le mode démo (`NIPS_ENABLED=false`) est activé par défaut dans `docker-compose.yml`.
+> En mode **NIPS actif** (`NIPS_ENABLED=true`), dès que la première attaque du conteneur `pentest` est détectée (ex: `SCAN_PORTS`), son adresse IP est bannie au niveau du noyau. C'est pourquoi le mode démo (`NIPS_ENABLED=false`) est activé par défaut dans `docker-compose.yml`.
 
 #### Activer le Mode Production (NIPS actif) :
 ```bash
@@ -205,7 +205,7 @@ Conformément au cahier des charges, les données sensibles recueillies par le N
   * Chiffrement symétrique **AES-128 en mode CBC**.
   * Signature d'intégrité et d'authenticité **HMAC-SHA256**.
 * **Transmission du Rapport** : À l'arrêt gracieux du service (`SIGTERM`/`SIGINT`), le journal d'alertes est chiffré (`nids_alerts.enc`) puis transmis par e-mail au destinataire désigné via un canal SMTP sécurisé en TLS.
-* **Notifications Discord en Temps Réel** : Relais instantané de toute détection vers un channel Discord via Webhook (`DISCORD_WEBHOOK_URL`), avec embeds stylisés par niveau de gravité (`CRITIQUE`, `HAUTE`, `MOYENNE`), tags d'alerte et mention `@here` automatique pour les attaques critiques (DoS, Brute-Force, SQLi).
+* **Notifications Discord en Temps Réel** : Relais instantané de toute détection vers un channel Discord via Webhook (`DISCORD_WEBHOOK_URL`), avec embeds stylisés par niveau de gravité (`CRITIQUE`, `HAUTE`, `MOYENNE`), tags d'alerte et mention `@here` automatique pour les attaques critiques.
 * **Déchiffrement** : L'administrateur déchiffre le rapport à l'aide de l'utilitaire `decrypt_report.py` et de la clé secrète partagée.
 
 ---
@@ -219,20 +219,24 @@ Un module de supervision web type **SOC / SIEM** est inclus dans le projet (`das
   * **Compteurs KPI** : Total des détections, nombre d'IPs hostiles uniques, alertes critiques, dernière détection horodatée.
   * **Chronologie des Attaques** : Diagramme en barres dynamique par tranche de minute.
   * **Jauge de Sévérité** : Répartition proportionnelle CSS *conic-gradient* (*Critique / Haute / Moyenne*).
-  * **Typologie des 7 Attaques Pentest** : Statut d'apparition, volume et pourcentages.
-  * **Matrice Kill-Chain** : Corrélation multi-étapes croisant chaque IP source avec les 7 vecteurs d'attaque.
+  * **Typologie des Attaques Pentest** : Statut d'apparition, volume et pourcentages.
+  * **Matrice Kill-Chain** : Corrélation multi-étapes croisant chaque IP source avec les vecteurs d'attaque.
   * **Flux d'Alertes en Direct** : Défilement animé des intrusions au fil de leur détection par Scapy.
 
 L'interface est accessible par défaut sur **`http://localhost:5050`** (port 5050 choisi pour éviter tout conflit avec AirPlay sur macOS).
 
 ### Panneau d'Attaques Web Interactif (`/attaques`)
 
-En complément de la supervision passive, une interface offensive dédiée est intégrée au dashboard :
+En complément de la supervision passive, une interface offensive dédiée est intégrée au dashboard pour piloter les scénarios de test :
 * **Accès** : Bouton **"⚔️ Attaques"** dans le bandeau du SIEM ou directement via **`http://localhost:5050/attaques`**.
-* **Cartes interactives** : Présente les 7 scénarios de test d'intrusion avec sévérité, cible et état.
-* **Déclenchement à la demande** : Bouton **"▶ Lancer l'attaque"** pour exécuter un vecteur en arrière-plan sans passer par la ligne de commande.
-* **Console d'audit en direct** : Terminal intégré à défilement automatique affichant le flux de logs et le code de retour du processus.
-* **Force Brute SSH (`#15`)** : Entièrement opérationnelle via cette interface. Dès son lancement, les 25 tentatives d'authentification s'affichent dans la console, et le NIDS lève immédiatement l'alerte `BRUTE_FORCE` répercutée en direct sur la vue SOC.
+* **Cartes interactives disponibles** :
+  1. 🔍 **Scan de Ports TCP Connect** (`scan_ports`) — Déclenche `SCAN_PORTS`.
+  2. 🎄 **Scan Furtif XMAS** (`xmas_scan`) — Envoi de paquets avec drapeaux FIN, PSH et URG (0x29).
+  3. 👻 **Scan Furtif NULL** (`null_scan`) — Envoi de paquets TCP sans drapeaux (flags=0, RFC 793).
+  4. 🔑 **Brute-Force SSH** (`brute_force_ssh`) — Tentatives d'authentification SSH répétées.
+* **Déclenchement unitaire à la demande** : Bouton **"▶ Lancer"** sur chaque carte pour exécuter le vecteur de scan ou de brute-force.
+* **Console d'audit en direct** : Terminal intégré sombre avec autoscroll affichant les sorties des scripts en temps réel et le code de retour final (`✅ Succès` ou code d'erreur).
+* **Corrélation immédiate avec le SOC** : Les scans génèrent du trafic hostile inspecté par Scapy ; les alertes correspondantes s'affichent en direct sur le SOC (**`http://localhost:5050/`**) et Discord.
 
 ---
 
@@ -262,6 +266,11 @@ DISCORD_WEBHOOK_URL=https://discord.com/api/webhooks/...
 docker compose up -d
 ```
 
+Pour reconstruire le Dashboard après modification du code :
+```bash
+docker compose up -d --build dashboard
+```
+
 Pour vérifier que les trois conteneurs sont actifs :
 ```bash
 docker compose ps
@@ -279,31 +288,40 @@ docker compose logs -f nids
 
 ### C. Tester la Supervision en Temps Réel (Simulation Rapide)
 
-Vous pouvez simuler l'injection successive des 7 attaques du pentest pour vérifier l'affichage direct sur le dashboard :
+Vous pouvez simuler l'injection successive des 7 attaques du pentest pour vérifier l'affichage direct sur le dashboard sans attendre le trafic réseau réel :
 ```bash
 # Exécution du simulateur d'attaques
 python3 scripts/simulate_attacks.py
 ```
-Les indicateurs, la matrice et le flux de `http://localhost:5050` se mettront à jour instantanément à chaque seconde sous vos yeux.
+Les indicateurs, la matrice et le flux de `http://localhost:5050` se mettront à jour instantanément sous vos yeux.
 
 ---
 
-### D. Lancer le Pentest Automatisé
+### D. Lancer le Pentest Automatisé (3 Méthodes)
 
-Le conteneur de pentest exécute les 7 types d'attaques réelles contre Metasploitable 2 :
+Le pentest exécute les 7 types d'attaques réelles contre la cible Metasploitable 2. Trois méthodes d'exécution sont à votre disposition selon vos besoins :
+
+#### Méthode 1 : Via le Panneau d'Attaques Web (Recommandé pour soutenance)
+1. Ouvrez votre navigateur sur **`http://localhost:5050/attaques`** (ou cliquez sur le bouton **"⚔️ Attaques"** depuis le SIEM).
+2. Pour tester un vecteur de scan ou d'authentification : cliquez sur **"▶ Lancer"** sur la carte souhaitée (`Scan de Ports TCP`, `Scan Furtif XMAS`, `Scan Furtif NULL`, ou `Brute Force SSH`).
+3. Les sorties défilent en streaming direct dans le terminal intégré au fur et à mesure des tentatives, et les alertes NIDS correspondantes apparaissent instantanément sur le tableau de bord SOC (**`http://localhost:5050/`**) et Discord.
+
+#### Méthode 2 : Via les scripts autonomes en CLI (`scripts/run_*.py`)
+Chaque attaque dispose d'un script standalone exécutable directement en ligne de commande :
+```bash
+# Exécution d'une attaque ciblée :
+python3 scripts/run_scan_ports.py       # 1. Scan TCP Connect
+python3 scripts/run_xmas_scan.py        # 2. Scan TCP XMAS (flags FPU)
+python3 scripts/run_null_scan.py        # 3. Scan Furtif TCP NULL (flags 0)
+python3 scripts/run_brute_force_ssh.py   # 4. Force Brute SSH (25 paires)
+```
+*(Note : les scripts détectent automatiquement s'ils s'exécutent sur l'hôte en ciblant `127.0.0.1` avec les ports 2222/8080, ou au sein du conteneur en ciblant `metasploitable`).*
+
+#### Méthode 3 : Via le conteneur Docker dédié
 ```bash
 # Exécution du conteneur d'attaque via son profil dédié
 docker compose --profile attaque run --rm pentest
 ```
-
-Le script exécute successivement :
-1. Un scan de ports TCP Connect sur les services connus de Metasploitable.
-2. Un scan furtif XMAS (drapeaux FIN+PSH+URG).
-3. Une tentative de force brute SSH (avec les identifiants typiques de Metasploitable 2).
-4. Une attaque par déni de service (inondation de connexions rapides).
-5. Des injections SQL dirigées vers DVWA (port 80).
-6. Des charges utiles XSS dirigées vers DVWA.
-7. Des tentatives de Path Traversal ciblant `/etc/passwd`.
 
 ---
 
@@ -323,7 +341,7 @@ python3 analysis/analyze.py --json
 
 ### F. Exécution des Tests Unitaires
 
-Pour valider l'intégrité de l'ensemble des modules (détecteurs, prévention NIPS, gestion des alertes, notification Discord, dashboard SIEM, chiffrement, configuration) :
+Pour valider l'intégrité de l'ensemble des modules (détecteurs, prévention NIPS, gestion des alertes, notification Discord, dashboard SIEM, routes d'attaque, chiffrement, configuration) :
 ```bash
 python3 -m pytest -v
 ```
@@ -349,6 +367,7 @@ python3 dashboard/app.py
 #    • Panneau d'Attaque : http://localhost:5050/attaques
 
 # 4. Lancer une attaque :
-#    • Soit depuis le bouton "▶ Lancer" sur http://localhost:5050/attaques
+#    • Soit depuis le bouton "▶ Lancer" ou "🚀 Lancer Toutes les Attaques" sur http://localhost:5050/attaques
 #    • Soit en ligne de commande : python3 scripts/run_brute_force_ssh.py
 ```
+

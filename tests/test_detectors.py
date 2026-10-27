@@ -1,15 +1,8 @@
-"""
-Tests unitaires pour les 7 détections du NIDS.
-Ces tests serviront de guide (TDD) au fur et à mesure de votre implémentation de detectors.py.
-Retirez le décorateur @pytest.mark.skip au fur et à mesure que vous implémentez chaque détection.
-"""
-
 import pytest
 from scapy.layers.inet import IP, TCP
 from scapy.packet import Raw
 
 
-@pytest.mark.skip(reason="À implémenter dans detectors.py")
 def test_detecte_scan_ports(moteur, mock_alertes, mock_blocker):
     """Test #1 : Scan de ports (ports distincts au-dessus du seuil)."""
     ip_attaquant = "192.168.1.100"
@@ -21,7 +14,6 @@ def test_detecte_scan_ports(moteur, mock_alertes, mock_blocker):
     assert ip_attaquant in mock_blocker.bloques
 
 
-@pytest.mark.skip(reason="À implémenter dans detectors.py")
 def test_detecte_null_scan(moteur, mock_alertes, mock_blocker):
     """Test #2A : Scan furtif NULL (aucun drapeau TCP)."""
     ip_attaquant = "192.168.1.101"
@@ -32,7 +24,6 @@ def test_detecte_null_scan(moteur, mock_alertes, mock_blocker):
     assert ip_attaquant in mock_blocker.bloques
 
 
-@pytest.mark.skip(reason="À implémenter dans detectors.py")
 def test_detecte_xmas_scan(moteur, mock_alertes, mock_blocker):
     """Test #2B : Scan furtif XMAS (drapeaux FIN+PSH+URG = 0x29)."""
     ip_attaquant = "192.168.1.102"
@@ -41,7 +32,6 @@ def test_detecte_xmas_scan(moteur, mock_alertes, mock_blocker):
 
     assert "XMAS_SCAN" in mock_alertes.types
     assert ip_attaquant in mock_blocker.bloques
-
 
 
 def test_detecte_brute_force(moteur, mock_alertes, mock_blocker):
@@ -55,7 +45,7 @@ def test_detecte_brute_force(moteur, mock_alertes, mock_blocker):
     assert ip_attaquant in mock_blocker.bloques
 
 
-@pytest.mark.skip(reason="À implémenter dans detectors.py")
+@pytest.mark.skip(reason="À implémenter par le membre en charge du DoS")
 def test_detecte_dos(moteur, mock_alertes, mock_blocker):
     """Test #4 : DoS flood volumétrique (seuil = 5 paquets)."""
     ip_attaquant = "192.168.1.104"
@@ -67,7 +57,7 @@ def test_detecte_dos(moteur, mock_alertes, mock_blocker):
     assert ip_attaquant in mock_blocker.bloques
 
 
-@pytest.mark.skip(reason="À implémenter dans detectors.py")
+@pytest.mark.skip(reason="À implémenter par le membre en charge du pentest web")
 def test_detecte_sql_injection(moteur, mock_alertes, mock_blocker):
     """Test #5 : Détection par signature d'injection SQL."""
     ip_attaquant = "192.168.1.105"
@@ -83,7 +73,7 @@ def test_detecte_sql_injection(moteur, mock_alertes, mock_blocker):
     assert ip_attaquant in mock_blocker.bloques
 
 
-@pytest.mark.skip(reason="À implémenter dans detectors.py")
+@pytest.mark.skip(reason="À implémenter par le membre en charge du pentest web")
 def test_detecte_xss(moteur, mock_alertes, mock_blocker):
     """Test #6 : Détection par signature de Cross-Site Scripting (XSS)."""
     ip_attaquant = "192.168.1.106"
@@ -99,7 +89,7 @@ def test_detecte_xss(moteur, mock_alertes, mock_blocker):
     assert ip_attaquant in mock_blocker.bloques
 
 
-@pytest.mark.skip(reason="À implémenter dans detectors.py")
+@pytest.mark.skip(reason="À implémenter par le membre en charge du pentest web")
 def test_detecte_path_traversal(moteur, mock_alertes, mock_blocker):
     """Test #7 : Détection par signature de Directory Traversal."""
     ip_attaquant = "192.168.1.107"
@@ -124,5 +114,6 @@ def test_cooldown_anti_spam(moteur, mock_alertes):
         / TCP(dport=80)
         / Raw(load=b"SELECT * FROM users")
     )
+    moteur.analyser(paquet)
     moteur.analyser(paquet)
     assert len(mock_alertes.alertes) == 1
