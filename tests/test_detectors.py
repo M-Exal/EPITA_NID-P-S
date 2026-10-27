@@ -43,7 +43,7 @@ def test_detecte_xmas_scan(moteur, mock_alertes, mock_blocker):
     assert ip_attaquant in mock_blocker.bloques
 
 
-@pytest.mark.skip(reason="À implémenter dans detectors.py")
+
 def test_detecte_brute_force(moteur, mock_alertes, mock_blocker):
     """Test #3 : Brute force d'authentification sur port sensible (seuil = 3)."""
     ip_attaquant = "192.168.1.103"

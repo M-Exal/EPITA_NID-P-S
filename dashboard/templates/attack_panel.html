@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>⚔️ Panneau d'Attaques — CyBear Pentest</title>
+    <style>
+        :root {
+            --bg-body: #070b14;
+            --bg-card: #0f172a;
+            --bg-card-hover: #162036;
+            --border: #1e293b;
+            --border-highlight: #334155;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --critique: #ef4444;
+            --critique-bg: rgba(239, 68, 68, 0.15);
+            --haute: #f97316;
+            --haute-bg: rgba(249, 115, 22, 0.15);
+            --moyenne: #eab308;
+            --moyenne-bg: rgba(234, 179, 8, 0.15);
+            --succes: #10b981;
+            --accent: #3b82f6;
+            --accent-glow: rgba(59, 130, 246, 0.25);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        /* ── Header ── */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 24px;
+            background: linear-gradient(90deg, #0f172a 0%, #1a0b2e 100%);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            margin-bottom: 24px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+        }
+
+        .header-brand {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .brand-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .brand-tag {
+            font-size: 0.72rem;
+            background: rgba(239, 68, 68, 0.2);
+            color: #f87171;
+            padding: 3px 10px;
+            border-radius: 20px;
+            border: 1px solid rgba(239, 68, 68, 0.4);
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+
+        .btn-back {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 18px;
+            border-radius: 8px;
+            background: rgba(59, 130, 246, 0.12);
+            border: 1px solid rgba(59, 130, 246, 0.35);
+            color: #60a5fa;
+            font-weight: 600;
+            font-size: 0.85rem;
+            text-decoration: none;
+            transition: background 0.2s, border-color 0.2s;
+        }
+
+        .btn-back:hover {
+            background: rgba(59, 130, 246, 0.24);
+            border-color: rgba(59, 130, 246, 0.6);
+        }
+
+        /* ── Section titles ── */
+        .section-title {
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* ── Attack grid ── */
+        .attack-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 20px;
+            margin-bottom: 32px;
+        }
+
+        .attack-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 20px;
+            position: relative;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            overflow: hidden;
+        }
+
+        .attack-card:hover {
+            border-color: var(--border-highlight);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Overlay "non implémenté" */
+        .overlay-wip {
+            position: absolute;
+            inset: 0;
+            background: rgba(7, 11, 20, 0.72);
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(1px);
+            z-index: 10;
+        }
+
+        .wip-badge {
+            background: rgba(234, 179, 8, 0.15);
+            border: 1px solid rgba(234, 179, 8, 0.4);
+            color: var(--moyenne);
+            padding: 8px 18px;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 0.9rem;
+            letter-spacing: 0.5px;
+        }
+
+        .card-header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 10px;
+            gap: 8px;
+        }
+
+        .attack-name {
+            font-size: 1.1rem;
+            font-weight: 700;
+        }
+
+        .sev-badge {
+            font-size: 0.7rem;
+            font-weight: 700;
+            padding: 3px 10px;
+            border-radius: 20px;
+            text-transform: uppercase;
+            white-space: nowrap;
+        }
+
+        .sev-CRITIQUE {
+            background: var(--critique-bg);
+            color: var(--critique);
+            border: 1px solid rgba(239, 68, 68, 0.35);
+        }
+
+        .sev-HAUTE {
+            background: var(--haute-bg);
+            color: var(--haute);
+            border: 1px solid rgba(249, 115, 22, 0.35);
+        }
+
+        .sev-MOYENNE {
+            background: var(--moyenne-bg);
+            color: var(--moyenne);
+            border: 1px solid rgba(234, 179, 8, 0.35);
+        }
+
+        .attack-description {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-bottom: 14px;
+            line-height: 1.4;
+        }
+
+        .attack-meta {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 16px;
+            font-size: 0.82rem;
+            color: var(--text-muted);
+        }
+
+        .meta-label {
+            color: #64748b;
+        }
+
+        .meta-value {
+            font-family: monospace;
+            color: #93c5fd;
+            font-size: 0.85rem;
+        }
+
+        .card-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .btn-launch {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 20px;
+            border-radius: 8px;
+            background: rgba(239, 68, 68, 0.15);
+            border: 1px solid rgba(239, 68, 68, 0.4);
+            color: #f87171;
+            font-weight: 700;
+            font-size: 0.88rem;
+            cursor: pointer;
+            transition: background 0.2s, border-color 0.2s, transform 0.1s;
+        }
+
+        .btn-launch:hover:not(:disabled) {
+            background: rgba(239, 68, 68, 0.28);
+            border-color: rgba(239, 68, 68, 0.7);
+            transform: translateY(-1px);
+        }
+
+        .btn-launch:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        /* Status indicator */
+        .status-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 4px 10px;
+            border-radius: 20px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .status-IDLE {
+            background: rgba(100, 116, 139, 0.12);
+            border: 1px solid rgba(100, 116, 139, 0.3);
+            color: #64748b;
+        }
+
+        .status-EN_COURS {
+            background: rgba(59, 130, 246, 0.12);
+            border: 1px solid rgba(59, 130, 246, 0.4);
+            color: #60a5fa;
+            animation: pulse-status 1.5s infinite;
+        }
+
+        .status-TERMINE {
+            background: rgba(16, 185, 129, 0.12);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            color: var(--succes);
+        }
+
+        .status-dot-small {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: currentColor;
+        }
+
+        @keyframes pulse-status {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.55; }
+        }
+
+        /* ── Log terminal ── */
+        .log-section {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            overflow: hidden;
+            margin-bottom: 24px;
+        }
+
+        .log-titlebar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 20px;
+            background: #0a0f1e;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .log-title {
+            font-size: 0.88rem;
+            font-weight: 700;
+            font-family: monospace;
+            color: var(--succes);
+            letter-spacing: 1px;
+        }
+
+        .log-controls {
+            display: flex;
+            gap: 6px;
+        }
+
+        .log-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .log-body {
+            padding: 16px 20px;
+            background: #020408;
+            min-height: 200px;
+            max-height: 420px;
+            overflow-y: auto;
+            font-family: "JetBrains Mono", "Fira Code", "Cascadia Code", monospace;
+            font-size: 0.82rem;
+            line-height: 1.6;
+            color: #a3e635;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        .log-body::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .log-body::-webkit-scrollbar-track {
+            background: #020408;
+        }
+
+        .log-body::-webkit-scrollbar-thumb {
+            background: #1e293b;
+            border-radius: 3px;
+        }
+
+        .log-placeholder {
+            color: #334155;
+            font-style: italic;
+        }
+
+        /* Notification toast */
+        #toast {
+            position: fixed;
+            bottom: 28px;
+            right: 28px;
+            padding: 12px 22px;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 0.88rem;
+            z-index: 9999;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: opacity 0.3s, transform 0.3s;
+            pointer-events: none;
+        }
+
+        #toast.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        #toast.toast-success {
+            background: rgba(16, 185, 129, 0.2);
+            border: 1px solid rgba(16, 185, 129, 0.5);
+            color: var(--succes);
+        }
+
+        #toast.toast-error {
+            background: rgba(239, 68, 68, 0.2);
+            border: 1px solid rgba(239, 68, 68, 0.5);
+            color: var(--critique);
+        }
+
+        @keyframes pulse {
+            0%, 100% { box-shadow: 0 0 6px currentColor; }
+            50% { box-shadow: 0 0 14px currentColor; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ── Header ── -->
+    <header>
+        <div class="header-brand">
+            <div class="brand-title">⚔️ Panneau d'Attaques</div>
+            <span class="brand-tag">CyBear Pentest</span>
+        </div>
+        <a href="/" class="btn-back">← Retour SIEM</a>
+    </header>
+
+    <!-- ── Grille des attaques ── -->
+    <div class="section-title">🗂️ Modules d'attaque disponibles</div>
+    <div class="attack-grid" id="attackGrid">
+
+        <!-- 1. Scan de ports TCP — NON IMPLÉMENTÉ -->
+        <div class="attack-card">
+            <div class="overlay-wip"><span class="wip-badge">🚧 Non implémenté</span></div>
+            <div class="card-header-row">
+                <div class="attack-name">🔍 Scan de Ports TCP</div>
+                <span class="sev-badge sev-MOYENNE">MOYENNE</span>
+            </div>
+            <p class="attack-description">Scan TCP Connect sur les ports sensibles (21, 22, 23, 80…). Déclenche la détection SCAN_PORTS du NIDS.</p>
+            <div class="attack-meta">
+                <span class="meta-label">Cible :</span>
+                <span class="meta-value">metasploitable:21-23,80,3306…</span>
+            </div>
+            <div class="card-footer">
+                <button class="btn-launch" disabled>▶ Lancer</button>
+                <span class="status-indicator status-IDLE"><span class="status-dot-small"></span> IDLE</span>
+            </div>
+        </div>
+
+        <!-- 2. Scan XMAS/NULL — NON IMPLÉMENTÉ -->
+        <div class="attack-card">
+            <div class="overlay-wip"><span class="wip-badge">🚧 Non implémenté</span></div>
+            <div class="card-header-row">
+                <div class="attack-name">🎄 Scan XMAS / NULL</div>
+                <span class="sev-badge sev-HAUTE">HAUTE</span>
+            </div>
+            <p class="attack-description">Envoi de paquets TCP avec flags FIN, PSH, URG (XMAS) ou sans flags (NULL) pour évasion de détection.</p>
+            <div class="attack-meta">
+                <span class="meta-label">Cible :</span>
+                <span class="meta-value">metasploitable — TCP flags FPU</span>
+            </div>
+            <div class="card-footer">
+                <button class="btn-launch" disabled>▶ Lancer</button>
+                <span class="status-indicator status-IDLE"><span class="status-dot-small"></span> IDLE</span>
+            </div>
+        </div>
+
+        <!-- 3. Brute Force SSH — DISPONIBLE ✅ -->
+        <div class="attack-card" id="card-brute_force_ssh">
+            <div class="card-header-row">
+                <div class="attack-name">🔐 Brute Force SSH</div>
+                <span class="sev-badge sev-CRITIQUE">CRITIQUE</span>
+            </div>
+            <p class="attack-description">Tentatives de connexion SSH successives avec un dictionnaire de credentials afin de déclencher le seuil BRUTE_FORCE du NIDS.</p>
+            <div class="attack-meta">
+                <span class="meta-label">Cible :</span>
+                <span class="meta-value">metasploitable:22</span>
+            </div>
+            <div class="card-footer">
+                <button class="btn-launch" id="btn-brute_force_ssh" onclick="lancerAttaque('brute_force_ssh')">▶ Lancer</button>
+                <span class="status-indicator status-IDLE" id="status-brute_force_ssh">
+                    <span class="status-dot-small"></span> IDLE
+                </span>
+            </div>
+        </div>
+
+        <!-- 4. DoS Flood — NON IMPLÉMENTÉ -->
+        <div class="attack-card">
+            <div class="overlay-wip"><span class="wip-badge">🚧 Non implémenté</span></div>
+            <div class="card-header-row">
+                <div class="attack-name">💥 DoS Flood</div>
+                <span class="sev-badge sev-CRITIQUE">CRITIQUE</span>
+            </div>
+            <p class="attack-description">Inondation SYN/UDP pour saturer la cible et déclencher la détection DOS du NIDS.</p>
+            <div class="attack-meta">
+                <span class="meta-label">Cible :</span>
+                <span class="meta-value">metasploitable:22</span>
+            </div>
+            <div class="card-footer">
+                <button class="btn-launch" disabled>▶ Lancer</button>
+                <span class="status-indicator status-IDLE"><span class="status-dot-small"></span> IDLE</span>
+            </div>
+        </div>
+
+        <!-- 5. SQL Injection — NON IMPLÉMENTÉ -->
+        <div class="attack-card">
+            <div class="overlay-wip"><span class="wip-badge">🚧 Non implémenté</span></div>
+            <div class="card-header-row">
+                <div class="attack-name">💉 SQL Injection</div>
+                <span class="sev-badge sev-CRITIQUE">CRITIQUE</span>
+            </div>
+            <p class="attack-description">Injection de payloads SQL malveillants via l'application DVWA hébergée sur Metasploitable.</p>
+            <div class="attack-meta">
+                <span class="meta-label">Cible :</span>
+                <span class="meta-value">metasploitable:80/dvwa</span>
+            </div>
+            <div class="card-footer">
+                <button class="btn-launch" disabled>▶ Lancer</button>
+                <span class="status-indicator status-IDLE"><span class="status-dot-small"></span> IDLE</span>
+            </div>
+        </div>
+
+        <!-- 6. XSS — NON IMPLÉMENTÉ -->
+        <div class="attack-card">
+            <div class="overlay-wip"><span class="wip-badge">🚧 Non implémenté</span></div>
+            <div class="card-header-row">
+                <div class="attack-name">🕷️ XSS</div>
+                <span class="sev-badge sev-HAUTE">HAUTE</span>
+            </div>
+            <p class="attack-description">Injection de scripts JavaScript via les champs de formulaire de DVWA pour tester la détection XSS.</p>
+            <div class="attack-meta">
+                <span class="meta-label">Cible :</span>
+                <span class="meta-value">metasploitable:80/dvwa</span>
+            </div>
+            <div class="card-footer">
+                <button class="btn-launch" disabled>▶ Lancer</button>
+                <span class="status-indicator status-IDLE"><span class="status-dot-small"></span> IDLE</span>
+            </div>
+        </div>
+
+        <!-- 7. Path Traversal — NON IMPLÉMENTÉ -->
+        <div class="attack-card">
+            <div class="overlay-wip"><span class="wip-badge">🚧 Non implémenté</span></div>
+            <div class="card-header-row">
+                <div class="attack-name">📂 Path Traversal</div>
+                <span class="sev-badge sev-HAUTE">HAUTE</span>
+            </div>
+            <p class="attack-description">Tentatives de traversée de répertoires (../../../etc/passwd) via les endpoints HTTP de Metasploitable.</p>
+            <div class="attack-meta">
+                <span class="meta-label">Cible :</span>
+                <span class="meta-value">metasploitable:80</span>
+            </div>
+            <div class="card-footer">
+                <button class="btn-launch" disabled>▶ Lancer</button>
+                <span class="status-indicator status-IDLE"><span class="status-dot-small"></span> IDLE</span>
+            </div>
+        </div>
+
+    </div><!-- /.attack-grid -->
+
+    <!-- ── Log terminal ── -->
+    <div class="section-title">🖥️ Log d'attaque en temps réel</div>
+    <div class="log-section">
+        <div class="log-titlebar">
+            <span class="log-title">▶ ATTACK_LOG — /tmp/attack_*.log</span>
+            <div class="log-controls">
+                <div class="log-dot" style="background:#ef4444;"></div>
+                <div class="log-dot" style="background:#f59e0b;"></div>
+                <div class="log-dot" style="background:#10b981;"></div>
+            </div>
+        </div>
+        <div class="log-body" id="logBody">
+            <span class="log-placeholder">Aucune attaque lancée — les sorties apparaîtront ici en temps réel.</span>
+        </div>
+    </div>
+
+    <!-- Toast notification -->
+    <div id="toast"></div>
+
+    <script>
+        // ── Constantes ──────────────────────────────────────────────────────
+        const POLL_INTERVAL_MS = 2000;
+
+        // Attaques qui ont un bouton actif côté JS
+        const ATTAQUES_ACTIVES = ['brute_force_ssh'];
+
+        // ── Utilitaires ─────────────────────────────────────────────────────
+        function showToast(message, type = 'success') {
+            const t = document.getElementById('toast');
+            t.textContent = message;
+            t.className = `show toast-${type}`;
+            setTimeout(() => { t.className = ''; }, 3500);
+        }
+
+        function setStatus(attaque, etat /* 'IDLE' | 'EN_COURS' | 'TERMINE' */) {
+            const el = document.getElementById(`status-${attaque}`);
+            const btn = document.getElementById(`btn-${attaque}`);
+            if (!el) return;
+
+            const labels = { IDLE: 'IDLE', EN_COURS: 'EN COURS', TERMINE: 'TERMINÉ' };
+            el.className = `status-indicator status-${etat}`;
+            el.innerHTML = `<span class="status-dot-small"></span> ${labels[etat] || etat}`;
+
+            if (btn) {
+                btn.disabled = (etat === 'EN_COURS');
+                btn.textContent = etat === 'EN_COURS' ? '⏳ En cours…' : '▶ Lancer';
+            }
+        }
+
+        function appendLog(text) {
+            const body = document.getElementById('logBody');
+            // Retire le placeholder si présent
+            const ph = body.querySelector('.log-placeholder');
+            if (ph) ph.remove();
+
+            body.textContent += text;
+            body.scrollTop = body.scrollHeight;
+        }
+
+        function setLog(text) {
+            const body = document.getElementById('logBody');
+            body.textContent = text || '';
+            body.scrollTop = body.scrollHeight;
+        }
+
+        // ── Lancer une attaque ───────────────────────────────────────────────
+        async function lancerAttaque(nom) {
+            const btn = document.getElementById(`btn-${nom}`);
+            if (btn) btn.disabled = true;
+
+            try {
+                const resp = await fetch('/api/attaques/lancer', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ attaque: nom }),
+                });
+                const data = await resp.json();
+
+                if (!resp.ok) {
+                    showToast(`❌ ${data.error || 'Erreur inconnue'}`, 'error');
+                    if (btn) btn.disabled = false;
+                    return;
+                }
+
+                showToast(`✅ Attaque "${nom}" démarrée (PID ${data.pid})`, 'success');
+                setStatus(nom, 'EN_COURS');
+            } catch (err) {
+                showToast(`❌ Erreur réseau : ${err.message}`, 'error');
+                if (btn) btn.disabled = false;
+            }
+        }
+
+        // ── Polling du statut ────────────────────────────────────────────────
+        let lastLogContent = '';
+
+        async function pollStatus() {
+            try {
+                const resp = await fetch('/api/attaques/status');
+                if (!resp.ok) return;
+                const data = await resp.json();
+
+                // Mise à jour des indicateurs
+                const enCoursNoms = data.en_cours.map(a => a.attaque);
+
+                ATTAQUES_ACTIVES.forEach(nom => {
+                    const enCours = enCoursNoms.includes(nom);
+                    const termine = data.terminees.some(a => a.attaque === nom);
+
+                    if (enCours) {
+                        setStatus(nom, 'EN_COURS');
+                    } else if (termine) {
+                        setStatus(nom, 'TERMINE');
+                    } else {
+                        // Vérifie si le bouton est IDLE ou déjà dans un état terminé
+                        const el = document.getElementById(`status-${nom}`);
+                        if (el && !el.classList.contains('status-TERMINE')) {
+                            setStatus(nom, 'IDLE');
+                        }
+                    }
+                });
+
+                // Log : priorité aux attaques en cours
+                let logText = '';
+                if (data.en_cours.length > 0) {
+                    const a = data.en_cours[0];
+                    logText = `[EN COURS] ${a.attaque} — démarré : ${a.debut}\n\n${a.log_extrait}`;
+                } else if (data.terminees.length > 0) {
+                    const a = data.terminees[data.terminees.length - 1];
+                    const rc = a.code_retour === 0 ? '✅ Succès' : `⚠️ Code ${a.code_retour}`;
+                    logText = `[TERMINÉ] ${a.attaque} — ${a.debut} → ${a.fin} — ${rc}\n\n${a.log_extrait || '(log vide)'}`;
+                }
+
+                if (logText && logText !== lastLogContent) {
+                    lastLogContent = logText;
+                    setLog(logText);
+                }
+
+            } catch (_) {
+                // Silencieux en cas d'erreur réseau passagère
+            }
+        }
+
+        // Démarre le polling immédiatement puis toutes les 2s
+        pollStatus();
+        setInterval(pollStatus, POLL_INTERVAL_MS);
+    </script>
+</body>
+</html>
