@@ -9,6 +9,7 @@ situé à la racine du projet (si présent).
 """
 
 import os
+import sys
 
 # Chargement automatique du .env en développement local (hors Docker)
 _env_file = os.path.join(os.path.dirname(__file__), "..", ".env")
@@ -25,13 +26,23 @@ class Config:
     # ------------------------------------------------------------------
     # Réseau & Interface
     # ------------------------------------------------------------------
-    INTERFACE = os.getenv("NIDS_IFACE", "eth0")
+    DEFAULT_IFACE = (
+        "eth0"
+        if os.path.exists("/sys/class/net/eth0")
+        else ("lo0" if sys.platform == "darwin" else "lo")
+    )
+    INTERFACE = os.getenv("NIDS_IFACE", DEFAULT_IFACE)
     BPF_FILTER = os.getenv("NIDS_BPF_FILTER", "ip")
 
     # ------------------------------------------------------------------
     # Répertoires et Fichiers de données
     # ------------------------------------------------------------------
-    DATA_DIR = os.getenv("NIDS_DATA_DIR", "/app/data")
+    DEFAULT_DATA_DIR = (
+        "/app/data"
+        if os.path.exists("/app")
+        else os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "data", "nids"))
+    )
+    DATA_DIR = os.getenv("NIDS_DATA_DIR", DEFAULT_DATA_DIR)
     ALERT_LOG = os.path.join(DATA_DIR, "nids_alerts.log")
     ALERT_JSON = os.path.join(DATA_DIR, "nids_alerts.json")
     KEY_FILE = os.path.join(DATA_DIR, "secret.key")
