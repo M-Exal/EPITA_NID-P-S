@@ -60,8 +60,13 @@ class DiscordNotifier:
         Args:
             webhook_url: URL du webhook Discord.
                          Si None, lit la variable d'environnement DISCORD_WEBHOOK_URL.
+                         Si une chaîne vide est fournie explicitement, le notifier
+                         est désactivé (utile pour les tests unitaires).
         """
-        self.webhook_url = webhook_url or os.getenv("DISCORD_WEBHOOK_URL", "")
+        if webhook_url is None:
+            self.webhook_url = os.getenv("DISCORD_WEBHOOK_URL", "")
+        else:
+            self.webhook_url = webhook_url
         self.enabled = bool(self.webhook_url)
 
         if not self.enabled:
