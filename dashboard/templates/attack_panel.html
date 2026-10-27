@@ -97,6 +97,32 @@
             border-color: rgba(59, 130, 246, 0.6);
         }
 
+        .btn-launch-all {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 18px;
+            border-radius: 8px;
+            background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%);
+            border: 1px solid rgba(239, 68, 68, 0.6);
+            color: #ffffff;
+            font-weight: 700;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 0 15px rgba(239, 68, 68, 0.3);
+        }
+
+        .btn-launch-all:hover {
+            background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
+            box-shadow: 0 0 20px rgba(239, 68, 68, 0.5);
+        }
+
+        .btn-launch-all:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
         /* ── Section titles ── */
         .section-title {
             font-size: 1.05rem;
@@ -423,9 +449,8 @@
     <div class="section-title">🗂️ Modules d'attaque disponibles</div>
     <div class="attack-grid" id="attackGrid">
 
-        <!-- 1. Scan de ports TCP — NON IMPLÉMENTÉ -->
-        <div class="attack-card">
-            <div class="overlay-wip"><span class="wip-badge">🚧 Non implémenté</span></div>
+        <!-- 1. Scan de ports TCP — DISPONIBLE ✅ -->
+        <div class="attack-card" id="card-scan_ports">
             <div class="card-header-row">
                 <div class="attack-name">🔍 Scan de Ports TCP</div>
                 <span class="sev-badge sev-MOYENNE">MOYENNE</span>
@@ -436,30 +461,52 @@
                 <span class="meta-value">metasploitable:21-23,80,3306…</span>
             </div>
             <div class="card-footer">
-                <button class="btn-launch" disabled>▶ Lancer</button>
-                <span class="status-indicator status-IDLE"><span class="status-dot-small"></span> IDLE</span>
+                <button class="btn-launch" id="btn-scan_ports" onclick="lancerAttaque('scan_ports')">▶ Lancer</button>
+                <span class="status-indicator status-IDLE" id="status-scan_ports">
+                    <span class="status-dot-small"></span> IDLE
+                </span>
             </div>
         </div>
 
-        <!-- 2. Scan XMAS/NULL — NON IMPLÉMENTÉ -->
-        <div class="attack-card">
-            <div class="overlay-wip"><span class="wip-badge">🚧 Non implémenté</span></div>
+        <!-- 2. Scan XMAS — DISPONIBLE ✅ -->
+        <div class="attack-card" id="card-xmas_scan">
             <div class="card-header-row">
-                <div class="attack-name">🎄 Scan XMAS / NULL</div>
+                <div class="attack-name">🎄 Scan Furtif XMAS</div>
                 <span class="sev-badge sev-HAUTE">HAUTE</span>
             </div>
-            <p class="attack-description">Envoi de paquets TCP avec flags FIN, PSH, URG (XMAS) ou sans flags (NULL) pour évasion de détection.</p>
+            <p class="attack-description">Envoi de paquets TCP avec drapeaux FIN, PSH, URG (0x29) pour tester la détection de signatures non conformes.</p>
             <div class="attack-meta">
                 <span class="meta-label">Cible :</span>
                 <span class="meta-value">metasploitable — TCP flags FPU</span>
             </div>
             <div class="card-footer">
-                <button class="btn-launch" disabled>▶ Lancer</button>
-                <span class="status-indicator status-IDLE"><span class="status-dot-small"></span> IDLE</span>
+                <button class="btn-launch" id="btn-xmas_scan" onclick="lancerAttaque('xmas_scan')">▶ Lancer</button>
+                <span class="status-indicator status-IDLE" id="status-xmas_scan">
+                    <span class="status-dot-small"></span> IDLE
+                </span>
             </div>
         </div>
 
-        <!-- 3. Brute Force SSH — DISPONIBLE ✅ -->
+        <!-- 3. Scan NULL — DISPONIBLE ✅ -->
+        <div class="attack-card" id="card-null_scan">
+            <div class="card-header-row">
+                <div class="attack-name">👻 Scan Furtif NULL</div>
+                <span class="sev-badge sev-HAUTE">HAUTE</span>
+            </div>
+            <p class="attack-description">Envoi de paquets TCP sans aucun drapeau (flags=0) pour évasion de détection d'après la RFC 793.</p>
+            <div class="attack-meta">
+                <span class="meta-label">Cible :</span>
+                <span class="meta-value">metasploitable — TCP flags 0</span>
+            </div>
+            <div class="card-footer">
+                <button class="btn-launch" id="btn-null_scan" onclick="lancerAttaque('null_scan')">▶ Lancer</button>
+                <span class="status-indicator status-IDLE" id="status-null_scan">
+                    <span class="status-dot-small"></span> IDLE
+                </span>
+            </div>
+        </div>
+
+        <!-- 4. Brute Force SSH — DISPONIBLE ✅ -->
         <div class="attack-card" id="card-brute_force_ssh">
             <div class="card-header-row">
                 <div class="attack-name">🔐 Brute Force SSH</div>
@@ -478,25 +525,21 @@
             </div>
         </div>
 
-        <!-- 4. DoS Flood — NON IMPLÉMENTÉ -->
+        <!-- 5. DoS Flood — NON IMPLÉMENTÉ -->
         <div class="attack-card">
             <div class="overlay-wip"><span class="wip-badge">🚧 Non implémenté</span></div>
             <div class="card-header-row">
                 <div class="attack-name">💥 DoS Flood</div>
                 <span class="sev-badge sev-CRITIQUE">CRITIQUE</span>
             </div>
-            <p class="attack-description">Inondation SYN/UDP pour saturer la cible et déclencher la détection DOS du NIDS.</p>
+            <p class="attack-description">Inondation SYN volumétrique pour saturer la pile réseau et déclencher la détection DOS du NIDS.</p>
             <div class="attack-meta">
                 <span class="meta-label">Cible :</span>
                 <span class="meta-value">metasploitable:22</span>
             </div>
-            <div class="card-footer">
-                <button class="btn-launch" disabled>▶ Lancer</button>
-                <span class="status-indicator status-IDLE"><span class="status-dot-small"></span> IDLE</span>
-            </div>
         </div>
 
-        <!-- 5. SQL Injection — NON IMPLÉMENTÉ -->
+        <!-- 6. SQL Injection — NON IMPLÉMENTÉ -->
         <div class="attack-card">
             <div class="overlay-wip"><span class="wip-badge">🚧 Non implémenté</span></div>
             <div class="card-header-row">
@@ -508,13 +551,9 @@
                 <span class="meta-label">Cible :</span>
                 <span class="meta-value">metasploitable:80/dvwa</span>
             </div>
-            <div class="card-footer">
-                <button class="btn-launch" disabled>▶ Lancer</button>
-                <span class="status-indicator status-IDLE"><span class="status-dot-small"></span> IDLE</span>
-            </div>
         </div>
 
-        <!-- 6. XSS — NON IMPLÉMENTÉ -->
+        <!-- 7. XSS — NON IMPLÉMENTÉ -->
         <div class="attack-card">
             <div class="overlay-wip"><span class="wip-badge">🚧 Non implémenté</span></div>
             <div class="card-header-row">
@@ -526,13 +565,9 @@
                 <span class="meta-label">Cible :</span>
                 <span class="meta-value">metasploitable:80/dvwa</span>
             </div>
-            <div class="card-footer">
-                <button class="btn-launch" disabled>▶ Lancer</button>
-                <span class="status-indicator status-IDLE"><span class="status-dot-small"></span> IDLE</span>
-            </div>
         </div>
 
-        <!-- 7. Path Traversal — NON IMPLÉMENTÉ -->
+        <!-- 8. Path Traversal — NON IMPLÉMENTÉ -->
         <div class="attack-card">
             <div class="overlay-wip"><span class="wip-badge">🚧 Non implémenté</span></div>
             <div class="card-header-row">
@@ -543,10 +578,6 @@
             <div class="attack-meta">
                 <span class="meta-label">Cible :</span>
                 <span class="meta-value">metasploitable:80</span>
-            </div>
-            <div class="card-footer">
-                <button class="btn-launch" disabled>▶ Lancer</button>
-                <span class="status-indicator status-IDLE"><span class="status-dot-small"></span> IDLE</span>
             </div>
         </div>
 
@@ -573,10 +604,15 @@
 
     <script>
         // ── Constantes ──────────────────────────────────────────────────────
-        const POLL_INTERVAL_MS = 2000;
+        const POLL_INTERVAL_MS = 1000;
 
         // Attaques qui ont un bouton actif côté JS
-        const ATTAQUES_ACTIVES = ['brute_force_ssh'];
+        const ATTAQUES_ACTIVES = [
+            'scan_ports',
+            'xmas_scan',
+            'null_scan',
+            'brute_force_ssh',
+        ];
 
         // ── Utilitaires ─────────────────────────────────────────────────────
         function showToast(message, type = 'success') {
@@ -597,7 +633,13 @@
 
             if (btn) {
                 btn.disabled = (etat === 'EN_COURS');
-                btn.textContent = etat === 'EN_COURS' ? '⏳ En cours…' : '▶ Lancer';
+                if (etat === 'EN_COURS') {
+                    btn.textContent = '⏳ En cours…';
+                } else if (attaque === 'all_attacks') {
+                    btn.textContent = '🚀 Lancer Toutes les Attaques';
+                } else {
+                    btn.textContent = '▶ Lancer';
+                }
             }
         }
 

@@ -182,11 +182,28 @@ def api_stream():
 # Panneau d'Attaque — gestion des processus de pentest
 # ===========================================================================
 
-# Répertoire contenant les scripts d'attaque standalone
-SCRIPTS_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "scripts"))
+def determiner_scripts_dir() -> str:
+    """Détermine dynamiquement le chemin absolu du dossier scripts/."""
+    if "SCRIPTS_DIR" in os.environ and os.path.isdir(os.environ["SCRIPTS_DIR"]):
+        return os.path.abspath(os.environ["SCRIPTS_DIR"])
+    candidats = [
+        os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "scripts")),
+        os.path.abspath(os.path.join(os.path.dirname(__file__), "scripts")),
+        "/app/scripts",
+    ]
+    for c in candidats:
+        if os.path.isdir(c):
+            return c
+    return candidats[0]
+
+
+SCRIPTS_DIR = determiner_scripts_dir()
 
 # Registre des attaques disponibles : nom_clé -> fichier script
 ATTAQUES_DISPONIBLES = {
+    "scan_ports": "run_scan_ports.py",
+    "xmas_scan": "run_xmas_scan.py",
+    "null_scan": "run_null_scan.py",
     "brute_force_ssh": "run_brute_force_ssh.py",
 }
 
@@ -248,18 +265,43 @@ def api_lancer_attaque():
             "status": "already_running",
         }), 409
 
-    script_path = os.path.join(SCRIPTS_DIR, ATTAQUES_DISPONIBLES[nom])
+    scripts_dir = determiner_scripts_dir()
+    script_file = ATTAQUES_DISPONIBLES[nom]
+    script_path = os.path.join(scripts_dir, script_file)
+
+    if not os.path.isfile(script_path):
+        return jsonify({
+            "error": f"Fichier script introuvable : {script_path}",
+            "scripts_dir": scripts_dir,
+        }), 500
+
     timestamp = int(time.time())
     log_path = f"/tmp/attack_{nom}_{timestamp}.log"
 
+    repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+    pentest_dir = os.path.join(repo_root, "pentest")
+    nouveau_pythonpath = os.pathsep.join(filter(None, [
+        repo_root,
+        pentest_dir,
+        "/app",
+        "/app/pentest",
+        os.environ.get("PYTHONPATH", ""),
+    ]))
+    env = {
+        **os.environ,
+        "PYTHONUNBUFFERED": "1",
+        "PYTHONPATH": nouveau_pythonpath,
+        "PENTEST_DATA_DIR": "/tmp",
+    }
+
     try:
-        log_file = open(log_path, "w", encoding="utf-8")  # noqa: WPS515
-        proc = subprocess.Popen(
-            [sys.executable, script_path],
-            stdout=log_file,
-            stderr=subprocess.STDOUT,
-            env={**os.environ},
-        )
+        with open(log_path, "w", encoding="utf-8") as log_file:
+            proc = subprocess.Popen(
+                [sys.executable, "-u", script_path],
+                stdout=log_file,
+                stderr=subprocess.STDOUT,
+                env=env,
+            )
     except Exception as exc:
         return jsonify({"error": f"Impossible de démarrer le subprocess : {exc}"}), 500
 
@@ -293,9 +335,16 @@ def api_status_attaques():
             "log_extrait": log_extrait,
         })
 
+    # Inclut l'extrait du log pour chaque attaque terminée
+    terminees = []
+    for t in _attaques_terminees[-20:]:
+        t_data = dict(t)
+        t_data["log_extrait"] = _lire_log(t.get("log", ""))
+        terminees.append(t_data)
+
     return jsonify({
         "en_cours": en_cours,
-        "terminees": _attaques_terminees[-20:],  # 20 dernières
+        "terminees": terminees,
     })
 
 

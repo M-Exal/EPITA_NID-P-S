@@ -26,6 +26,11 @@ SCENARIOS = [
         "details": "Drapeaux illégaux FIN+PSH+URG détectés",
     },
     {
+        "type": "NULL_SCAN",
+        "src_ip": "172.19.0.4",
+        "details": "Drapeaux TCP nuls (flags=0) détectés",
+    },
+    {
         "type": "BRUTE_FORCE",
         "src_ip": "172.19.0.4",
         "details": "12 tentatives de connexion SSH avec comptes 'root', 'admin'",

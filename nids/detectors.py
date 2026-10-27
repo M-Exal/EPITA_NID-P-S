@@ -1,22 +1,23 @@
 """
 Moteur de détection du NIDS et module de prévention du NIPS.
 
-Base saine pour votre implémentation :
-  1. SCAN_PORTS (anomalie comportementale)
+Détections implémentées :
+  1. SCAN_PORTS (anomalie comportementale : scan de ports TCP)
   2. NULL_SCAN / XMAS_SCAN (drapeaux TCP illégaux)
   3. BRUTE_FORCE (tentatives de connexion répétées sur ports auth)
+
+À implémenter par les autres membres du groupe :
   4. DOS (inondation volumétrique)
   5. SQL_INJECTION (signature de charge utile)
   6. XSS (signature de scripts web)
   7. PATH_TRAVERSAL (signature de traversée d'arborescence)
-
-Module de prévention active (NIPS) : blocage IP via iptables.
 """
 
+import subprocess
 import time
 from collections import defaultdict, deque
-from scapy.layers.inet import IP, TCP  # noqa: F401
-from scapy.packet import Raw  # noqa: F401
+from scapy.layers.inet import IP, TCP
+from scapy.packet import Raw
 
 
 class MoteurDetection:
@@ -38,9 +39,6 @@ class MoteurDetection:
         # Ensemble des IPs bloquées par le NIPS
         self.ips_bloquees = set()
 
-    # ------------------------------------------------------------------
-    # Prévention active NIPS
-    # ------------------------------------------------------------------
     def _executer_blocage_systeme(self, ip_src):
         """Applique la règle de blocage iptables (à implémenter si besoin)."""
         # TODO: Implémenter le blocage système (ex: iptables -I INPUT -s <ip> -j DROP)
@@ -68,23 +66,59 @@ class MoteurDetection:
     # ------------------------------------------------------------------
     def detecte_scan(self, paquet, maintenant):
         """1. Scan de ports (TCP Connect / SYN scan)."""
-        # TODO: À implémenter
-        pass
+        if not paquet.haslayer(TCP):
+            return
+        ip_src = paquet[IP].src
+        dport = paquet[TCP].dport
+        self.scan_tracker[ip_src].append((maintenant, dport))
+
+        # Purge hors fenêtre
+        while self.scan_tracker[ip_src] and self.scan_tracker[ip_src][0][0] < maintenant - self.cfg.SCAN_WINDOW:
+            self.scan_tracker[ip_src].popleft()
+
+        ports_uniques = {p for _, p in self.scan_tracker[ip_src]}
+        if len(ports_uniques) > self.cfg.SCAN_THRESHOLD:
+            details = (
+                f"Scan de ports détecté : {len(ports_uniques)} ports distincts contactés "
+                f"en {self.cfg.SCAN_WINDOW}s"
+            )
+            self.declencher_alerte_et_prevention("SCAN_PORTS", ip_src, details, maintenant)
 
     def detecte_flags_anormaux(self, paquet, maintenant):
         """2. Scans furtifs (NULL scan / XMAS scan)."""
-        # TODO: À implémenter
-        pass
+        if not paquet.haslayer(TCP):
+            return
+        ip_src = paquet[IP].src
+        flags = paquet[TCP].flags
+        dport = paquet[TCP].dport
+
+        try:
+            val_flags = int(flags)
+        except (ValueError, TypeError):
+            val_flags = -1
+
+        # NULL Scan (flags == 0)
+        if val_flags == 0 or flags == 0:
+            details = f"NULL scan détecté (flags=0) vers le port {dport}"
+            self.declencher_alerte_et_prevention("NULL_SCAN", ip_src, details, maintenant)
+            return
+
+        # XMAS Scan : FIN (0x01) + PSH (0x08) + URG (0x20) = 0x29 (41)
+        if val_flags == 0x29 or str(flags) in ("FPU", "FPUA"):
+            details = f"XMAS scan détecté (flags=FPU/0x29) vers le port {dport}"
+            self.declencher_alerte_et_prevention("XMAS_SCAN", ip_src, details, maintenant)
+            return
 
     def detecte_brute_force(self, paquet, maintenant):
         """3. Brute force d'authentification (SSH / Telnet / FTP)."""
         if not paquet.haslayer(TCP):
             return
         ip_src = paquet[IP].src
-        if paquet[TCP].flags != "S" or paquet[TCP].dport not in self.cfg.MONITORED_PORTS:
+        # SYN flag seul sur un port surveillé (authentification)
+        flags_str = str(paquet[TCP].flags)
+        if flags_str != "S" or paquet[TCP].dport not in self.cfg.MONITORED_PORTS:
             return
         self.brute_tracker[ip_src].append(maintenant)
-        # Purger les entrées hors fenêtre
         while self.brute_tracker[ip_src] and self.brute_tracker[ip_src][0] < maintenant - self.cfg.BRUTE_WINDOW:
             self.brute_tracker[ip_src].popleft()
         if len(self.brute_tracker[ip_src]) > self.cfg.BRUTE_THRESHOLD:
@@ -105,16 +139,15 @@ class MoteurDetection:
         pass
 
     # ------------------------------------------------------------------
-    # Analyse silencieuse des paquets
+    # Analyse des paquets
     # ------------------------------------------------------------------
     def analyser(self, paquet):
         """Point d'entrée principal : reçoit chaque paquet capturé par Scapy."""
         if not paquet.haslayer(IP):
             return
         maintenant = time.time()
-        # Les fonctions de détection sont appelées ici (silencieuses tant que non implémentées)
-        self.detecte_scan(paquet, maintenant)
         self.detecte_flags_anormaux(paquet, maintenant)
+        self.detecte_signatures_payload(paquet, maintenant)
+        self.detecte_scan(paquet, maintenant)
         self.detecte_brute_force(paquet, maintenant)
         self.detecte_dos(paquet, maintenant)
-        self.detecte_signatures_payload(paquet, maintenant)
