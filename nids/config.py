@@ -3,9 +3,22 @@ Configuration centralisée du NIDS / NIPS.
 
 Toutes les variables sont surchargeables par l'environnement
 pour faciliter les tests et le déploiement Docker.
+
+En développement local, les variables sont lues depuis le fichier .env
+situé à la racine du projet (si présent).
 """
 
 import os
+
+# Chargement automatique du .env en développement local (hors Docker)
+_env_file = os.path.join(os.path.dirname(__file__), "..", ".env")
+if os.path.exists(_env_file):
+    with open(_env_file) as _f:
+        for _line in _f:
+            _line = _line.strip()
+            if _line and not _line.startswith("#") and "=" in _line:
+                _key, _val = _line.split("=", 1)
+                os.environ.setdefault(_key.strip(), _val.strip())
 
 
 class Config:
