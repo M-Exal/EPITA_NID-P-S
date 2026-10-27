@@ -3,7 +3,6 @@ Tests unitaires pour le backend du Dashboard SIEM CyBear.
 """
 
 import json
-import os
 import sys
 from pathlib import Path
 import pytest
@@ -13,7 +12,7 @@ sys.path.insert(0, str(RACINE / "dashboard"))
 
 pytest.importorskip("flask")
 
-from app import app, calculer_statistiques, SEVERITE_MAP
+from app import app, calculer_statistiques
 
 
 @pytest.fixture

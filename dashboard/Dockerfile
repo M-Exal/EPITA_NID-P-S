@@ -7,12 +7,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 WORKDIR /app
 
-COPY dashboard/requirements.txt requirements.txt
+COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY dashboard/ /app/
-COPY pentest/ /app/pentest/
-COPY scripts/ /app/scripts/
+COPY . .
 
 EXPOSE 5050
 ENV PYTHONUNBUFFERED=1

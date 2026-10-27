@@ -143,7 +143,6 @@ def api_stats():
 def api_stream():
     """Flux SSE (Server-Sent Events) pour diffuser les alertes en direct."""
     def event_stream():
-        derniere_taille = -1
         derniers_count = -1
 
         while True:
@@ -215,7 +214,6 @@ _attaques_terminees: list = []
 
 def _nettoyer_terminees():
     """Déplace dans _attaques_terminees les processus qui ont fini."""
-    global _attaques_en_cours, _attaques_terminees
     finies = []
     for nom, info in list(_attaques_en_cours.items()):
         proc: subprocess.Popen = info.get("proc")

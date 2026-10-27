@@ -13,11 +13,11 @@ Détections implémentées :
   7. PATH_TRAVERSAL (signature de traversée d'arborescence)
 """
 
-import subprocess
+import subprocess  # noqa: F401
 import time
 from collections import defaultdict, deque
 from scapy.layers.inet import IP, TCP
-from scapy.packet import Raw
+from scapy.packet import Raw  # noqa: F401
 
 
 class MoteurDetection:

@@ -43,9 +43,10 @@ def main():
 
     try:
         pentester.xmas_scan()
-        pentester.sauvegarder()
         stats = pentester.resultats["attaques"].get("xmas_scan", {})
-        print(f"[+] Résultat XMAS : {stats.get('status', 'inconnu')} ({stats.get('paquets_envoyes', 0)} paquets)", flush=True)
+        statut = stats.get('status', 'inconnu')
+        nb_pkts = stats.get('paquets_envoyes', 0)
+        print(f"[+] Résultat XMAS : {statut} ({nb_pkts} paquets)", flush=True)
     except Exception as exc:
         print(f"[!] Erreur durant l'attaque : {exc}", file=sys.stderr, flush=True)
         sys.exit(1)
