@@ -33,13 +33,16 @@ def main():
     pentester = Pentester(cfg=Config)
 
     try:
-        resultats = pentester.brute_force_ssh()
-        if resultats:
-            print(f"[+] Résultats brute_force_ssh :")
-            for k, v in resultats.items():
-                print(f"    {k}: {v}")
+        pentester.brute_force_ssh()
+        stats = pentester.resultats["attaques"].get("brute_force_ssh", {})
+        if stats:
+            print("[+] Synthèse brute_force_ssh :")
+            for k, v in stats.items():
+                if k != "paires_testees":
+                    print(f"    {k}: {v}")
+            print(f"    paires_testees: {len(stats.get('paires_testees', []))} combinaisons")
         else:
-            print("[~] Aucun résultat retourné par brute_force_ssh().")
+            print("[~] Aucun résultat retourné.")
     except Exception as exc:
         print(f"[!] Erreur durant l'attaque : {exc}", file=sys.stderr)
         sys.exit(1)
