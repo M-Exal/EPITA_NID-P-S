@@ -118,7 +118,8 @@ def test_api_ssh_connect(client):
     data = res.get_json()
     assert data["status"] == "ready"
     assert data["utilisateur"] == "msfadmin"
-    assert "message" in data
+    assert "token" in data
+    assert "cible" in data
 
 
 def test_api_attaques_lancer_validation(client):
