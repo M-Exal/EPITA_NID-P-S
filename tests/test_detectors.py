@@ -88,7 +88,6 @@ def test_detecte_xss(moteur, mock_alertes, mock_blocker):
     assert ip_attaquant in mock_blocker.bloques
 
 
-@pytest.mark.skip(reason="À implémenter par le membre en charge du pentest web")
 def test_detecte_path_traversal(moteur, mock_alertes, mock_blocker):
     """Test #7 : Détection par signature de Directory Traversal."""
     ip_attaquant = "192.168.1.107"
