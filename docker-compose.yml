@@ -74,6 +74,7 @@ services:
       - NET_RAW
     volumes:
       - ./data/pentest:/app/data
+      - ./pentest:/app
     networks:
       - honeynet
     depends_on:
