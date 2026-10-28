@@ -772,7 +772,8 @@
 
             if (stats.derniere_alerte) {
                 const ts = stats.derniere_alerte.timestamp || '';
-                document.getElementById('kpiLastTime').textContent = ts.includes('T') ? ts.split('T')[1] : ts;
+                const heureSeule = ts.includes('T') ? ts.split('T')[1].split('+')[0] : ts;
+                document.getElementById('kpiLastTime').textContent = heureSeule;
                 document.getElementById('kpiLastDetails').textContent = 
                     `${EMOJIS[stats.derniere_alerte.type] || '⚠️'} ${stats.derniere_alerte.type} (${stats.derniere_alerte.src_ip})`;
             }
@@ -897,7 +898,7 @@
                     const sev = SEVERITES[a.type] || 'MOYENNE';
                     const sevClass = sev.toLowerCase();
                     const emoji = EMOJIS[a.type] || '⚠️';
-                    const timeStr = a.timestamp ? a.timestamp.replace('T', ' ') : '';
+                    const timeStr = a.timestamp ? a.timestamp.replace('T', ' ').replace(/\+\d{2}:\d{2}$/, '') : '';
 
                     return `
                         <div class="alert-item ${sevClass}">

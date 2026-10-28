@@ -7,6 +7,9 @@ Base saine pour l'analyse des logs générés par le NIDS et par Metasploitable 
 import argparse
 import json
 from datetime import datetime
+from zoneinfo import ZoneInfo
+
+TZ_PARIS = ZoneInfo("Europe/Paris")
 
 
 class LogAnalyzer:
@@ -33,7 +36,7 @@ class LogAnalyzer:
     def generer_rapport(self):
         """Génère une synthèse consolidée."""
         return {
-            "date_analyse": datetime.now().isoformat(timespec="seconds"),
+            "date_analyse": datetime.now(TZ_PARIS).isoformat(timespec="seconds"),
             "nids": self.analyser_alertes_nids(),
             "metasploitable": self.analyser_logs_metasploitable(),
         }

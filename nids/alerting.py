@@ -10,8 +10,12 @@ import json
 import logging
 import os
 from datetime import datetime
+from zoneinfo import ZoneInfo
 
 from discord_notifier import DiscordNotifier
+
+# Fuseau horaire de référence pour les horodatages (conteneur en UTC)
+TZ_PARIS = ZoneInfo("Europe/Paris")
 
 
 class AlertManager:
@@ -46,7 +50,7 @@ class AlertManager:
         """
         Enregistre une alerte et l'affiche dans la console.
         """
-        horodatage = datetime.now().isoformat(timespec="seconds")
+        horodatage = datetime.now(TZ_PARIS).isoformat(timespec="seconds")
         message = f"ALERTE [{type_attaque}] depuis {ip_src} {details}".strip()
 
         # 1. Log texte
