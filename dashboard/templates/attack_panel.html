@@ -566,6 +566,11 @@
                 <span class="meta-value">scripts/brute_force_ssh.py</span>
             </div>
             <button class="btn-launch" onclick="lancerAttaque('BRUTE_FORCE', this)">Lancer l'attaque</button>
+            <div id="brute-creds" style="display:none; margin-top:10px; padding:10px; background:var(--succes-bg); border:2px solid var(--border); border-radius:6px; box-shadow:var(--shadow-sm);">
+                <div style="font-weight:800; font-size:0.85rem; margin-bottom:6px; color:var(--succes);">✅ IDENTIFIANTS TROUVÉS</div>
+                <div id="brute-creds-list" style="display:flex; flex-direction:column; gap:6px;"></div>
+                <button onclick="ouvrirTerminalSSH()" class="btn-launch" style="margin-top:8px; background:var(--succes);">🖥️ OUVRIR TERMINAL SSH</button>
+            </div>
             <div class="status-indicator status-idle">
                 <span class="status-dot-sm"></span>
                 <span class="status-text">En attente</span>
@@ -699,6 +704,46 @@
             else text.textContent = 'En attente';
         }
 
+        let lastCreds = [];
+        
+        async function verifierBruteForce() {
+            try {
+                const resp = await fetch('/api/attaques/acces');
+                const data = await resp.json();
+                if (data.acces && data.acces.length > 0) {
+                    lastCreds = data.acces;
+                    const box = document.getElementById('brute-creds');
+                    const list = document.getElementById('brute-creds-list');
+                    list.innerHTML = data.acces.map((c, i) => 
+                        `<div style="display:flex; align-items:center; justify-content:space-between; font-family:'Courier New',monospace; font-weight:800;">
+                            <span>[${i+1}] ${c.utilisateur || c.user}:${c.mot_de_passe || c.password}</span>
+                        </div>`
+                    ).join('');
+                    box.style.display = 'block';
+                    logConsole(`> [BRUTE_FORCE] ${data.acces.length} identifiant(s) valide(s) détecté(s)`, 'accent');
+                }
+            } catch(e) {}
+        }
+        
+        async function ouvrirTerminalSSH() {
+            if (lastCreds.length === 0) return;
+            const c = lastCreds[0];
+            try {
+                const resp = await fetch('/api/attaques/ssh_connect', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({utilisateur: c.utilisateur || c.user, mot_de_passe: c.mot_de_passe || c.password})
+                });
+                const data = await resp.json();
+                if (data.token) {
+                    window.open('/terminal?token=' + data.token, '_blank');
+                    logConsole(`> [SSH] Ouverture du terminal interactif pour ${c.utilisateur || c.user}`, 'accent');
+                }
+            } catch(e) {
+                logConsole('> [SSH] Erreur lors de la création de la session', 'err');
+            }
+        }
+        
         async function lancerAttaque(type, btn) {
             const card = btn.closest('.attack-card');
             btn.disabled = true;
@@ -709,7 +754,7 @@
             globalStatus.classList.add('active');
             globalText.textContent = `Lancement de ${type}...`;
             logConsole(`> DÉMARRAGE | ${type}`, 'accent');
-            logConsole(`> Connexion au moteur d'attaque CyBear...`, 'dim');
+            logConsole(`> Initialisation du module d'attaque...`, 'dim');
 
             try {
                 const resp = await fetch('/api/attack/launch', {
@@ -725,6 +770,9 @@
                         setStatus(card, 'done');
                         globalText.textContent = `✅ ${type} terminé`;
                         logConsole(`> TERMINÉ | ${type}`, 'accent');
+                        if (type === 'BRUTE_FORCE') {
+                            setTimeout(verifierBruteForce, 500);
+                        }
                         setTimeout(() => { if (!enCours) globalStatus.classList.remove('active'); }, 2000);
                     }, 3200);
                 } else {
