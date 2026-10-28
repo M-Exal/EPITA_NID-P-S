@@ -672,6 +672,20 @@
         const attaques = ['SCAN_PORTS', 'XMAS_SCAN', 'NULL_SCAN', 'BRUTE_FORCE', 'DOS', 'SQL_INJECTION', 'XSS', 'PATH_TRAVERSAL'];
         let enCours = false;
 
+        function getScriptName(type) {
+            const map = {
+                'SCAN_PORTS': 'scan_ports.py',
+                'XMAS_SCAN': 'xmas_scan.py',
+                'NULL_SCAN': 'null_scan.py',
+                'BRUTE_FORCE': 'brute_force_ssh.py',
+                'DOS': 'dos_attack.py',
+                'SQL_INJECTION': 'sql_injection.py',
+                'XSS': 'xss_attack.py',
+                'PATH_TRAVERSAL': 'path_traversal.py'
+            };
+            return map[type] || type.toLowerCase() + '.py';
+        }
+
         const themeToggle = document.getElementById('theme-toggle');
         const root = document.documentElement;
         const savedTheme = localStorage.getItem('cybear-theme') || 'light';
@@ -754,7 +768,9 @@
             globalStatus.classList.add('active');
             globalText.textContent = `Lancement de ${type}...`;
             logConsole(`> DÉMARRAGE | ${type}`, 'accent');
-            logConsole(`> Initialisation du module d'attaque...`, 'dim');
+            logConsole(`> Cible: ${location.protocol}//${location.hostname}`, 'dim');
+            logConsole(`> Module: scripts/${getScriptName(type)}`, 'dim');
+            logConsole(`> Statut: ENVOI DE LA REQUÊTE AU SERVEUR...`, 'warn');
 
             try {
                 const resp = await fetch('/api/attack/launch', {
@@ -763,9 +779,11 @@
                     body: JSON.stringify({attaque: type, attack_type: type})
                 });
                 const data = await resp.json();
-                if (data.success || resp.ok) {
-                    logConsole(`> Succès: ${type} déclenché avec succès`, '');
-                    logConsole(`> Analyse en cours, surveillance NIDS active...`, 'dim');
+                if (data.success || resp.ok || data.status === 'started') {
+                    logConsole(`> RÉPONSE SERVEUR: OK`, 'accent');
+                    logConsole(`> ${type} EN COURS D'EXÉCUTION`, '');
+                    logConsole(`> Génération de trafic vers la cible...`, 'dim');
+                    logConsole(`> Surveillance NIDS: ACTIVÉE`, 'dim');
                     setTimeout(() => {
                         setStatus(card, 'done');
                         globalText.textContent = `✅ ${type} terminé`;
