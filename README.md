@@ -355,18 +355,29 @@ Le projet s'adapte automatiquement à l'environnement hôte (macOS / Linux) sans
 * Résolution automatique de la cible : repli sur `127.0.0.1` si `metasploitable` n'est pas joignable en DNS.
 * Chargement automatique du `.env` en local.
 
-**Pré-requis :**
+**Pré-requis — création et activation de l'environnement virtuel :**
 ```bash
+# Créer le venv (une seule fois)
+python3 -m venv venv
+
+# Activer le venv (à faire dans chaque terminal)
+source venv/bin/activate      # Linux / macOS
+# .\venv\Scripts\activate     # Windows
+
+# Installer les dépendances
 pip install -r dashboard/requirements.txt
+
 # Si les fichiers de données appartiennent à root (créés par Docker) :
 sudo chown -R $USER:$USER data/
 ```
 
 ```bash
 # 1. Démarrer le moteur NIDS (Scapy nécessite les droits root) :
-sudo python3 nids/nids.py
+#    Le venv étant activé, passer le chemin explicite de son python :
+sudo venv/bin/python3 nids/nids.py
 
-# 2. Dans un second terminal, démarrer le Dashboard SIEM + WebSocket :
+# 2. Dans un second terminal (venv activé) — Dashboard SIEM + WebSocket :
+source venv/bin/activate
 python3 dashboard/app.py
 
 # 3. Ouvrir l'interface dans le navigateur :
