@@ -105,8 +105,21 @@ def test_api_attaques_status_vide(client):
     data = res.get_json()
     assert "en_cours" in data
     assert "terminees" in data
+    assert "acces_valides" in data
     assert isinstance(data["en_cours"], list)
     assert isinstance(data["terminees"], list)
+    assert isinstance(data["acces_valides"], list)
+
+
+def test_api_ssh_connect(client):
+    """Vérifie que /api/attaques/ssh_connect répond favorablement à une demande de connexion."""
+    res = client.post("/api/attaques/ssh_connect", json={"utilisateur": "msfadmin"})
+    assert res.status_code == 200
+    data = res.get_json()
+    assert data["status"] == "ready"
+    assert data["utilisateur"] == "msfadmin"
+    assert "token" in data
+    assert "cible" in data
 
 
 def test_api_attaques_lancer_validation(client):

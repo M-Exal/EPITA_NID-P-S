@@ -1,4 +1,6 @@
 flask>=3.0.0
+flask-socketio>=5.3.6
 scapy>=2.5.0
 requests>=2.31.0
 cryptography>=41.0.0
+paramiko>=3.0.0

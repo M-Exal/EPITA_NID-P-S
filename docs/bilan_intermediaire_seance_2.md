@@ -42,9 +42,9 @@ Le NIDS écoute directement sur l'interface `eth0` partagée, lui permettant de 
 
 ---
 
-## 3. Spécification des 7 Attaques du Pentest Automatisé
+## 3. Spécification des 8 Attaques du Pentest Automatisé
 
-Le script modulaire `pentest/pentest.py` implémente 7 scénarios distincts dont les volumes sont calibrés pour dépasser les seuils de détection :
+Le script modulaire `pentest/pentest.py` implémente 8 scénarios distincts dont les volumes sont calibrés pour dépasser les seuils de détection :
 
 1. **Scan de ports TCP (Reconnaissance)** :
    * *Méthode* : Connexions TCP Connect séquentielles sur la liste des ports cibles (21, 22, 23, 80, 139, 445, 3306...).
@@ -52,23 +52,26 @@ Le script modulaire `pentest/pentest.py` implémente 7 scénarios distincts dont
 2. **Scan furtif XMAS (Scans anormaux)** :
    * *Méthode* : Envoi de paquets Scapy avec les drapeaux illégaux FIN, PSH, URG (`flags='FPU'`).
    * *Seuil NIDS* : Détection immédiate par signature de drapeaux TCP non conformes.
-3. **Force brute SSH (Authentification)** :
+3. **Scan furtif NULL (Scans anormaux)** :
+   * *Méthode* : Envoi de paquets TCP Scapy sans aucun drapeau activé (`flags=0`), combinaison illégale au sens de la RFC 793.
+   * *Seuil NIDS* : Détection immédiate par signature de drapeaux TCP vides (`NULL_SCAN`).
+4. **Force brute SSH (Authentification)** :
    * *Méthode* : Tentatives répétées d'authentification via `paramiko` avec un dictionnaire de comptes faibles (`msfadmin:msfadmin`, `root:root`).
    * *Seuil NIDS* : > 10 paquets SYN vers le port 22 en 30 secondes.
-4. **Déni de Service DoS (Inondation volumétrique)** :
+5. **Déni de Service DoS (Inondation volumétrique)** :
    * *Méthode* : Boucle rapide d'inondation TCP/HTTP (250 requêtes).
    * *Seuil NIDS* : > 200 paquets par IP en moins de 5 secondes.
-5. **Injection SQL (Web)** :
+6. **Injection SQL (Web)** :
    * *Méthode* : Requêtes HTTP GET/POST ciblées vers DVWA contenant des charges utiles SQL (`' OR '1'='1`, `UNION SELECT...`).
    * *Seuil NIDS* : Inspection de la charge utile (DPI) sur port 80.
-6. **Cross-Site Scripting XSS (Web)** :
+7. **Cross-Site Scripting XSS (Web)** :
    * *Méthode* : Injection de balises de script malveillant (`<script>alert('XSS')</script>`, `<img src=x onerror=...>`) dans les formulaires DVWA.
    * *Seuil NIDS* : Détection de signatures de balises de script.
-7. **Traversée de Répertoire Path Traversal (Web)** :
+8. **Traversée de Répertoire Path Traversal (Web)** :
    * *Méthode* : Requêtes HTTP visant à lire `/etc/passwd` via des séquences `../../../../etc/passwd` et encodages URL (`%2e%2e%2f`).
    * *Seuil NIDS* : Détection de motifs de navigation d'arborescence.
 
-Les résultats de chaque attaque sont enregistrés dans `data/pentest/pentest_results.json`.
+Les résultats de chaque attaque sont enregistrés dans `data/pentest/pentest_results.json` (avec repli vers `/tmp` si le dossier est en lecture seule).
 
 ---
 
@@ -81,34 +84,36 @@ Les résultats de chaque attaque sont enregistrés dans `data/pentest/pentest_re
   * Dashboard SIEM temps réel autonome en Flask avec streaming SSE (*Server-Sent Events*).
   * Webhook Discord avec notifications riches (couleurs de sévérité, mentions `@here`).
 * **Sécurité & Chiffrement** : Cryptographie symétrique authentifiée Fernet (AES-128-CBC + HMAC-SHA256).
-* **Qualité de code & CI/CD** : GitHub Actions, pytest (24 tests unitaires validés).
+* **Qualité de code & CI/CD** : GitHub Actions, pytest (51 tests unitaires, dont 43 actifs — 8 marqués `skip` en attente des détecteurs NIDS et du NIPS restants).
 
 ---
 
-## 5. État d'Avancement Réel (Fin Séance 1 / Début Séance 2)
+## 5. État d'Avancement Réel (Séance 2 — mis à jour)
 
 | Composant | Statut | Détails |
 | :--- | :---: | :--- |
 | **Environnement Docker** | ✅ Terminé | Metasploitable 2 + NIDS configurés sur réseau `honeynet`. |
-| **Supervision SIEM Temps Réel** | ✅ Terminé | Dashboard SOC web accessible sur `http://localhost:5050` avec flux SSE. |
-| **Système d'Alertes Discord** | ✅ Terminé | Webhook fonctionnel avec notification de criticité et d'intrusion. |
-| **Pipeline CI/CD & Tests** | ✅ Terminé | 24 tests unitaires au vert, validation automatisée. |
-| **Script Pentest Automatisé** | 🔄 En cours | Squelette complet en place ; implémentation des 7 scénarios (Séance 2). |
-| **Module d'Analyse des Logs** | 🔄 En cours | Structure de base `analysis/analyze.py` prête pour corrélation (Séance 2). |
-| **Moteur NIDS Scapy** | ⏳ Prévu | Découpage des 7 détecteurs en issues dédiées (#13 à #19, Séance 3). |
+| **Supervision SIEM Temps Réel** | ✅ Terminé | Dashboard SOC web accessible sur `http://localhost:5050` avec flux SSE + panneau d'attaques web (`/attaques`). |
+| **Système d'Alertes Discord** | ✅ Terminé | Webhook fonctionnel avec notification de criticité et d'intrusion (désactivation propre via `webhook_url=''`). |
+| **Pipeline CI/CD & Tests** | ✅ Terminé | 51 tests unitaires (43 actifs, 8 `skip` en attente d'implémentation), validation automatisée GitHub Actions. |
+| **Script Pentest Automatisé** | ✅ Terminé | Les 8 scénarios d'attaque sont implémentés et testés (scans TCP / XMAS / NULL, brute force SSH, DoS, SQLi, XSS, Path Traversal) avec session authentifiée DVWA. Reste à valider l'exécution complète via Docker et la génération de `data/pentest/pentest_results.json`. |
+| **Module d'Analyse des Logs** | 🔄 En cours | Structure de base `analysis/analyze.py` en place ; parsing des alertes NIDS et des logs Metasploitable encore à implémenter. |
+| **Moteur NIDS Scapy** | 🔄 En cours | 4 détecteurs sur 7 implémentés et testés : SCAN_PORTS, XMAS_SCAN, NULL_SCAN, BRUTE_FORCE. Restent : DOS, signatures payload (SQLi / XSS / Path Traversal), blocage iptables NIPS et cooldown anti-spam. |
 
 ---
 
-## 6. Travail Planifié pour la Séance 2
+## 6. Travail Restant (Suite Séance 2 → Séance 3)
 
-1. **Finalisation du Script d'Attaque** :
-   - Implémentation complète des méthodes d'attaque dans `pentest/pentest.py` (Alexis, Maximilien, Léa).
-   - Validation que les volumes d'attaque dépassent strictement les seuils NIDS.
-2. **Exécution du Pentest & Récolte des Logs** :
+1. **Détecteurs NIDS restants** :
+   - Implémentation du détecteur DoS et des signatures de payload (SQLi, XSS, Path Traversal) dans `nids/detectors.py` (Maximilien, Léa).
+   - Ajout du cooldown anti-spam entre alertes (Alexis).
+2. **Prévention active NIPS** :
+   - Implémentation du blocage système iptables dans `_executer_blocage_systeme` (`nids/detectors.py`) et dé-skip des tests `test_nips_prevention.py` (Antoine).
+3. **Exécution du Pentest & Récolte des Logs** :
    - Lancement automatisé via `docker compose --profile attaque run --rm pentest` (Antoine).
-   - Validation de la génération du fichier `data/pentest/pentest_results.json`.
-3. **Analyse des Données Collectées** :
+   - Validation de la génération du fichier `data/pentest/pentest_results.json` (aucun résultat persisté à ce jour).
+4. **Analyse des Données Collectées** :
    - Implémentation du parsing et des statistiques dans `analysis/analyze.py` (Léa).
    - Corrélation entre requêtes émises par le pentest et logs enregistrés par la cible.
-4. **Validation des Tests Unitaires** :
-   - Exécution complète de la suite de tests pour préparer le passage à la séance 3.
+5. **Validation des Tests Unitaires** :
+   - Dé-skip des tests liés aux détecteurs nouvellement implémentés, puis exécution complète de la suite pour préparer le passage à la séance 3.
