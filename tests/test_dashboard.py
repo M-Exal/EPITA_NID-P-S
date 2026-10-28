@@ -172,3 +172,19 @@ def test_api_attaques_lancer_nouvelles_attaques(client, monkeypatch):
         assert data["success"] is True
         assert data["status"] == "started"
 
+
+def test_api_alerts_reset(client):
+    """Vérifie que /api/alerts/reset réinitialise la base d'alertes."""
+    # Avant le reset : 3 alertes présentes
+    res = client.get("/api/alerts")
+    assert len(res.get_json()) == 3
+
+    # Appel du endpoint de réinitialisation
+    res_reset = client.post("/api/alerts/reset")
+    assert res_reset.status_code == 200
+    assert res_reset.get_json()["status"] == "success"
+
+    # Après le reset : 0 alerte
+    res_after = client.get("/api/alerts")
+    assert len(res_after.get_json()) == 0
+

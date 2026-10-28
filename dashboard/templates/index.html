@@ -1,12 +1,12 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="fr" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CyBear SIEM — Supervision NIDS / NIPS en Temps Réel</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
             --bg: #ffffff;
@@ -33,12 +33,13 @@
         }
 
         [data-theme="dark"] {
-            --bg: #050510;
-            --bg-alt: #101018;
-            --bg-card: #15151d;
-            --border: #ffffff;
-            --text: #f8fafc;
-            --text-muted: #a1a1aa;
+            --bg: #090a10;
+            --bg-alt: #10121a;
+            --bg-card: #131520;
+            --border: #262938;
+            --border-highlight: #3c4159;
+            --text: #f1f5f9;
+            --text-muted: #94a3b8;
             --main: #a3e635;
             --main-hover: #bef264;
             --critique: #f87171;
@@ -51,16 +52,16 @@
             --succes-bg: rgba(16, 185, 129, 0.18);
             --accent: #60a5fa;
             --accent-bg: rgba(59, 130, 246, 0.18);
-            --shadow: 4px 4px 0px #ffffff;
-            --shadow-sm: 2px 2px 0px #ffffff;
-            --grid: rgba(255, 255, 255, 0.06);
+            --shadow: 4px 4px 0px #000000;
+            --shadow-sm: 2px 2px 0px #000000;
+            --grid: rgba(255, 255, 255, 0.035);
         }
 
         * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
         }
 
         body {
@@ -72,7 +73,7 @@
             color: var(--text);
             min-height: 100vh;
             padding: 20px;
-            transition: background 0.3s ease, color 0.3s ease;
+            transition: background 0.2s ease, color 0.2s ease;
         }
 
         header {
@@ -81,13 +82,12 @@
             align-items: center;
             padding: 16px 24px;
             background: var(--bg-card);
-            border: 3px solid var(--border);
+            border: 2px solid var(--border);
             border-radius: 8px;
             margin-bottom: 24px;
             box-shadow: var(--shadow);
             flex-wrap: wrap;
             gap: 12px;
-            transition: all 0.3s ease;
         }
 
         .header-brand {
@@ -99,12 +99,12 @@
 
         .brand-title {
             font-family: 'Space Grotesk', sans-serif;
-            font-size: 1.8rem;
+            font-size: 1.6rem;
             font-weight: 800;
             letter-spacing: -0.5px;
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 12px;
         }
 
         .brand-logo {
@@ -112,7 +112,7 @@
             flex-direction: column;
             background: var(--main);
             color: #000000;
-            padding: 8px 12px;
+            padding: 6px 12px;
             border: 2px solid var(--border);
             border-radius: 6px;
             box-shadow: var(--shadow-sm);
@@ -121,19 +121,19 @@
 
         .brand-logo span {
             font-family: 'Space Grotesk', sans-serif;
-            font-size: 1.25rem;
+            font-size: 1.15rem;
             font-weight: 800;
         }
 
         .brand-tag {
-            font-size: 0.7rem;
-            background: var(--accent-bg);
-            color: var(--accent);
+            font-size: 0.75rem;
+            background: var(--main);
+            color: #000000;
             padding: 4px 12px;
             border: 2px solid var(--border);
             border-radius: 6px;
-            text-transform: uppercase;
             font-weight: 800;
+            text-transform: uppercase;
             box-shadow: var(--shadow-sm);
         }
 
@@ -142,61 +142,54 @@
             align-items: center;
             gap: 10px;
             flex-wrap: wrap;
-            font-size: 0.9rem;
         }
 
-        .btn-attack-link {
+        .btn-link, .btn-attack-link {
             display: inline-flex;
             align-items: center;
-            gap: 6px;
+            gap: 8px;
             padding: 8px 16px;
             border-radius: 6px;
-            background: var(--critique-bg);
             border: 2px solid var(--border);
-            color: var(--critique);
+            background: var(--bg-card);
+            color: var(--text);
             font-weight: 800;
             font-size: 0.85rem;
             text-decoration: none;
-            transition: all 0.2s ease;
-            box-shadow: var(--shadow-sm);
-            text-transform: uppercase;
-        }
-
-        .btn-attack-link:hover {
-            background: var(--critique);
-            color: #ffffff;
-            transform: translate(-2px, -2px);
-            box-shadow: 4px 4px 0px var(--border);
-        }
-
-        .btn-icon {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            width: 38px;
-            height: 38px;
-            border-radius: 6px;
-            background: var(--bg-card);
-            border: 2px solid var(--border);
-            color: var(--text);
-            font-weight: 800;
-            font-size: 1rem;
             cursor: pointer;
-            transition: all 0.2s ease;
             box-shadow: var(--shadow-sm);
-            text-decoration: none;
+            transition: transform 0.1s ease, box-shadow 0.1s ease;
         }
 
-        .btn-icon:hover {
+        .btn-link:hover, .btn-attack-link:hover {
             transform: translate(-2px, -2px);
-            box-shadow: 4px 4px 0px var(--border);
+            box-shadow: var(--shadow);
+        }
+
+        .btn-link:active, .btn-attack-link:active {
+            transform: translate(0px, 0px);
+            box-shadow: 0px 0px 0px;
+        }
+
+        .btn-attack-link {
+            background: var(--main);
+            color: #000000;
+        }
+
+        .btn-reset {
+            color: var(--critique) !important;
+            border-color: var(--critique) !important;
+        }
+
+        .btn-reset:hover {
+            background: var(--critique-bg) !important;
         }
 
         .status-badge {
             display: flex;
             align-items: center;
             gap: 8px;
-            padding: 6px 14px;
+            padding: 8px 14px;
             border-radius: 6px;
             background: var(--succes-bg);
             border: 2px solid var(--border);
@@ -205,14 +198,14 @@
             font-size: 0.82rem;
             box-shadow: var(--shadow-sm);
             text-transform: uppercase;
+            font-family: 'JetBrains Mono', monospace;
         }
 
         .status-dot {
-            width: 10px;
-            height: 10px;
+            width: 9px;
+            height: 9px;
             border-radius: 50%;
             background-color: var(--succes);
-            border: 1px solid var(--border);
             animation: pulse 1.8s infinite;
         }
 
@@ -228,263 +221,230 @@
 
         @keyframes pulse {
             0%, 100% { opacity: 1; transform: scale(1); }
-            50% { opacity: 0.5; transform: scale(0.9); }
+            50% { opacity: 0.4; transform: scale(0.85); }
         }
 
         .kpi-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
-            gap: 18px;
+            grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+            gap: 16px;
             margin-bottom: 24px;
         }
 
         .card {
-            background-color: var(--bg-card);
-            border: 3px solid var(--border);
+            background: var(--bg-card);
+            border: 2px solid var(--border);
             border-radius: 8px;
             padding: 20px;
-            transition: all 0.2s ease;
             box-shadow: var(--shadow);
-        }
-
-        .card:hover {
-            transform: translate(-2px, -2px);
-            box-shadow: 6px 6px 0px var(--border);
         }
 
         .kpi-card {
             display: flex;
             flex-direction: column;
-            justify-content: space-between;
+            gap: 8px;
+            transition: transform 0.15s ease;
+        }
+
+        .kpi-card:hover {
+            transform: translate(-2px, -2px);
         }
 
         .kpi-head {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            color: var(--text-muted);
+            font-family: 'Space Grotesk', sans-serif;
             font-size: 0.85rem;
             font-weight: 800;
-            text-transform: uppercase;
-            letter-spacing: 0.6px;
-        }
-
-        .kpi-icon {
-            font-size: 1.4rem;
-        }
-
-        .kpi-value {
-            font-family: 'Space Grotesk', sans-serif;
-            font-size: 2.9rem;
-            font-weight: 800;
-            margin: 12px 0 4px 0;
-            letter-spacing: -1px;
-        }
-
-        .kpi-footer {
-            font-size: 0.8rem;
             color: var(--text-muted);
-            font-weight: 600;
-        }
-
-        .section-grid {
-            display: grid;
-            grid-template-columns: 2fr 1fr;
-            gap: 24px;
-            margin-bottom: 24px;
-        }
-
-        @media (max-width: 1100px) {
-            .section-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        .section-title {
-            font-family: 'Space Grotesk', sans-serif;
-            font-size: 1.3rem;
-            font-weight: 800;
-            margin-bottom: 16px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }
 
-        .title-bar {
+        .kpi-value {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 2.2rem;
+            font-weight: 800;
+            letter-spacing: -1px;
+            color: var(--text);
+            line-height: 1.1;
+        }
+
+        .kpi-footer {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+
+        .critique-text { color: var(--critique); }
+        .haute-text { color: var(--haute); }
+        .moyenne-text { color: var(--moyenne); }
+
+        .section-title {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 1.15rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
             display: flex;
             align-items: center;
+            gap: 10px;
+        }
+
+        .section-title::before {
+            content: '';
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            background: var(--main);
+            border: 2px solid var(--border);
+            box-shadow: 1px 1px 0px var(--border);
+        }
+
+        .title-bar {
+            display: flex;
             justify-content: space-between;
+            align-items: center;
             margin-bottom: 16px;
-            gap: 12px;
+        }
+
+        .progress-bar-container {
+            display: flex;
+            height: 14px;
+            background: var(--bg-alt);
+            border-radius: 6px;
+            overflow: hidden;
+            margin: 14px 0 16px 0;
+            border: 2px solid var(--border);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .progress-critique { background: var(--critique); transition: width 0.3s ease; }
+        .progress-haute { background: var(--haute); transition: width 0.3s ease; }
+        .progress-moyenne { background: var(--moyenne); transition: width 0.3s ease; }
+
+        .legend-row {
+            display: flex;
+            gap: 16px;
+            font-size: 0.85rem;
+            font-weight: 800;
             flex-wrap: wrap;
         }
 
-        .table-wrapper {
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .legend-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 2px;
+            border: 1px solid var(--border);
+        }
+
+        .badge-list {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 12px;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 0.78rem;
+            font-weight: 800;
+            border: 2px solid var(--border);
+            box-shadow: var(--shadow-sm);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .badge-critique { background: var(--critique-bg); color: var(--critique); border: 2px solid rgba(248, 113, 113, 0.4); }
+        .badge-haute { background: var(--haute-bg); color: var(--haute); border: 2px solid rgba(251, 146, 60, 0.4); }
+        .badge-moyenne { background: var(--moyenne-bg); color: var(--moyenne); border: 2px solid rgba(251, 191, 36, 0.4); }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 18px;
+            margin-bottom: 24px;
+        }
+
+        @media (max-width: 900px) {
+            .dashboard-grid { grid-template-columns: 1fr; }
+        }
+
+        .table-responsive {
             overflow-x: auto;
+            margin-top: 8px;
         }
 
         table {
             width: 100%;
-            border-collapse: separate;
-            border-spacing: 0;
-        }
-
-        thead th {
+            border-collapse: collapse;
+            font-size: 0.85rem;
             text-align: left;
-            padding: 12px 16px;
-            font-size: 0.78rem;
-            text-transform: uppercase;
-            letter-spacing: 0.6px;
+        }
+
+        th {
+            background: var(--bg-alt);
             color: var(--text);
-            background: var(--bg-alt);
-            border: 2px solid var(--border);
-            border-bottom: 3px solid var(--border);
-            font-weight: 800;
-        }
-
-        thead th:first-child {
-            border-top-left-radius: 6px;
-        }
-
-        thead th:last-child {
-            border-top-right-radius: 6px;
-        }
-
-        tbody td {
-            padding: 12px 16px;
-            border: 2px solid var(--border);
-            border-top: none;
-            font-size: 0.9rem;
-            background: var(--bg-card);
-        }
-
-        tbody tr:last-child td:first-child {
-            border-bottom-left-radius: 6px;
-        }
-
-        tbody tr:last-child td:last-child {
-            border-bottom-right-radius: 6px;
-        }
-
-        tbody tr:hover td {
-            background: var(--bg-alt);
-        }
-
-        .cell-center {
-            text-align: center;
-            font-weight: 700;
-        }
-
-        .severity-bars {
-            display: flex;
-            flex-direction: column;
-            gap: 14px;
-        }
-
-        .severity-row {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .severity-label {
-            width: 95px;
-            font-size: 0.9rem;
             font-weight: 800;
             text-transform: uppercase;
-        }
-
-        .severity-bar-track {
-            flex: 1;
-            height: 14px;
-            background: var(--bg-alt);
-            border: 2px solid var(--border);
-            border-radius: 999px;
-            overflow: hidden;
-        }
-
-        .severity-bar-fill {
-            height: 100%;
-            border-right: 2px solid var(--border);
-        }
-
-        .bar-critique { background: var(--critique); }
-        .bar-haute { background: var(--haute); }
-        .bar-moyenne { background: var(--moyenne); }
-
-        .severity-count {
-            width: 42px;
-            text-align: right;
-            font-weight: 800;
+            letter-spacing: 0.5px;
+            padding: 10px 12px;
+            border-bottom: 2px solid var(--border);
+            font-size: 0.78rem;
             font-family: 'Space Grotesk', sans-serif;
-            font-size: 1.05rem;
         }
 
-        .badge {
-            font-size: 0.7rem;
-            padding: 2px 8px;
-            border: 1.5px solid var(--border);
-            border-radius: 6px;
-            font-weight: 800;
-            text-transform: uppercase;
-            box-shadow: var(--shadow-sm);
+        td {
+            padding: 10px 12px;
+            border-bottom: 1px solid var(--border);
+            color: var(--text);
         }
 
-        .badge-critique { background: var(--critique); color: #ffffff; }
-        .badge-haute { background: var(--haute); color: #ffffff; }
-        .badge-moyenne { background: var(--moyenne); color: #000000; }
+        tbody tr:hover {
+            background: var(--bg-alt);
+        }
 
+        .cell-center { text-align: center; }
+
+        /* Timeline */
         .timeline {
             display: flex;
+            gap: 8px;
             align-items: flex-end;
-            gap: 10px;
-            height: 230px;
-            padding: 16px 12px 10px;
+            min-height: 180px;
             overflow-x: auto;
-            border: 2px solid var(--border);
-            border-radius: 8px;
-            background: var(--bg-alt);
-            box-shadow: inset 0 0 0 1px var(--grid);
-        }
-
-        .timeline::-webkit-scrollbar {
-            height: 10px;
-        }
-
-        .timeline::-webkit-scrollbar-track {
-            background: var(--bg-card);
-            border-top: 2px solid var(--border);
-        }
-
-        .timeline::-webkit-scrollbar-thumb {
-            background: var(--text);
+            padding: 12px 4px 4px 4px;
         }
 
         .timeline-bar-group {
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 8px;
-            min-width: 44px;
+            gap: 6px;
+            min-width: 42px;
         }
 
         .timeline-bars {
             display: flex;
             flex-direction: column-reverse;
-            gap: 3px;
-            width: 34px;
-            height: 170px;
+            gap: 2px;
+            width: 28px;
+            height: 140px;
             justify-content: flex-start;
             align-items: stretch;
         }
 
         .timeline-seg {
             width: 100%;
-            border: 2px solid var(--border);
-            border-radius: 4px;
-            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--border);
+            border-radius: 2px;
         }
 
         .seg-critique { background: var(--critique); }
@@ -492,15 +452,14 @@
         .seg-moyenne { background: var(--moyenne); }
 
         .timeline-label {
-            font-size: 0.75rem;
-            font-weight: 800;
+            font-size: 0.72rem;
             color: var(--text-muted);
-            text-transform: uppercase;
-            letter-spacing: 0.4px;
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 700;
         }
 
         .timeline-total {
-            font-size: 0.72rem;
+            font-size: 0.75rem;
             font-weight: 800;
             color: var(--text);
         }
@@ -513,27 +472,14 @@
             width: 100%;
         }
 
+        /* Flux d'alertes en direct */
         .live-feed {
             display: flex;
             flex-direction: column;
             gap: 10px;
             max-height: 440px;
             overflow-y: auto;
-        }
-
-        .live-feed::-webkit-scrollbar {
-            width: 10px;
-        }
-
-        .live-feed::-webkit-scrollbar-track {
-            background: var(--bg-alt);
-            border: 2px solid var(--border);
-            border-radius: 6px;
-        }
-
-        .live-feed::-webkit-scrollbar-thumb {
-            background: var(--text);
-            border-radius: 4px;
+            margin-top: 8px;
         }
 
         .alert-item {
@@ -545,68 +491,73 @@
             border: 2px solid var(--border);
             border-radius: 6px;
             gap: 12px;
+            font-size: 0.88rem;
             box-shadow: var(--shadow-sm);
-            flex-wrap: wrap;
         }
 
-        .alert-item.critique { background: var(--critique-bg); }
-        .alert-item.haute { background: var(--haute-bg); }
-        .alert-item.moyenne { background: var(--moyenne-bg); }
+        .alert-item.critique { border-left: 6px solid var(--critique); }
+        .alert-item.haute { border-left: 6px solid var(--haute); }
+        .alert-item.moyenne { border-left: 6px solid var(--moyenne); }
 
         .alert-left {
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 12px;
             flex: 1;
-            min-width: 0;
         }
 
-        .alert-emoji {
-            font-size: 1.2rem;
+        .alert-indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 2px;
+            border: 1px solid var(--border);
+            flex-shrink: 0;
         }
+
+        .alert-indicator.critique { background: var(--critique); }
+        .alert-indicator.haute { background: var(--haute); }
+        .alert-indicator.moyenne { background: var(--moyenne); }
 
         .alert-type {
+            font-family: 'Space Grotesk', sans-serif;
             font-weight: 800;
-            font-size: 0.9rem;
+            color: var(--text);
             display: flex;
             align-items: center;
             gap: 8px;
-            flex-wrap: wrap;
         }
 
         .alert-details {
-            font-size: 0.82rem;
+            font-size: 0.8rem;
             color: var(--text-muted);
             margin-top: 2px;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-            max-width: 320px;
+            font-weight: 500;
         }
 
         .alert-right {
             text-align: right;
+            font-family: 'JetBrains Mono', monospace;
             font-size: 0.82rem;
+            font-weight: 700;
         }
 
         .alert-ip {
-            font-family: 'Courier New', monospace;
+            color: var(--main);
             font-weight: 800;
         }
 
         .alert-time {
             color: var(--text-muted);
+            font-size: 0.75rem;
             margin-top: 2px;
-            font-weight: 600;
         }
 
         footer {
             text-align: center;
-            padding: 20px;
-            margin-top: 40px;
+            padding: 28px 0 10px 0;
             color: var(--text-muted);
-            font-size: 0.9rem;
-            font-weight: 700;
+            font-size: 0.85rem;
+            font-weight: 800;
         }
     </style>
 </head>
@@ -615,22 +566,17 @@
         <div class="header-brand">
             <div class="brand-title">
                 <div class="brand-logo">
-                    <span>CyBear</span>
+                    <span>CYBEAR</span>
                     <span>SIEM</span>
                 </div>
                 CyBear SIEM
             </div>
-            <span class="brand-tag">NIDS / NIPS en Temps Réel</span>
+            <span class="brand-tag">Supervision NIDS / NIPS</span>
         </div>
         <div class="header-meta">
-            <a href="/attaques" class="btn-attack-link">
-                ⚔️ Panneau d'Attaques
-            </a>
-            <a href="/attaques" class="btn-attack-link" style="background: var(--accent-bg); color: var(--accent);">
-                🛠️ Vue Complète
-            </a>
-            <a href="/terminal" class="btn-icon" title="Terminal SSH">💻</a>
-            <button class="btn-icon" id="theme-toggle" title="Basculer thème">🌙</button>
+            <a href="/attaques" class="btn-attack-link">Panneau d'Attaques</a>
+            <button class="btn-link btn-reset" id="btn-reset-db" onclick="reinitialiserBase()">Vider la base</button>
+            <button class="btn-link" id="theme-toggle">Thème</button>
             <div class="status-badge" id="connectionStatus">
                 <span class="status-dot"></span>
                 <span id="statusText">CONNEXION...</span>
@@ -640,146 +586,127 @@
 
     <div class="kpi-grid">
         <div class="card kpi-card">
-            <div class="kpi-head">
-                <span>Total Alertes</span>
-                <span class="kpi-icon">📊</span>
-            </div>
+            <div class="kpi-head">Total Alertes</div>
             <div class="kpi-value" id="kpi-total">0</div>
-            <div class="kpi-footer">Depuis le démarrage</div>
+            <div class="kpi-footer">Événements enregistrés</div>
         </div>
         <div class="card kpi-card">
-            <div class="kpi-head">
-                <span>Adresses IP Uniques</span>
-                <span class="kpi-icon">🌐</span>
-            </div>
+            <div class="kpi-head">Adresses IP Uniques</div>
             <div class="kpi-value" id="kpi-ips">0</div>
             <div class="kpi-footer">Sources détectées</div>
         </div>
         <div class="card kpi-card">
-            <div class="kpi-head">
-                <span>Critiques</span>
-                <span class="kpi-icon">🚨</span>
-            </div>
-            <div class="kpi-value" id="kpi-critique" style="color: var(--critique);">0</div>
-            <div class="kpi-footer">Niveau maximal</div>
+            <div class="kpi-head">Critiques</div>
+            <div class="kpi-value critique-text" id="kpi-critique">0</div>
+            <div class="kpi-footer">Attaques confirmées</div>
         </div>
         <div class="card kpi-card">
-            <div class="kpi-head">
-                <span>Hautes</span>
-                <span class="kpi-icon">⚠️</span>
-            </div>
-            <div class="kpi-value" id="kpi-haute" style="color: var(--haute);">0</div>
-            <div class="kpi-footer">Menaces significatives</div>
+            <div class="kpi-head">Hautes</div>
+            <div class="kpi-value haute-text" id="kpi-haute">0</div>
+            <div class="kpi-footer">Scans et injections</div>
         </div>
         <div class="card kpi-card">
-            <div class="kpi-head">
-                <span>Moyennes</span>
-                <span class="kpi-icon">ℹ️</span>
-            </div>
-            <div class="kpi-value" id="kpi-moyenne" style="color: var(--moyenne);">0</div>
-            <div class="kpi-footer">À surveiller</div>
+            <div class="kpi-head">Moyennes</div>
+            <div class="kpi-value moyenne-text" id="kpi-moyenne">0</div>
+            <div class="kpi-footer">Reconnaissance réseau</div>
         </div>
     </div>
 
-    <div class="section-grid">
+    <div class="dashboard-grid">
         <div class="card">
             <div class="title-bar">
-                <h2 class="section-title">🎯 Top Adresses IP Sources</h2>
+                <h2 class="section-title">Répartition des Sévérités</h2>
             </div>
-            <div class="table-wrapper">
+            <div class="progress-bar-container">
+                <div class="progress-critique" id="bar-critique" style="width: 0%;"></div>
+                <div class="progress-haute" id="bar-haute" style="width: 0%;"></div>
+                <div class="progress-moyenne" id="bar-moyenne" style="width: 0%;"></div>
+            </div>
+            <div class="legend-row">
+                <div class="legend-item"><span class="legend-dot" style="background: var(--critique);"></span> Critique (<span id="count-critique">0</span>)</div>
+                <div class="legend-item"><span class="legend-dot" style="background: var(--haute);"></span> Haute (<span id="count-haute">0</span>)</div>
+                <div class="legend-item"><span class="legend-dot" style="background: var(--moyenne);"></span> Moyenne (<span id="count-moyenne">0</span>)</div>
+            </div>
+            <div style="margin-top: 18px;">
+                <div class="kpi-head" style="margin-bottom: 8px;">Vecteurs d'attaque détectés</div>
+                <div class="badge-list" id="attackTypes">
+                    <span style="color: var(--text-muted); font-size: 0.85rem; font-weight: 600;">En attente de détections…</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="title-bar">
+                <h2 class="section-title">Matrice par Adresse IP</h2>
+            </div>
+            <div class="table-responsive">
                 <table>
                     <thead>
                         <tr>
                             <th>Adresse IP</th>
                             <th class="cell-center">Total</th>
-                            <th class="cell-center">SCAN</th>
+                            <th class="cell-center">Ports</th>
                             <th class="cell-center">XMAS</th>
                             <th class="cell-center">NULL</th>
-                            <th class="cell-center">BRUTE</th>
-                            <th class="cell-center">DOS</th>
-                            <th class="cell-center">SQLi</th>
+                            <th class="cell-center">SSH</th>
+                            <th class="cell-center">DoS</th>
+                            <th class="cell-center">SQL</th>
                             <th class="cell-center">XSS</th>
-                            <th class="cell-center">PATH</th>
+                            <th class="cell-center">Path</th>
                         </tr>
                     </thead>
-                    <tbody id="ipTableBody"></tbody>
+                    <tbody id="ipTableBody">
+                        <tr><td colspan="10" style="text-align: center; color: var(--text-muted); padding: 24px; font-weight: 700;">Aucune donnée enregistrée</td></tr>
+                    </tbody>
                 </table>
-            </div>
-        </div>
-
-        <div class="card">
-            <div class="title-bar">
-                <h2 class="section-title">📈 Répartition par Sévérité</h2>
-            </div>
-            <div class="severity-bars">
-                <div class="severity-row">
-                    <span class="severity-label" style="color: var(--critique);">Critique</span>
-                    <div class="severity-bar-track">
-                        <div class="severity-bar-fill bar-critique" id="bar-critique" style="width: 0%"></div>
-                    </div>
-                    <span class="severity-count" id="count-critique">0</span>
-                </div>
-                <div class="severity-row">
-                    <span class="severity-label" style="color: var(--haute);">Haute</span>
-                    <div class="severity-bar-track">
-                        <div class="severity-bar-fill bar-haute" id="bar-haute" style="width: 0%"></div>
-                    </div>
-                    <span class="severity-count" id="count-haute">0</span>
-                </div>
-                <div class="severity-row">
-                    <span class="severity-label" style="color: var(--moyenne);">Moyenne</span>
-                    <div class="severity-bar-track">
-                        <div class="severity-bar-fill bar-moyenne" id="bar-moyenne" style="width: 0%"></div>
-                    </div>
-                    <span class="severity-count" id="count-moyenne">0</span>
-                </div>
-            </div>
-            <div style="margin-top: 24px; padding-top: 18px; border-top: 2px solid var(--border);">
-                <h3 style="font-weight: 800; margin-bottom: 12px; font-size: 0.95rem; text-transform: uppercase; letter-spacing: 0.4px;">Types d'Attaques</h3>
-                <div id="attackTypes" style="display: flex; flex-wrap: wrap; gap: 8px;"></div>
             </div>
         </div>
     </div>
 
     <div class="card" style="margin-bottom: 24px;">
         <div class="title-bar">
-            <h2 class="section-title">⏱️ Timeline des Alertes</h2>
-            <span style="font-size: 0.9rem; color: var(--text-muted); font-weight: 700;">Dernières 30 minutes</span>
+            <h2 class="section-title">Chronologie des Alertes (Dernières 30 min)</h2>
         </div>
         <div class="timeline" id="timeline">
-            <div class="timeline-empty">En attente de données...</div>
+            <div class="timeline-empty">En attente de flux…</div>
         </div>
     </div>
 
     <div class="card">
         <div class="title-bar">
-            <h2 class="section-title">🔴 Flux en Direct</h2>
-            <span style="font-size: 0.9rem; color: var(--text-muted); font-weight: 700;" id="feedCount">0 affichée(s)</span>
+            <h2 class="section-title">Flux d'Alertes en Direct</h2>
+            <span style="font-size: 0.85rem; color: var(--text-muted); font-family: 'JetBrains Mono', monospace; font-weight: 700;" id="feedCount">0 affichée(s)</span>
         </div>
         <div class="live-feed" id="liveFeed">
-            <div style="text-align: center; color: var(--text-muted); padding: 40px; font-weight: 700;">En attente d'alertes...</div>
+            <div style="text-align: center; color: var(--text-muted); padding: 32px; font-weight: 700;">En attente d'alertes NIDS…</div>
         </div>
     </div>
 
-    <footer>
-        CyBear SIEM — EPITA NID-P-S Project | Neobrutal Design • Dark Mode Ready
-    </footer>
+    <footer>CyBear SIEM & Pentest — Neobrutal Design System</footer>
 
     <script>
-        const SEVERITES = {"SCAN_PORTS": "MOYENNE", "XMAS_SCAN": "HAUTE", "NULL_SCAN": "HAUTE", "BRUTE_FORCE": "CRITIQUE", "DOS": "CRITIQUE", "SQL_INJECTION": "CRITIQUE", "XSS": "HAUTE", "PATH_TRAVERSAL": "HAUTE"};
-        const EMOJIS = {"SCAN_PORTS": "🔍", "XMAS_SCAN": "🎄", "NULL_SCAN": "⚫", "BRUTE_FORCE": "🔨", "DOS": "💥", "SQL_INJECTION": "💉", "XSS": "⚡", "PATH_TRAVERSAL": "📁"};
+        const SEVERITES = {
+            "SCAN_PORTS": "MOYENNE",
+            "XMAS_SCAN": "HAUTE",
+            "NULL_SCAN": "HAUTE",
+            "BRUTE_FORCE": "CRITIQUE",
+            "DOS": "CRITIQUE",
+            "SQL_INJECTION": "CRITIQUE",
+            "XSS": "HAUTE",
+            "PATH_TRAVERSAL": "HAUTE"
+        };
 
         const themeToggle = document.getElementById('theme-toggle');
         const root = document.documentElement;
-        const savedTheme = localStorage.getItem('cybear-theme') || 'light';
+        const savedTheme = localStorage.getItem('cybear-theme') || 'dark';
         root.setAttribute('data-theme', savedTheme);
-        themeToggle.textContent = savedTheme === 'dark' ? '☀️' : '🌙';
+        themeToggle.textContent = savedTheme === 'dark' ? 'Mode clair' : 'Mode sombre';
         themeToggle.addEventListener('click', () => {
             const current = root.getAttribute('data-theme');
             const next = current === 'dark' ? 'light' : 'dark';
             root.setAttribute('data-theme', next);
             localStorage.setItem('cybear-theme', next);
-            themeToggle.textContent = next === 'dark' ? '☀️' : '🌙';
+            themeToggle.textContent = next === 'dark' ? 'Mode clair' : 'Mode sombre';
         });
 
         function renderStats(stats) {
@@ -799,39 +726,48 @@
 
             const attackTypesDiv = document.getElementById('attackTypes');
             const types = stats.alerts_by_type || {};
-            attackTypesDiv.innerHTML = Object.entries(types).sort((a,b) => b[1] - a[1]).map(([type, count]) => {
-                const sev = SEVERITES[type] || 'MOYENNE';
-                const cls = sev.toLowerCase();
-                return `<span class="badge badge-${cls}">${EMOJIS[type] || '⚠️'} ${type} (${count})</span>`;
-            }).join('');
+            const entries = Object.entries(types).sort((a,b) => b[1] - a[1]);
+            if (entries.length > 0) {
+                attackTypesDiv.innerHTML = entries.map(([type, count]) => {
+                    const sev = SEVERITES[type] || 'MOYENNE';
+                    const cls = sev.toLowerCase();
+                    return `<span class="badge badge-${cls}">${type} (${count})</span>`;
+                }).join('');
+            } else {
+                attackTypesDiv.innerHTML = '<span style="color: var(--text-muted); font-size: 0.85rem; font-weight: 600;">En attente de détections…</span>';
+            }
 
             const ipTableBody = document.getElementById('ipTableBody');
             const topIps = stats.alerts_by_ip || [];
             const matrix = stats.attack_matrix || {};
-            ipTableBody.innerHTML = topIps.slice(0, 10).map(([ip, total]) => {
-                const row = matrix[ip] || {};
-                return `<tr>
-                    <td style="font-family: 'Courier New', monospace; font-weight: 800;">${ip}</td>
-                    <td class="cell-center" style="font-weight: 800; font-family: 'Space Grotesk', sans-serif;">${total}</td>
-                    <td class="cell-center">${row['SCAN_PORTS'] || 0}</td>
-                    <td class="cell-center">${row['XMAS_SCAN'] || 0}</td>
-                    <td class="cell-center">${row['NULL_SCAN'] || 0}</td>
-                    <td class="cell-center">${row['BRUTE_FORCE'] || 0}</td>
-                    <td class="cell-center">${row['DOS'] || 0}</td>
-                    <td class="cell-center">${row['SQL_INJECTION'] || 0}</td>
-                    <td class="cell-center">${row['XSS'] || 0}</td>
-                    <td class="cell-center">${row['PATH_TRAVERSAL'] || 0}</td>
-                </tr>`;
-            }).join('');
+            if (topIps.length > 0) {
+                ipTableBody.innerHTML = topIps.slice(0, 10).map(([ip, total]) => {
+                    const row = matrix[ip] || {};
+                    return `<tr>
+                        <td style="font-family: 'JetBrains Mono', monospace; font-weight: 800; color: var(--main);">${ip}</td>
+                        <td class="cell-center" style="font-weight: 800; font-family: 'Space Grotesk', sans-serif;">${total}</td>
+                        <td class="cell-center">${row['SCAN_PORTS'] || 0}</td>
+                        <td class="cell-center">${row['XMAS_SCAN'] || 0}</td>
+                        <td class="cell-center">${row['NULL_SCAN'] || 0}</td>
+                        <td class="cell-center">${row['BRUTE_FORCE'] || 0}</td>
+                        <td class="cell-center">${row['DOS'] || 0}</td>
+                        <td class="cell-center">${row['SQL_INJECTION'] || 0}</td>
+                        <td class="cell-center">${row['XSS'] || 0}</td>
+                        <td class="cell-center">${row['PATH_TRAVERSAL'] || 0}</td>
+                    </tr>`;
+                }).join('');
+            } else {
+                ipTableBody.innerHTML = '<tr><td colspan="10" style="text-align: center; color: var(--text-muted); padding: 24px; font-weight: 700;">Aucune donnée enregistrée</td></tr>';
+            }
 
             const timelineDiv = document.getElementById('timeline');
             const timeline = stats.timeline || [];
             if (timeline.length > 0) {
                 const maxT = Math.max(...timeline.map(t => t.total), 1);
                 timelineDiv.innerHTML = timeline.map(t => {
-                    const hCrit = Math.max(4, (t.critique / maxT) * 150);
-                    const hHaut = Math.max(4, (t.haute / maxT) * 150);
-                    const hMoy = Math.max(4, (t.moyenne / maxT) * 150);
+                    const hCrit = Math.max(4, (t.critique / maxT) * 130);
+                    const hHaut = Math.max(4, (t.haute / maxT) * 130);
+                    const hMoy = Math.max(4, (t.moyenne / maxT) * 130);
                     return `<div class="timeline-bar-group" title="${t.total} alerte(s)">
                         <div class="timeline-bars">
                             ${t.moyenne > 0 ? `<div class="timeline-seg seg-moyenne" style="height: ${hMoy}px;"></div>` : ''}
@@ -842,6 +778,8 @@
                         <div class="timeline-label">${t.minute}</div>
                     </div>`;
                 }).join('');
+            } else {
+                timelineDiv.innerHTML = '<div style="text-align: center; color: var(--text-muted); width: 100%; padding: 40px 0; font-weight: 700;">En attente de données chronologiques…</div>';
             }
 
             const liveFeed = document.getElementById('liveFeed');
@@ -851,11 +789,10 @@
                 liveFeed.innerHTML = alerts.map(a => {
                     const sev = SEVERITES[a.type] || 'MOYENNE';
                     const sevClass = sev.toLowerCase();
-                    const emoji = EMOJIS[a.type] || '⚠️';
                     const timeStr = a.timestamp ? a.timestamp.replace('T', ' ').substring(11, 19) : '';
                     return `<div class="alert-item ${sevClass}">
                         <div class="alert-left">
-                            <span class="alert-emoji">${emoji}</span>
+                            <span class="alert-indicator ${sevClass}"></span>
                             <div>
                                 <div class="alert-type">${a.type} <span class="badge badge-${sevClass}">${sev}</span></div>
                                 <div class="alert-details">${a.details || 'Aucun détail'}</div>
@@ -867,6 +804,8 @@
                         </div>
                     </div>`;
                 }).join('');
+            } else {
+                liveFeed.innerHTML = '<div style="text-align: center; color: var(--text-muted); padding: 32px; font-weight: 700;">En attente d\'alertes NIDS…</div>';
             }
         }
 
@@ -874,14 +813,40 @@
             const statusBadge = document.getElementById('connectionStatus');
             const statusText = document.getElementById('statusText');
             const eventSource = new EventSource('/api/stream');
-            eventSource.onopen = function() { statusBadge.classList.remove('status-disconnected'); statusText.textContent = 'SUPERVISION ACTIVE'; };
+            eventSource.onopen = function() {
+                statusBadge.classList.remove('status-disconnected');
+                statusText.textContent = 'SUPERVISION ACTIVE';
+            };
             eventSource.onmessage = function(e) {
                 try {
                     const data = JSON.parse(e.data);
                     if (data.type === 'update' && data.stats) renderStats(data.stats);
                 } catch (err) { console.error(err); }
             };
-            eventSource.onerror = function() { statusBadge.classList.add('status-disconnected'); statusText.textContent = 'RECONNEXION...'; };
+            eventSource.onerror = function() {
+                statusBadge.classList.add('status-disconnected');
+                statusText.textContent = 'RECONNEXION...';
+            };
+        }
+
+        async function reinitialiserBase() {
+            if (!confirm("Voulez-vous vraiment réinitialiser toutes les alertes de la base ?")) {
+                return;
+            }
+            try {
+                const res = await fetch('/api/alerts/reset', { method: 'POST' });
+                const data = await res.json();
+                if (res.ok && data.status === 'success') {
+                    fetch('/api/stats')
+                        .then(r => r.json())
+                        .then(d => renderStats(d))
+                        .catch(console.error);
+                } else {
+                    alert("Erreur lors de la réinitialisation : " + (data.message || 'inconnue'));
+                }
+            } catch (err) {
+                alert("Erreur réseau : " + err.message);
+            }
         }
 
         fetch('/api/stats').then(res => res.json()).then(data => renderStats(data)).catch(console.error);

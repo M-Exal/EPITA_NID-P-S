@@ -161,6 +161,35 @@ def api_alerts():
     return jsonify(lire_alertes())
 
 
+@app.route("/api/reset", methods=["POST"])
+@app.route("/api/alerts/reset", methods=["POST"])
+def api_alerts_reset():
+    """Réinitialise la base d'alertes NIDS (fichier JSON et logs)."""
+    try:
+        os.makedirs(os.path.dirname(ALERT_JSON_PATH), exist_ok=True)
+        with open(ALERT_JSON_PATH, "w", encoding="utf-8") as f:
+            json.dump([], f)
+
+        log_path = os.path.join(os.path.dirname(ALERT_JSON_PATH), "nids_alerts.log")
+        if os.path.exists(log_path):
+            with open(log_path, "w", encoding="utf-8") as f:
+                f.write("")
+
+        enc_path = os.path.join(os.path.dirname(ALERT_JSON_PATH), "nids_alerts.enc")
+        if os.path.exists(enc_path):
+            try:
+                os.remove(enc_path)
+            except OSError:
+                pass
+
+        return jsonify({
+            "status": "success",
+            "message": "Base d'alertes réinitialisée avec succès."
+        })
+    except Exception as exc:
+        return jsonify({"status": "error", "message": str(exc)}), 500
+
+
 @app.route("/api/stats")
 def api_stats():
     """Retourne la synthèse analytique complète."""
@@ -513,7 +542,9 @@ def ws_join_session(data):
             look_for_keys=False,
         )
 
-        channel = client.invoke_shell(term="xterm-256color", width=220, height=50)
+        cols = int(data.get("cols", 100))
+        rows = int(data.get("rows", 30))
+        channel = client.invoke_shell(term="xterm-256color", width=cols, height=rows)
         channel.setblocking(False)
 
         _ssh_actifs[sid] = {"client": client, "channel": channel}
@@ -630,7 +661,7 @@ def api_status_attaques():
     })
 
 
-def _lire_log(path: str, nb_lignes: int = 50) -> str:
+def _lire_log(path: str, nb_lignes: int = 150) -> str:
     """Retourne les dernières lignes d'un fichier log d'attaque."""
     try:
         with open(path, "r", encoding="utf-8", errors="replace") as f:

@@ -68,6 +68,16 @@ class MoteurDetection:
         """1. Scan de ports (TCP Connect / SYN scan)."""
         if not paquet.haslayer(TCP):
             return
+        # N'analyser que les paquets SYN d'initiation de connexion (SYN pur).
+        # Les paquets de réponse du serveur cible (SYN-ACK, RST-ACK) vers les ports
+        # éphémères du client ne doivent pas être pris pour un scan émis par le serveur.
+        try:
+            flags_str = str(paquet[TCP].flags)
+            if flags_str != "S" and int(paquet[TCP].flags) != 0x02:
+                return
+        except Exception:
+            return
+
         ip_src = paquet[IP].src
         dport = paquet[TCP].dport
         self.scan_tracker[ip_src].append((maintenant, dport))
@@ -144,7 +154,9 @@ class MoteurDetection:
         if not (paquet.haslayer(TCP) and paquet.haslayer(Raw)):
             return
         tcp_layer = paquet[TCP]
-        if tcp_layer.dport != 80 and tcp_layer.sport != 80:
+        # N'inspecter que les requêtes entrantes vers le serveur Web (dport=80),
+        # pas les réponses sortantes (sport=80) pour éviter les faux positifs et alertes en double
+        if tcp_layer.dport != 80:
             return
 
         ip_src = paquet[IP].src

@@ -102,7 +102,7 @@ services:
       - HTTP_PORT=80
       - FTP_PORT=21
     volumes:
-      - ./data/nids:/app/data:ro
+      - ./data/nids:/app/data
       - ./dashboard:/app
       - ./scripts:/app/scripts
       - ./pentest:/app/pentest
