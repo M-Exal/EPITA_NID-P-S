@@ -373,8 +373,16 @@ sudo chown -R $USER:$USER data/
 
 ```bash
 # 1. Démarrer le moteur NIDS (Scapy nécessite les droits root) :
-#    Le venv étant activé, passer le chemin explicite de son python :
+#    ⚠️  En local, le NIPS DOIT être désactivé (NIPS_ENABLED=false, valeur par défaut).
+#    Si le NIPS est actif, il bloque 127.0.0.1 dès la première détection et coupe
+#    toutes les connexions locales (dashboard, brute force, etc.).
+#    Pour la démo locale, utiliser :
+sudo -E NIPS_ENABLED=false venv/bin/python3 nids/nids.py
+#    (sans variable d'env, le défaut est false — la ligne ci-dessus est donc équivalente à :)
 sudo venv/bin/python3 nids/nids.py
+
+#    Pour tester le NIPS actif (en Docker uniquement, jamais en local) :
+#    NIPS_ENABLED=true docker compose up -d
 
 # 2. Dans un second terminal (venv activé) — Dashboard SIEM + WebSocket :
 source venv/bin/activate
