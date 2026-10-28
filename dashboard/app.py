@@ -320,11 +320,19 @@ def api_lancer_attaque():
         }), 400
 
     if cle in _attaques_en_cours or nom in _attaques_en_cours:
-        return jsonify({
-            "error": f"L'attaque '{nom}' est déjà en cours",
-            "success": False,
-            "status": "already_running",
-        }), 409
+        # Vérifier si le process est vraiment encore actif (il peut avoir fini sans être nettoyé)
+        en_cours_cle = _attaques_en_cours.get(cle) or _attaques_en_cours.get(nom)
+        if en_cours_cle:
+            proc_actif = en_cours_cle.get("proc")
+            if proc_actif and proc_actif.poll() is not None:
+                # Process terminé mais pas encore nettoyé — on le nettoie et on continue
+                _nettoyer_terminees()
+            else:
+                return jsonify({
+                    "error": f"L'attaque '{nom}' est déjà en cours",
+                    "success": False,
+                    "status": "already_running",
+                }), 409
 
     scripts_dir = determiner_scripts_dir()
     script_file = ATTAQUES_DISPONIBLES[cle]
@@ -432,6 +440,12 @@ def _recuperer_acces_valides() -> list:
             except Exception:
                 pass
     return []
+
+
+@app.route("/api/attaques/acces")
+def api_acces_valides():
+    """Retourne uniquement les accès SSH valides découverts lors du brute-force."""
+    return jsonify({"acces": _recuperer_acces_valides()})
 
 
 @app.route("/api/attaques/ssh_connect", methods=["POST"])
