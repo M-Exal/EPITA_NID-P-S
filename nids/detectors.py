@@ -134,9 +134,48 @@ class MoteurDetection:
         pass
 
     def detecte_signatures_payload(self, paquet, maintenant):
-        """5, 6, 7. Signatures de payload : SQLi, XSS, Path Traversal."""
-        # TODO: À implémenter
-        pass
+        """5, 6, 7. Signatures de payload : SQLi, XSS, Path Traversal.
+
+        Inspecte la charge utile (couche Raw) des paquets TCP sur le port 80.
+        Recherche les signatures définies dans la configuration de façon
+        insensible à la casse. Déclenche une alerte dès la première signature
+        correspondante.
+        """
+        if not (paquet.haslayer(TCP) and paquet.haslayer(Raw)):
+            return
+        tcp_layer = paquet[TCP]
+        if tcp_layer.dport != 80 and tcp_layer.sport != 80:
+            return
+
+        ip_src = paquet[IP].src
+        charge = paquet[Raw].load.decode("utf-8", errors="ignore").upper()
+
+        # 5. SQL_INJECTION
+        for sig in self.cfg.SIGNATURES_SQL:
+            if sig.upper() in charge:
+                details = f"signature SQLi détectée : {sig!r}"
+                self.declencher_alerte_et_prevention(
+                    "SQL_INJECTION", ip_src, details, maintenant
+                )
+                return
+
+        # 6. XSS
+        for sig in self.cfg.SIGNATURES_XSS:
+            if sig.upper() in charge:
+                details = f"signature XSS détectée : {sig!r}"
+                self.declencher_alerte_et_prevention(
+                    "XSS", ip_src, details, maintenant
+                )
+                return
+
+        # 7. PATH_TRAVERSAL
+        for sig in self.cfg.SIGNATURES_TRAVERSAL:
+            if sig.upper() in charge:
+                details = f"signature traversal détectée : {sig!r}"
+                self.declencher_alerte_et_prevention(
+                    "PATH_TRAVERSAL", ip_src, details, maintenant
+                )
+                return
 
     # ------------------------------------------------------------------
     # Analyse des paquets
