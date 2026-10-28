@@ -12,9 +12,13 @@ import sys
 import time
 from collections import defaultdict, Counter
 from datetime import datetime
+from zoneinfo import ZoneInfo
 from flask import Flask, Response, jsonify, render_template, request
 
 app = Flask(__name__)
+
+# Fuseau horaire de référence pour tous les horodatages ISO (conteneurs en UTC)
+TZ_PARIS = ZoneInfo("Europe/Paris")
 
 # Fichier source des alertes JSON
 DEFAULT_JSON = os.path.abspath(
@@ -222,7 +226,7 @@ def _nettoyer_terminees():
             _attaques_terminees.append({
                 "attaque": nom,
                 "debut": info["debut"],
-                "fin": datetime.now().isoformat(timespec="seconds"),
+                "fin": datetime.now(TZ_PARIS).isoformat(timespec="seconds"),
                 "code_retour": proc.returncode,
                 "log": info["log"],
             })
@@ -306,7 +310,7 @@ def api_lancer_attaque():
     _attaques_en_cours[nom] = {
         "proc": proc,
         "log": log_path,
-        "debut": datetime.now().isoformat(timespec="seconds"),
+        "debut": datetime.now(TZ_PARIS).isoformat(timespec="seconds"),
         "status": "en_cours",
     }
 

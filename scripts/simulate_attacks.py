@@ -9,6 +9,9 @@ import os
 import sys
 import time
 from datetime import datetime
+from zoneinfo import ZoneInfo
+
+TZ_PARIS = ZoneInfo("Europe/Paris")
 
 FICHIER_ALERTES = os.path.abspath(
     os.path.join(os.path.dirname(__file__), "..", "data", "nids", "nids_alerts.json")
@@ -69,7 +72,7 @@ def injecter_alerte(scenario):
             alertes = []
 
     nouvelle_entree = {
-        "timestamp": datetime.now().isoformat(timespec="seconds"),
+        "timestamp": datetime.now(TZ_PARIS).isoformat(timespec="seconds"),
         "type": scenario["type"],
         "src_ip": scenario["src_ip"],
         "details": scenario["details"],

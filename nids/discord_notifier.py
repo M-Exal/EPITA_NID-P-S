@@ -13,8 +13,12 @@ import threading
 from datetime import datetime
 from urllib import request as urllib_request
 from urllib.error import URLError
+from zoneinfo import ZoneInfo
 
 logger = logging.getLogger("NIDS_Discord")
+
+# Fuseau horaire de référence pour les horodatages (conteneur en UTC)
+TZ_PARIS = ZoneInfo("Europe/Paris")
 
 
 # Couleurs d'embed Discord par sévérité
@@ -133,7 +137,7 @@ class DiscordNotifier:
         severite = SEVERITE_PAR_TYPE.get(type_attaque, "MOYENNE")
         couleur = COULEURS_SEVERITE.get(severite, 0xFFCC00)
         emoji = EMOJIS.get(type_attaque, "⚠️")
-        horodatage = datetime.now().isoformat()
+        horodatage = datetime.now(TZ_PARIS).isoformat()
 
         embed = {
             "title": f"{emoji} Intrusion Détectée — {type_attaque}",
@@ -196,7 +200,7 @@ class DiscordNotifier:
                 "title": "✅ NIDS/NIPS Démarré",
                 "description": "Le système de détection d'intrusions est actif et surveille le réseau.",
                 "color": 0x00CC00,
-                "timestamp": datetime.now().isoformat(),
+                "timestamp": datetime.now(TZ_PARIS).isoformat(),
                 "footer": {
                     "text": "NIDS/NIPS — Système de Détection d'Intrusions",
                 },
@@ -221,7 +225,7 @@ class DiscordNotifier:
                 "title": "🔴 NIDS/NIPS Arrêté",
                 "description": "Le système de détection d'intrusions a été arrêté.",
                 "color": 0xFF0000,
-                "timestamp": datetime.now().isoformat(),
+                "timestamp": datetime.now(TZ_PARIS).isoformat(),
                 "footer": {
                     "text": "NIDS/NIPS — Système de Détection d'Intrusions",
                 },
