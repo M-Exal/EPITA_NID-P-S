@@ -57,7 +57,6 @@ def test_detecte_dos(moteur, mock_alertes, mock_blocker):
     assert ip_attaquant in mock_blocker.bloques
 
 
-@pytest.mark.skip(reason="À implémenter par le membre en charge du pentest web")
 def test_detecte_sql_injection(moteur, mock_alertes, mock_blocker):
     """Test #5 : Détection par signature d'injection SQL."""
     ip_attaquant = "192.168.1.105"
