@@ -768,19 +768,31 @@
         // ── Connexion SSH vers accès découverts ──────────────────────────────
         async function connecterSSH(utilisateur, motDePasse) {
             try {
-                showToast(`🔌 Lancement de la connexion SSH vers ${utilisateur}…`, 'success');
-                appendLog(`\n[*] Lancement de la connexion SSH vers ${utilisateur}@metasploitable:22...\n[~] Coeur de la fonction prêt à être implémenté.\n`);
+                showToast(`🔌 Ouverture du terminal SSH pour ${utilisateur}…`, 'success');
 
                 const resp = await fetch('/api/attaques/ssh_connect', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ utilisateur: utilisateur, mot_de_passe: motDePasse }),
+                    body: JSON.stringify({ utilisateur, mot_de_passe: motDePasse }),
                 });
                 const data = await resp.json();
-                if (resp.ok) {
-                    showToast(`✅ ${data.message}`, 'success');
+
+                if (!resp.ok || !data.token) {
+                    showToast(`❌ ${data.error || 'Impossible de démarrer la session SSH'}`, 'error');
+                    return;
+                }
+
+                const label  = encodeURIComponent(`${utilisateur}@${data.cible}`);
+                const url    = `/terminal?token=${data.token}&label=${label}`;
+                const specs  = 'width=960,height=620,resizable=yes,scrollbars=no,toolbar=no,menubar=no,location=no,status=no';
+                const fenetre = window.open(url, `ssh_${utilisateur}_${Date.now()}`, specs);
+
+                if (!fenetre) {
+                    // Popup bloqué : fallback — log + lien cliquable
+                    appendLog(`\n[*] Terminal SSH disponible (popup bloqué) : ${url}\n`);
+                    showToast('⚠️ Popup bloqué. Autorisez les popups pour ce site ou cliquez sur le lien dans le log.', 'error');
                 } else {
-                    showToast(`❌ ${data.error || 'Erreur inconnue'}`, 'error');
+                    appendLog(`\n[*] Terminal SSH ouvert pour ${utilisateur}@${data.cible}\n`);
                 }
             } catch (err) {
                 showToast(`❌ Erreur réseau : ${err.message}`, 'error');
