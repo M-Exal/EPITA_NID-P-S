@@ -72,7 +72,6 @@ def test_detecte_sql_injection(moteur, mock_alertes, mock_blocker):
     assert ip_attaquant in mock_blocker.bloques
 
 
-@pytest.mark.skip(reason="À implémenter par le membre en charge du pentest web")
 def test_detecte_xss(moteur, mock_alertes, mock_blocker):
     """Test #6 : Détection par signature de Cross-Site Scripting (XSS)."""
     ip_attaquant = "192.168.1.106"
@@ -103,7 +102,6 @@ def test_detecte_path_traversal(moteur, mock_alertes, mock_blocker):
     assert ip_attaquant in mock_blocker.bloques
 
 
-@pytest.mark.skip(reason="À implémenter dans detectors.py")
 def test_cooldown_anti_spam(moteur, mock_alertes):
     """Vérifie le cooldown anti-spam."""
     ip_attaquant = "192.168.1.108"
