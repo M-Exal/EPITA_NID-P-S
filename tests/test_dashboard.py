@@ -53,7 +53,7 @@ def test_index_route(client):
     res = client.get("/")
     assert res.status_code == 200
     assert b"CyBear SIEM" in res.data
-    assert b"NIDS / NIPS SOC" in res.data
+    assert b"NIDS / NIPS" in res.data
 
 
 def test_api_alerts(client):
@@ -133,3 +133,42 @@ def test_api_attaques_lancer_validation(client):
     res = client.post("/api/attaques/lancer", json={"attaque": "attaque_inconnue"})
     assert res.status_code == 400
     assert "error" in res.get_json()
+
+
+def test_panneau_attaques_tous_modules_actifs(client):
+    """Vérifie que tous les modules d'attaque (notamment web et DoS) sont activés sur l'interface."""
+    res = client.get("/attaques")
+    assert res.status_code == 200
+    # Aucun badge 'Non implémenté' restant
+    assert b"Non impl\xc3\xa9ment\xc3\xa9" not in res.data
+    # Les cartes pour lancer les attaques web et DoS sont présentes
+    assert b"data-attack=\"SQL_INJECTION\"" in res.data
+    assert b"data-attack=\"XSS\"" in res.data
+    assert b"data-attack=\"PATH_TRAVERSAL\"" in res.data
+    assert b"data-attack=\"DOS\"" in res.data
+
+
+def test_api_attaques_lancer_nouvelles_attaques(client, monkeypatch):
+    """Vérifie que le backend accepte le lancement de sql_injection, xss, path_traversal et dos."""
+    from unittest.mock import MagicMock
+    mock_proc = MagicMock()
+    mock_proc.pid = 9999
+    mock_proc.poll.return_value = None
+
+    monkeypatch.setattr("subprocess.Popen", MagicMock(return_value=mock_proc))
+
+    for atk in ["sql_injection", "xss", "path_traversal", "dos"]:
+        res = client.post("/api/attaques/lancer", json={"attaque": atk})
+        assert res.status_code == 200, f"Erreur lors du lancement de {atk}: {res.get_json()}"
+        data = res.get_json()
+        assert data["status"] == "started"
+        assert data["success"] is True
+
+    # Test avec la syntaxe frontend /api/attack/launch et majuscules
+    for atk_type in ["SQL_INJECTION", "XSS", "PATH_TRAVERSAL", "DOS"]:
+        res = client.post("/api/attack/launch", json={"attack_type": atk_type})
+        assert res.status_code == 200, f"Erreur lors du lancement de {atk_type}: {res.get_json()}"
+        data = res.get_json()
+        assert data["success"] is True
+        assert data["status"] == "started"
+

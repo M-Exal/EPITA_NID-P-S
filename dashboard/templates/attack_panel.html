@@ -779,20 +779,57 @@
                     body: JSON.stringify({attaque: type, attack_type: type})
                 });
                 const data = await resp.json();
+
+                if (resp.status === 409) {
+                    // Déjà en cours côté serveur
+                    logConsole(`> AVERTISSEMENT | ${type} déjà en cours d'exécution côté serveur`, 'warn');
+                    logConsole(`> Patienter quelques secondes avant de relancer`, 'dim');
+                    setStatus(card, 'idle');
+                    btn.disabled = false;
+                    globalStatus.classList.remove('active');
+                    return;
+                }
+
                 if (data.success || resp.ok || data.status === 'started') {
                     logConsole(`> RÉPONSE SERVEUR: OK`, 'accent');
                     logConsole(`> ${type} EN COURS D'EXÉCUTION`, '');
                     logConsole(`> Génération de trafic vers la cible...`, 'dim');
                     logConsole(`> Surveillance NIDS: ACTIVÉE`, 'dim');
-                    setTimeout(() => {
-                        setStatus(card, 'done');
-                        globalText.textContent = `✅ ${type} terminé`;
-                        logConsole(`> TERMINÉ | ${type}`, 'accent');
-                        if (type === 'BRUTE_FORCE') {
-                            setTimeout(verifierBruteForce, 500);
+
+                    // Polling du log en temps réel via /api/attaques/status
+                    const attaqueCle = data.attaque || type;
+                    let derniereIigne = '';
+                    let pollCount = 0;
+                    const pollLog = setInterval(async () => {
+                        pollCount++;
+                        try {
+                            const sr = await fetch('/api/attaques/status');
+                            const sd = await sr.json();
+                            const enCoursItem = sd.en_cours.find(a => a.attaque === attaqueCle);
+                            if (enCoursItem && enCoursItem.log_extrait) {
+                                const lines = enCoursItem.log_extrait.trim().split('\n');
+                                const lastLine = lines[lines.length - 1];
+                                if (lastLine && lastLine.trim() && lastLine !== derniereIigne) {
+                                    derniereIigne = lastLine;
+                                    logConsole(`  ${lastLine.trim()}`, 'dim');
+                                }
+                            }
+                            const termineeItem = sd.terminees.find(a => a.attaque === attaqueCle);
+                            if (termineeItem || pollCount > 60) {
+                                clearInterval(pollLog);
+                                setStatus(card, 'done');
+                                globalText.textContent = `✅ ${type} terminé`;
+                                logConsole(`> TERMINÉ | ${type}`, 'accent');
+                                if (type === 'BRUTE_FORCE') setTimeout(verifierBruteForce, 500);
+                                setTimeout(() => { if (!enCours) globalStatus.classList.remove('active'); }, 2000);
+                                btn.disabled = false;
+                            }
+                        } catch(e) {
+                            clearInterval(pollLog);
+                            setStatus(card, 'done');
+                            btn.disabled = false;
                         }
-                        setTimeout(() => { if (!enCours) globalStatus.classList.remove('active'); }, 2000);
-                    }, 3200);
+                    }, 1200);
                 } else {
                     setStatus(card, 'idle');
                     btn.disabled = false;
