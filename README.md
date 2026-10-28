@@ -348,62 +348,43 @@ python3 -m pytest -v
 
 ---
 
-### G. Développement et Démonstration en Local (hors Docker)
+### G. Lancement du projet (mode Docker — recommandé)
 
-Le projet s'adapte automatiquement à l'environnement hôte (macOS / Linux) sans nécessiter Docker pour le prototypage rapide :
-* Détection automatique de l'interface réseau : bascule transparente sur `lo0` (macOS) ou `lo` (Linux).
-* Résolution automatique de la cible : repli sur `127.0.0.1` si `metasploitable` n'est pas joignable en DNS.
-* Chargement automatique du `.env` en local.
+> ⚠️ **Le projet fonctionne uniquement en mode Docker complet.** Les scripts
+> d'attaque ciblent `metasploitable:22` via le réseau interne Docker `honeynet`.
+> En dehors de Docker, ce nom d'hôte ne se résout pas et les attaques échouent.
 
-**Pré-requis — création et activation de l'environnement virtuel :**
 ```bash
-# Créer le venv (une seule fois)
-python3 -m venv venv
+# Démarrer tout l'environnement (Metasploitable + NIDS + Dashboard) :
+docker compose up -d
 
-# Activer le venv (à faire dans chaque terminal)
-source venv/bin/activate      # Linux / macOS
-# .\venv\Scripts\activate     # Windows
+# Ouvrir l'interface dans le navigateur :
+#   • SOC Temps Réel  : http://localhost:5050/
+#   • Panneau d'Attaque : http://localhost:5050/attaques
 
-# Installer les dépendances
-pip install -r dashboard/requirements.txt
+# Lancer une attaque individuelle depuis le conteneur pentest :
+docker compose --profile attaque run --rm pentest
 
-# Si les fichiers de données appartiennent à root (créés par Docker) :
-sudo chown -R $USER:$USER data/
+# Suivre les logs en temps réel :
+docker compose logs -f
+docker compose logs -f nids       # NIDS uniquement
+docker compose logs -f dashboard  # Dashboard uniquement
+
+# Arrêter tout :
+docker compose down
 ```
 
+**NIPS actif (blocage iptables) :**
 ```bash
-# 1. Démarrer le moteur NIDS (Scapy nécessite les droits root) :
-#    ⚠️  En local, le NIPS DOIT être désactivé (NIPS_ENABLED=false, valeur par défaut).
-#    Si le NIPS est actif, il bloque 127.0.0.1 dès la première détection et coupe
-#    toutes les connexions locales (dashboard, brute force, etc.).
-#    Pour la démo locale, utiliser :
-sudo -E NIPS_ENABLED=false venv/bin/python3 nids/nids.py
-#    (sans variable d'env, le défaut est false — la ligne ci-dessus est donc équivalente à :)
-sudo venv/bin/python3 nids/nids.py
+# Par défaut NIPS_ENABLED=false (mode démo — toutes les attaques passent).
+# Pour activer le blocage réel en production :
+NIPS_ENABLED=true docker compose up -d
+```
 
-#    Pour tester le NIPS actif (en Docker uniquement, jamais en local) :
-#    NIPS_ENABLED=true docker compose up -d
-
-# 2. Dans un second terminal (venv activé) — Dashboard SIEM + WebSocket :
-source venv/bin/activate
-python3 dashboard/app.py
-
-# 3. Ouvrir l'interface dans le navigateur :
-#    • SOC Temps Réel : http://localhost:5050/
-#    • Panneau d'Attaque : http://localhost:5050/attaques
-
-# 4. Lancer une attaque :
-#    • Via le bouton "▶ Lancer" ou "🚀 Lancer Toutes les Attaques" dans /attaques
-#    • En ligne de commande (depuis la racine du projet) :
-python3 scripts/run_brute_force_ssh.py   # Brute force SSH
-python3 scripts/run_scan_ports.py        # Scan de ports
-python3 scripts/run_xmas_scan.py         # Scan XMAS
-python3 scripts/run_null_scan.py         # Scan NULL
-
-# 5. Terminal SSH interactif :
-#    Après le Brute Force SSH, les identifiants valides apparaissent dans
-#    la section "🔑 Accès validé(s) découvert(s)". Cliquer sur
-#    "⚡ Connexion SSH" ouvre un terminal interactif dans une nouvelle fenêtre.
-#    → Cliquer dans la zone noire du terminal pour activer la saisie.
+**Tests unitaires (hors Docker) :**
+```bash
+python3 -m venv venv && source venv/bin/activate
+pip install -r dashboard/requirements.txt
+python3 -m pytest -v
 ```
 
