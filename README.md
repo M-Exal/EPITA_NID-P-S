@@ -355,19 +355,36 @@ Le projet s'adapte automatiquement à l'environnement hôte (macOS / Linux) sans
 * Résolution automatique de la cible : repli sur `127.0.0.1` si `metasploitable` n'est pas joignable en DNS.
 * Chargement automatique du `.env` en local.
 
+**Pré-requis :**
 ```bash
-# 1. Démarrer le moteur de détection NIDS (écoute loopback) :
-python3 nids/nids.py
+pip install -r dashboard/requirements.txt
+# Si les fichiers de données appartiennent à root (créés par Docker) :
+sudo chown -R $USER:$USER data/
+```
 
-# 2. Dans un second terminal, démarrer le Dashboard SIEM SOC :
+```bash
+# 1. Démarrer le moteur NIDS (Scapy nécessite les droits root) :
+sudo python3 nids/nids.py
+
+# 2. Dans un second terminal, démarrer le Dashboard SIEM + WebSocket :
 python3 dashboard/app.py
 
-# 3. Ouvrir l'interface dans votre navigateur :
+# 3. Ouvrir l'interface dans le navigateur :
 #    • SOC Temps Réel : http://localhost:5050/
 #    • Panneau d'Attaque : http://localhost:5050/attaques
 
 # 4. Lancer une attaque :
-#    • Soit depuis le bouton "▶ Lancer" ou "🚀 Lancer Toutes les Attaques" sur http://localhost:5050/attaques
-#    • Soit en ligne de commande : python3 scripts/run_brute_force_ssh.py
+#    • Via le bouton "▶ Lancer" ou "🚀 Lancer Toutes les Attaques" dans /attaques
+#    • En ligne de commande (depuis la racine du projet) :
+python3 scripts/run_brute_force_ssh.py   # Brute force SSH
+python3 scripts/run_scan_ports.py        # Scan de ports
+python3 scripts/run_xmas_scan.py         # Scan XMAS
+python3 scripts/run_null_scan.py         # Scan NULL
+
+# 5. Terminal SSH interactif :
+#    Après le Brute Force SSH, les identifiants valides apparaissent dans
+#    la section "🔑 Accès validé(s) découvert(s)". Cliquer sur
+#    "⚡ Connexion SSH" ouvre un terminal interactif dans une nouvelle fenêtre.
+#    → Cliquer dans la zone noire du terminal pour activer la saisie.
 ```
 

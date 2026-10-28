@@ -128,7 +128,8 @@
             try { fitAddon.fit(); } catch (_) {}
         };
         fit();
-        document.fonts.ready.then(fit);
+        term.focus();
+        document.fonts.ready.then(() => { fit(); term.focus(); });
 
         // ── Socket.IO ─────────────────────────────────────────────────
         const socket = io({ transports: ["websocket", "polling"] });
