@@ -43,6 +43,7 @@ def main():
 
     try:
         pentester.brute_force_ssh()
+        pentester.sauvegarder()
         stats = pentester.resultats["attaques"].get("brute_force_ssh", {})
         if stats:
             print("[+] Synthèse brute_force_ssh :", flush=True)
