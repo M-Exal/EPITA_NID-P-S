@@ -322,9 +322,72 @@ def api_lancer_attaque():
     })
 
 
+def _recuperer_acces_valides() -> list:
+    """Tente de lire les accès valides découverts lors du brute-force SSH."""
+    repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+    candidats = [
+        "/app/data/pentest/pentest_results.json",
+        "/app/data/pentest_results.json",
+        "/tmp/pentest_results.json",
+        os.path.join(repo_root, "data", "pentest", "pentest_results.json"),
+        os.path.join(repo_root, "data", "pentest_results.json"),
+    ]
+    for chemin in candidats:
+        if os.path.isfile(chemin):
+            try:
+                with open(chemin, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                acces = data.get("attaques", {}).get("brute_force_ssh", {}).get("acces_valides", [])
+                if acces:
+                    return acces
+            except Exception:
+                pass
+
+    # Analyse des logs récents (attaques en cours et terminées)
+    sources = list(_attaques_en_cours.values()) + list(reversed(_attaques_terminees))
+    for item in sources:
+        log_path = item.get("log")
+        if log_path and os.path.isfile(log_path):
+            try:
+                with open(log_path, "r", encoding="utf-8", errors="replace") as f:
+                    contenu = f.read()
+                import re
+                matches = re.findall(
+                    r"\[\+\]\s+([a-zA-Z0-9_\-]+):([^\s—]+)\s+—\s+authentification réussie",
+                    contenu,
+                )
+                if matches:
+                    vus = set()
+                    res = []
+                    for u, p in matches:
+                        if (u, p) not in vus:
+                            vus.add((u, p))
+                            res.append({"utilisateur": u, "mot_de_passe": p, "whoami": u})
+                    return res
+            except Exception:
+                pass
+    return []
+
+
+@app.route("/api/attaques/ssh_connect", methods=["POST"])
+def api_ssh_connect():
+    """Point d'entrée pour initier la connexion SSH vers un compte découvert."""
+    data = request.get_json(silent=True) or {}
+    user = data.get("utilisateur", "msfadmin")
+    target = os.getenv("TARGET_HOST", "metasploitable")
+    port = int(os.getenv("SSH_PORT", "22"))
+
+    return jsonify({
+        "status": "ready",
+        "message": f"Connexion SSH demandée vers {user}@{target}:{port}. Coeur de la fonction à implémenter.",
+        "utilisateur": user,
+        "cible": f"{target}:{port}",
+    })
+
+
 @app.route("/api/attaques/status")
 def api_status_attaques():
-    """Retourne l'état de toutes les attaques (en cours + terminées)."""
+    """Retourne l'état de toutes les attaques (en cours + terminées) et les accès valides."""
     _nettoyer_terminees()
 
     en_cours = []
@@ -347,6 +410,7 @@ def api_status_attaques():
     return jsonify({
         "en_cours": en_cours,
         "terminees": terminees,
+        "acces_valides": _recuperer_acces_valides(),
     })
 
 
