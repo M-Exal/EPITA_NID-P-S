@@ -442,7 +442,12 @@
             <div class="brand-title">⚔️ Panneau d'Attaques</div>
             <span class="brand-tag">CyBear Pentest</span>
         </div>
-        <a href="/" class="btn-back">← Retour SIEM</a>
+        <div style="display: flex; gap: 12px; align-items: center;">
+            <button class="btn-launch-all" id="btn-all_attacks" onclick="lancerAttaque('all_attacks')">
+                🚀 Lancer Toutes les Attaques
+            </button>
+            <a href="/" class="btn-back">← Retour SIEM</a>
+        </div>
     </header>
 
     <!-- ── Grille des attaques ── -->
@@ -608,6 +613,7 @@
 
         // Attaques qui ont un bouton actif côté JS
         const ATTAQUES_ACTIVES = [
+            'all_attacks',
             'scan_ports',
             'xmas_scan',
             'null_scan',
@@ -625,11 +631,13 @@
         function setStatus(attaque, etat /* 'IDLE' | 'EN_COURS' | 'TERMINE' */) {
             const el = document.getElementById(`status-${attaque}`);
             const btn = document.getElementById(`btn-${attaque}`);
-            if (!el) return;
+            if (!el && !btn) return;
 
-            const labels = { IDLE: 'IDLE', EN_COURS: 'EN COURS', TERMINE: 'TERMINÉ' };
-            el.className = `status-indicator status-${etat}`;
-            el.innerHTML = `<span class="status-dot-small"></span> ${labels[etat] || etat}`;
+            if (el) {
+                const labels = { IDLE: 'IDLE', EN_COURS: 'EN COURS', TERMINE: 'TERMINÉ' };
+                el.className = `status-indicator status-${etat}`;
+                el.innerHTML = `<span class="status-dot-small"></span> ${labels[etat] || etat}`;
+            }
 
             if (btn) {
                 btn.disabled = (etat === 'EN_COURS');
@@ -709,7 +717,7 @@
                     } else {
                         // Vérifie si le bouton est IDLE ou déjà dans un état terminé
                         const el = document.getElementById(`status-${nom}`);
-                        if (el && !el.classList.contains('status-TERMINE')) {
+                        if (!el || !el.classList.contains('status-TERMINE')) {
                             setStatus(nom, 'IDLE');
                         }
                     }

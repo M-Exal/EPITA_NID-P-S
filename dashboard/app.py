@@ -200,6 +200,7 @@ SCRIPTS_DIR = determiner_scripts_dir()
 
 # Registre des attaques disponibles : nom_clé -> fichier script
 ATTAQUES_DISPONIBLES = {
+    "all_attacks": "run_all_attacks.py",
     "scan_ports": "run_scan_ports.py",
     "xmas_scan": "run_xmas_scan.py",
     "null_scan": "run_null_scan.py",
