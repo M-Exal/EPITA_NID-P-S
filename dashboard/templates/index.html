@@ -4,83 +4,144 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CyBear SIEM — Supervision NIDS / NIPS en Temps Réel</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-body: #070b14;
-            --bg-card: #0f172a;
-            --bg-card-hover: #162036;
-            --border: #1e293b;
-            --border-highlight: #334155;
-            --text-main: #f8fafc;
-            --text-muted: #94a3b8;
+            --bg: #ffffff;
+            --bg-alt: #f8f9fa;
+            --bg-card: #ffffff;
+            --border: #000000;
+            --text: #000000;
+            --text-muted: #4b5563;
+            --main: #a3e635;
+            --main-hover: #84cc16;
             --critique: #ef4444;
-            --critique-bg: rgba(239, 68, 68, 0.15);
+            --critique-bg: #fee2e2;
             --haute: #f97316;
-            --haute-bg: rgba(249, 115, 22, 0.15);
-            --moyenne: #eab308;
-            --moyenne-bg: rgba(234, 179, 8, 0.15);
+            --haute-bg: #ffedd5;
+            --moyenne: #f59e0b;
+            --moyenne-bg: #fef3c7;
             --succes: #10b981;
-            --accent: #3b82f6;
-            --accent-glow: rgba(59, 130, 246, 0.25);
+            --succes-bg: #d1fae5;
+            --accent: #2563eb;
+            --accent-bg: #dbeafe;
+            --shadow: 4px 4px 0px #000000;
+            --shadow-sm: 2px 2px 0px #000000;
+            --grid: rgba(0, 0, 0, 0.08);
+        }
+
+        [data-theme="dark"] {
+            --bg: #050510;
+            --bg-alt: #101018;
+            --bg-card: #15151d;
+            --border: #ffffff;
+            --text: #f8fafc;
+            --text-muted: #a1a1aa;
+            --main: #a3e635;
+            --main-hover: #bef264;
+            --critique: #f87171;
+            --critique-bg: rgba(239, 68, 68, 0.18);
+            --haute: #fb923c;
+            --haute-bg: rgba(249, 115, 22, 0.18);
+            --moyenne: #fbbf24;
+            --moyenne-bg: rgba(245, 158, 11, 0.18);
+            --succes: #34d399;
+            --succes-bg: rgba(16, 185, 129, 0.18);
+            --accent: #60a5fa;
+            --accent-bg: rgba(59, 130, 246, 0.18);
+            --shadow: 4px 4px 0px #ffffff;
+            --shadow-sm: 2px 2px 0px #ffffff;
+            --grid: rgba(255, 255, 255, 0.06);
         }
 
         * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
         }
 
         body {
-            background-color: var(--bg-body);
-            color: var(--text-main);
+            background-color: var(--bg);
+            background-image: 
+                linear-gradient(to right, var(--grid) 1px, transparent 1px),
+                linear-gradient(to bottom, var(--grid) 1px, transparent 1px);
+            background-size: 40px 40px;
+            color: var(--text);
             min-height: 100vh;
             padding: 20px;
+            transition: background 0.3s ease, color 0.3s ease;
         }
 
-        /* Top Header */
         header {
             display: flex;
             justify-content: space-between;
             align-items: center;
             padding: 16px 24px;
-            background: linear-gradient(90deg, #0f172a 0%, #1e1b4b 100%);
-            border: 1px solid var(--border);
-            border-radius: 14px;
+            background: var(--bg-card);
+            border: 3px solid var(--border);
+            border-radius: 8px;
             margin-bottom: 24px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+            box-shadow: var(--shadow);
+            flex-wrap: wrap;
+            gap: 12px;
+            transition: all 0.3s ease;
         }
 
         .header-brand {
             display: flex;
             align-items: center;
             gap: 14px;
+            flex-wrap: wrap;
         }
 
         .brand-title {
-            font-size: 1.5rem;
-            font-weight: 700;
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 1.8rem;
+            font-weight: 800;
             letter-spacing: -0.5px;
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 10px;
+        }
+
+        .brand-logo {
+            display: flex;
+            flex-direction: column;
+            background: var(--main);
+            color: #000000;
+            padding: 8px 12px;
+            border: 2px solid var(--border);
+            border-radius: 6px;
+            box-shadow: var(--shadow-sm);
+            line-height: 0.9;
+        }
+
+        .brand-logo span {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 1.25rem;
+            font-weight: 800;
         }
 
         .brand-tag {
-            font-size: 0.72rem;
-            background: rgba(59, 130, 246, 0.2);
-            color: #60a5fa;
-            padding: 3px 10px;
-            border-radius: 20px;
-            border: 1px solid rgba(59, 130, 246, 0.4);
+            font-size: 0.7rem;
+            background: var(--accent-bg);
+            color: var(--accent);
+            padding: 4px 12px;
+            border: 2px solid var(--border);
+            border-radius: 6px;
             text-transform: uppercase;
-            font-weight: 600;
+            font-weight: 800;
+            box-shadow: var(--shadow-sm);
         }
 
         .header-meta {
             display: flex;
             align-items: center;
-            gap: 20px;
+            gap: 10px;
+            flex-wrap: wrap;
             font-size: 0.9rem;
         }
 
@@ -88,20 +149,47 @@
             display: inline-flex;
             align-items: center;
             gap: 6px;
-            padding: 7px 16px;
-            border-radius: 8px;
-            background: rgba(239, 68, 68, 0.15);
-            border: 1px solid rgba(239, 68, 68, 0.4);
-            color: #f87171;
-            font-weight: 600;
-            font-size: 0.82rem;
+            padding: 8px 16px;
+            border-radius: 6px;
+            background: var(--critique-bg);
+            border: 2px solid var(--border);
+            color: var(--critique);
+            font-weight: 800;
+            font-size: 0.85rem;
             text-decoration: none;
-            transition: background 0.2s, border-color 0.2s;
+            transition: all 0.2s ease;
+            box-shadow: var(--shadow-sm);
+            text-transform: uppercase;
         }
 
         .btn-attack-link:hover {
-            background: rgba(239, 68, 68, 0.28);
-            border-color: rgba(239, 68, 68, 0.7);
+            background: var(--critique);
+            color: #ffffff;
+            transform: translate(-2px, -2px);
+            box-shadow: 4px 4px 0px var(--border);
+        }
+
+        .btn-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 38px;
+            height: 38px;
+            border-radius: 6px;
+            background: var(--bg-card);
+            border: 2px solid var(--border);
+            color: var(--text);
+            font-weight: 800;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: var(--shadow-sm);
+            text-decoration: none;
+        }
+
+        .btn-icon:hover {
+            transform: translate(-2px, -2px);
+            box-shadow: 4px 4px 0px var(--border);
         }
 
         .status-badge {
@@ -109,41 +197,40 @@
             align-items: center;
             gap: 8px;
             padding: 6px 14px;
-            border-radius: 30px;
-            background: rgba(16, 185, 129, 0.12);
-            border: 1px solid rgba(16, 185, 129, 0.3);
+            border-radius: 6px;
+            background: var(--succes-bg);
+            border: 2px solid var(--border);
             color: var(--succes);
-            font-weight: 600;
+            font-weight: 800;
             font-size: 0.82rem;
+            box-shadow: var(--shadow-sm);
+            text-transform: uppercase;
         }
 
         .status-dot {
-            width: 8px;
-            height: 8px;
+            width: 10px;
+            height: 10px;
             border-radius: 50%;
             background-color: var(--succes);
-            box-shadow: 0 0 10px var(--succes);
+            border: 1px solid var(--border);
             animation: pulse 1.8s infinite;
         }
 
         .status-disconnected {
-            background: rgba(239, 68, 68, 0.12);
-            border-color: rgba(239, 68, 68, 0.3);
+            background: var(--critique-bg);
             color: var(--critique);
         }
 
         .status-disconnected .status-dot {
             background-color: var(--critique);
-            box-shadow: 0 0 10px var(--critique);
             animation: none;
         }
 
         @keyframes pulse {
             0%, 100% { opacity: 1; transform: scale(1); }
-            50% { opacity: 0.4; transform: scale(0.9); }
+            50% { opacity: 0.5; transform: scale(0.9); }
         }
 
-        /* KPI Grid */
         .kpi-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
@@ -153,16 +240,16 @@
 
         .card {
             background-color: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: 12px;
+            border: 3px solid var(--border);
+            border-radius: 8px;
             padding: 20px;
             transition: all 0.2s ease;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            box-shadow: var(--shadow);
         }
 
         .card:hover {
-            border-color: var(--border-highlight);
-            transform: translateY(-2px);
+            transform: translate(-2px, -2px);
+            box-shadow: 6px 6px 0px var(--border);
         }
 
         .kpi-card {
@@ -177,784 +264,627 @@
             align-items: center;
             color: var(--text-muted);
             font-size: 0.85rem;
-            font-weight: 500;
+            font-weight: 800;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
+            letter-spacing: 0.6px;
         }
 
         .kpi-icon {
-            font-size: 1.3rem;
+            font-size: 1.4rem;
         }
 
         .kpi-value {
-            font-size: 2.3rem;
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 2.9rem;
             font-weight: 800;
             margin: 12px 0 4px 0;
             letter-spacing: -1px;
         }
 
         .kpi-footer {
-            font-size: 0.78rem;
+            font-size: 0.8rem;
             color: var(--text-muted);
+            font-weight: 600;
         }
 
-        /* Layout Grid */
-        .layout-grid {
+        .section-grid {
             display: grid;
-            grid-template-columns: 1.6fr 1fr;
-            gap: 20px;
+            grid-template-columns: 2fr 1fr;
+            gap: 24px;
             margin-bottom: 24px;
         }
 
-        @media (max-width: 1024px) {
-            .layout-grid {
+        @media (max-width: 1100px) {
+            .section-grid {
                 grid-template-columns: 1fr;
             }
         }
 
-        .card-title {
-            font-size: 1.05rem;
-            font-weight: 700;
+        .section-title {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 1.3rem;
+            font-weight: 800;
             margin-bottom: 16px;
             display: flex;
             align-items: center;
-            justify-content: space-between;
-            border-bottom: 1px solid var(--border);
-            padding-bottom: 12px;
+            gap: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
 
-        /* Timeline Chart */
-        .timeline-container {
+        .title-bar {
             display: flex;
-            align-items: flex-end;
-            gap: 8px;
-            height: 180px;
-            padding-top: 10px;
-            border-bottom: 1px solid var(--border);
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .table-wrapper {
             overflow-x: auto;
         }
 
-        .timeline-bar-wrapper {
-            flex: 1;
-            min-width: 24px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            height: 100%;
-            justify-content: flex-end;
-        }
-
-        .timeline-bar {
+        table {
             width: 100%;
-            max-width: 32px;
-            border-radius: 4px 4px 0 0;
-            background: var(--accent);
-            min-height: 4px;
-            transition: height 0.4s ease;
-            position: relative;
+            border-collapse: separate;
+            border-spacing: 0;
         }
 
-        .timeline-bar:hover::after {
-            content: attr(data-tooltip);
-            position: absolute;
-            bottom: 100%;
-            left: 50%;
-            transform: translateX(-50%);
-            background: #000;
-            color: #fff;
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 0.7rem;
-            white-space: nowrap;
-            z-index: 10;
-        }
-
-        .timeline-label {
-            font-size: 0.68rem;
-            color: var(--text-muted);
-            margin-top: 6px;
-        }
-
-        /* Donut Chart with CSS Conic Gradient */
-        .donut-wrapper {
-            display: flex;
-            align-items: center;
-            justify-content: space-around;
-            padding: 10px 0;
-            gap: 20px;
-        }
-
-        .donut-chart {
-            width: 140px;
-            height: 140px;
-            border-radius: 50%;
-            background: conic-gradient(
-                var(--critique) 0% 33%,
-                var(--haute) 33% 66%,
-                var(--moyenne) 66% 100%
-            );
-            position: relative;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 0 20px rgba(0, 0, 0, 0.4);
-        }
-
-        .donut-hole {
-            width: 86px;
-            height: 86px;
-            background-color: var(--bg-card);
-            border-radius: 50%;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            font-size: 0.75rem;
-            color: var(--text-muted);
-        }
-
-        .donut-hole strong {
-            font-size: 1.25rem;
-            color: var(--text-main);
-        }
-
-        .donut-legend {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        .legend-item {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            font-size: 0.85rem;
-        }
-
-        .legend-dot {
-            width: 12px;
-            height: 12px;
-            border-radius: 3px;
-        }
-
-        /* Attack Breakdown Table */
-        .table-custom {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 0.88rem;
-        }
-
-        .table-custom th {
+        thead th {
             text-align: left;
-            color: var(--text-muted);
-            font-weight: 500;
-            padding: 8px 12px;
-            border-bottom: 1px solid var(--border);
+            padding: 12px 16px;
             font-size: 0.78rem;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            color: var(--text);
+            background: var(--bg-alt);
+            border: 2px solid var(--border);
+            border-bottom: 3px solid var(--border);
+            font-weight: 800;
+        }
+
+        thead th:first-child {
+            border-top-left-radius: 6px;
+        }
+
+        thead th:last-child {
+            border-top-right-radius: 6px;
+        }
+
+        tbody td {
+            padding: 12px 16px;
+            border: 2px solid var(--border);
+            border-top: none;
+            font-size: 0.9rem;
+            background: var(--bg-card);
+        }
+
+        tbody tr:last-child td:first-child {
+            border-bottom-left-radius: 6px;
+        }
+
+        tbody tr:last-child td:last-child {
+            border-bottom-right-radius: 6px;
+        }
+
+        tbody tr:hover td {
+            background: var(--bg-alt);
+        }
+
+        .cell-center {
+            text-align: center;
+            font-weight: 700;
+        }
+
+        .severity-bars {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .severity-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .severity-label {
+            width: 95px;
+            font-size: 0.9rem;
+            font-weight: 800;
             text-transform: uppercase;
         }
 
-        .table-custom td {
-            padding: 10px 12px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
-        }
-
-        .attack-name-cell {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            font-weight: 600;
-        }
-
-        .progress-bar-bg {
-            width: 100%;
-            background: rgba(255, 255, 255, 0.08);
-            height: 6px;
-            border-radius: 10px;
+        .severity-bar-track {
+            flex: 1;
+            height: 14px;
+            background: var(--bg-alt);
+            border: 2px solid var(--border);
+            border-radius: 999px;
             overflow: hidden;
-            margin-top: 4px;
         }
 
-        .progress-bar-fill {
+        .severity-bar-fill {
             height: 100%;
-            border-radius: 10px;
-            transition: width 0.4s ease;
+            border-right: 2px solid var(--border);
+        }
+
+        .bar-critique { background: var(--critique); }
+        .bar-haute { background: var(--haute); }
+        .bar-moyenne { background: var(--moyenne); }
+
+        .severity-count {
+            width: 42px;
+            text-align: right;
+            font-weight: 800;
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 1.05rem;
         }
 
         .badge {
-            display: inline-block;
-            padding: 3px 8px;
+            font-size: 0.7rem;
+            padding: 2px 8px;
+            border: 1.5px solid var(--border);
             border-radius: 6px;
-            font-size: 0.72rem;
-            font-weight: 700;
+            font-weight: 800;
             text-transform: uppercase;
+            box-shadow: var(--shadow-sm);
         }
 
-        .badge-critique {
-            background: var(--critique-bg);
-            color: var(--critique);
-            border: 1px solid rgba(239, 68, 68, 0.3);
-        }
+        .badge-critique { background: var(--critique); color: #ffffff; }
+        .badge-haute { background: var(--haute); color: #ffffff; }
+        .badge-moyenne { background: var(--moyenne); color: #000000; }
 
-        .badge-haute {
-            background: var(--haute-bg);
-            color: var(--haute);
-            border: 1px solid rgba(249, 115, 22, 0.3);
-        }
-
-        .badge-moyenne {
-            background: var(--moyenne-bg);
-            color: var(--moyenne);
-            border: 1px solid rgba(234, 179, 8, 0.3);
-        }
-
-        /* Kill Chain Matrix */
-        .matrix-container {
+        .timeline {
+            display: flex;
+            align-items: flex-end;
+            gap: 10px;
+            height: 230px;
+            padding: 16px 12px 10px;
             overflow-x: auto;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            background: var(--bg-alt);
+            box-shadow: inset 0 0 0 1px var(--grid);
         }
 
-        .matrix-table th {
-            text-align: center;
-            font-size: 0.75rem;
-            padding: 10px 8px;
+        .timeline::-webkit-scrollbar {
+            height: 10px;
         }
 
-        .matrix-table td {
-            text-align: center;
-            padding: 12px 8px;
+        .timeline::-webkit-scrollbar-track {
+            background: var(--bg-card);
+            border-top: 2px solid var(--border);
         }
 
-        .matrix-table td:first-child {
-            text-align: left;
-            font-weight: 600;
-            font-family: monospace;
-            color: #60a5fa;
+        .timeline::-webkit-scrollbar-thumb {
+            background: var(--text);
         }
 
-        .matrix-cell {
-            display: inline-flex;
+        .timeline-bar-group {
+            display: flex;
+            flex-direction: column;
             align-items: center;
-            justify-content: center;
-            width: 28px;
-            height: 28px;
-            border-radius: 50%;
-            background: rgba(255, 255, 255, 0.05);
-            color: var(--text-muted);
+            gap: 8px;
+            min-width: 44px;
+        }
+
+        .timeline-bars {
+            display: flex;
+            flex-direction: column-reverse;
+            gap: 3px;
+            width: 34px;
+            height: 170px;
+            justify-content: flex-start;
+            align-items: stretch;
+        }
+
+        .timeline-seg {
+            width: 100%;
+            border: 2px solid var(--border);
+            border-radius: 4px;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .seg-critique { background: var(--critique); }
+        .seg-haute { background: var(--haute); }
+        .seg-moyenne { background: var(--moyenne); }
+
+        .timeline-label {
             font-size: 0.75rem;
-            transition: all 0.2s ease;
+            font-weight: 800;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
         }
 
-        .matrix-cell.active {
-            background: rgba(239, 68, 68, 0.2);
-            color: #ef4444;
-            border: 1px solid #ef4444;
-            font-weight: bold;
-            box-shadow: 0 0 10px rgba(239, 68, 68, 0.4);
+        .timeline-total {
+            font-size: 0.72rem;
+            font-weight: 800;
+            color: var(--text);
         }
 
-        /* Live Feed */
-        .feed-container {
-            max-height: 420px;
-            overflow-y: auto;
+        .timeline-empty {
+            text-align: center;
+            color: var(--text-muted);
+            padding: 40px;
+            font-weight: 700;
+            width: 100%;
+        }
+
+        .live-feed {
             display: flex;
             flex-direction: column;
             gap: 10px;
-            padding-right: 6px;
+            max-height: 440px;
+            overflow-y: auto;
         }
 
-        .feed-container::-webkit-scrollbar {
-            width: 6px;
+        .live-feed::-webkit-scrollbar {
+            width: 10px;
         }
 
-        .feed-container::-webkit-scrollbar-thumb {
-            background: var(--border-highlight);
+        .live-feed::-webkit-scrollbar-track {
+            background: var(--bg-alt);
+            border: 2px solid var(--border);
+            border-radius: 6px;
+        }
+
+        .live-feed::-webkit-scrollbar-thumb {
+            background: var(--text);
             border-radius: 4px;
         }
 
         .alert-item {
             display: flex;
-            align-items: center;
             justify-content: space-between;
-            background: #111a2e;
-            border: 1px solid var(--border);
-            border-left: 4px solid var(--accent);
-            border-radius: 8px;
+            align-items: center;
             padding: 12px 16px;
-            transition: all 0.3s ease;
-            animation: slideDown 0.3s ease-out;
+            background: var(--bg-card);
+            border: 2px solid var(--border);
+            border-radius: 6px;
+            gap: 12px;
+            box-shadow: var(--shadow-sm);
+            flex-wrap: wrap;
         }
 
-        @keyframes slideDown {
-            from {
-                opacity: 0;
-                transform: translateY(-10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .alert-item.critique { border-left-color: var(--critique); }
-        .alert-item.haute { border-left-color: var(--haute); }
-        .alert-item.moyenne { border-left-color: var(--moyenne); }
+        .alert-item.critique { background: var(--critique-bg); }
+        .alert-item.haute { background: var(--haute-bg); }
+        .alert-item.moyenne { background: var(--moyenne-bg); }
 
         .alert-left {
             display: flex;
             align-items: center;
-            gap: 14px;
+            gap: 10px;
+            flex: 1;
+            min-width: 0;
         }
 
         .alert-emoji {
-            font-size: 1.5rem;
+            font-size: 1.2rem;
         }
 
         .alert-type {
-            font-weight: 700;
-            font-size: 0.95rem;
+            font-weight: 800;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
         }
 
         .alert-details {
-            font-size: 0.8rem;
+            font-size: 0.82rem;
             color: var(--text-muted);
-            font-family: monospace;
-            margin-top: 3px;
+            margin-top: 2px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 320px;
         }
 
         .alert-right {
             text-align: right;
+            font-size: 0.82rem;
         }
 
         .alert-ip {
-            font-family: monospace;
-            color: #93c5fd;
-            font-size: 0.85rem;
-            font-weight: 600;
+            font-family: 'Courier New', monospace;
+            font-weight: 800;
         }
 
         .alert-time {
-            font-size: 0.75rem;
             color: var(--text-muted);
-            margin-top: 3px;
+            margin-top: 2px;
+            font-weight: 600;
         }
 
-        .empty-state {
+        footer {
             text-align: center;
-            padding: 40px;
+            padding: 20px;
+            margin-top: 40px;
             color: var(--text-muted);
             font-size: 0.9rem;
+            font-weight: 700;
         }
     </style>
 </head>
 <body>
-
-    <!-- Header -->
     <header>
         <div class="header-brand">
-            <div class="brand-title">🛡️ CyBear SIEM</div>
-            <span class="brand-tag">NIDS / NIPS SOC</span>
+            <div class="brand-title">
+                <div class="brand-logo">
+                    <span>CyBear</span>
+                    <span>SIEM</span>
+                </div>
+                CyBear SIEM
+            </div>
+            <span class="brand-tag">NIDS / NIPS en Temps Réel</span>
         </div>
         <div class="header-meta">
-            <a href="/attaques" class="btn-attack-link">⚔️ Attaques</a>
-            <div id="liveClock" style="font-family: monospace; color: var(--text-muted);">--:--:--</div>
-            <div id="connectionStatus" class="status-badge">
+            <a href="/attack" class="btn-attack-link">
+                ⚔️ Panneau d'Attaques
+            </a>
+            <a href="/attaques" class="btn-attack-link" style="background: var(--accent-bg); color: var(--accent);">
+                🛠️ Vue Complète
+            </a>
+            <a href="/terminal" class="btn-icon" title="Terminal SSH">💻</a>
+            <button class="btn-icon" id="theme-toggle" title="Basculer thème">🌙</button>
+            <div class="status-badge" id="connectionStatus">
                 <span class="status-dot"></span>
-                <span id="statusText">SUPERVISION ACTIVE</span>
+                <span id="statusText">CONNEXION...</span>
             </div>
         </div>
     </header>
 
-    <!-- KPI Cards -->
     <div class="kpi-grid">
         <div class="card kpi-card">
             <div class="kpi-head">
-                <span>Total Détections</span>
-                <span class="kpi-icon">🚨</span>
+                <span>Total Alertes</span>
+                <span class="kpi-icon">📊</span>
             </div>
-            <div id="kpiTotal" class="kpi-value">0</div>
-            <div class="kpi-footer">Alertes agrégées par le NIDS</div>
+            <div class="kpi-value" id="kpi-total">0</div>
+            <div class="kpi-footer">Depuis le démarrage</div>
         </div>
-
         <div class="card kpi-card">
             <div class="kpi-head">
-                <span>Adresses IP Sources</span>
+                <span>Adresses IP Uniques</span>
                 <span class="kpi-icon">🌐</span>
             </div>
-            <div id="kpiIps" class="kpi-value" style="color: #60a5fa;">0</div>
-            <div class="kpi-footer">Attaquants uniques identifiés</div>
+            <div class="kpi-value" id="kpi-ips">0</div>
+            <div class="kpi-footer">Sources détectées</div>
         </div>
-
         <div class="card kpi-card">
             <div class="kpi-head">
-                <span>Alertes Critiques</span>
+                <span>Critiques</span>
+                <span class="kpi-icon">🚨</span>
+            </div>
+            <div class="kpi-value" id="kpi-critique" style="color: var(--critique);">0</div>
+            <div class="kpi-footer">Niveau maximal</div>
+        </div>
+        <div class="card kpi-card">
+            <div class="kpi-head">
+                <span>Hautes</span>
                 <span class="kpi-icon">⚠️</span>
             </div>
-            <div id="kpiCritique" class="kpi-value" style="color: var(--critique);">0</div>
-            <div class="kpi-footer">DoS, Brute Force, Injection SQL</div>
+            <div class="kpi-value" id="kpi-haute" style="color: var(--haute);">0</div>
+            <div class="kpi-footer">Menaces significatives</div>
         </div>
-
         <div class="card kpi-card">
             <div class="kpi-head">
-                <span>Dernière Intrusion</span>
-                <span class="kpi-icon">⏱️</span>
+                <span>Moyennes</span>
+                <span class="kpi-icon">ℹ️</span>
             </div>
-            <div id="kpiLastTime" class="kpi-value" style="font-size: 1.4rem; padding-top: 10px;">En attente</div>
-            <div id="kpiLastDetails" class="kpi-footer">Aucune alerte récente</div>
+            <div class="kpi-value" id="kpi-moyenne" style="color: var(--moyenne);">0</div>
+            <div class="kpi-footer">À surveiller</div>
         </div>
     </div>
 
-    <!-- Row 2 : Timeline & Severity Donut -->
-    <div class="layout-grid">
+    <div class="section-grid">
         <div class="card">
-            <div class="card-title">
-                <span>📈 Chronologie des Attaques (Temps Réel)</span>
-                <span style="font-size: 0.8rem; font-weight: normal; color: var(--text-muted);">Par minute</span>
+            <div class="title-bar">
+                <h2 class="section-title">🎯 Top Adresses IP Sources</h2>
             </div>
-            <div id="timelineChart" class="timeline-container">
-                <div class="empty-state">En attente de flux de données...</div>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Adresse IP</th>
+                            <th class="cell-center">Total</th>
+                            <th class="cell-center">SCAN</th>
+                            <th class="cell-center">XMAS</th>
+                            <th class="cell-center">NULL</th>
+                            <th class="cell-center">BRUTE</th>
+                            <th class="cell-center">DOS</th>
+                            <th class="cell-center">SQLi</th>
+                            <th class="cell-center">XSS</th>
+                            <th class="cell-center">PATH</th>
+                        </tr>
+                    </thead>
+                    <tbody id="ipTableBody"></tbody>
+                </table>
             </div>
         </div>
 
         <div class="card">
-            <div class="card-title">
-                <span>🎯 Répartition de Sévérité</span>
+            <div class="title-bar">
+                <h2 class="section-title">📈 Répartition par Sévérité</h2>
             </div>
-            <div class="donut-wrapper">
-                <div id="donutChart" class="donut-chart">
-                    <div class="donut-hole">
-                        <strong id="donutTotal">0</strong>
-                        <span>Menaces</span>
+            <div class="severity-bars">
+                <div class="severity-row">
+                    <span class="severity-label" style="color: var(--critique);">Critique</span>
+                    <div class="severity-bar-track">
+                        <div class="severity-bar-fill bar-critique" id="bar-critique" style="width: 0%"></div>
                     </div>
+                    <span class="severity-count" id="count-critique">0</span>
                 </div>
-                <div class="donut-legend">
-                    <div class="legend-item">
-                        <span class="legend-dot" style="background: var(--critique);"></span>
-                        <span>Critique : <strong id="legendCritique">0</strong></span>
+                <div class="severity-row">
+                    <span class="severity-label" style="color: var(--haute);">Haute</span>
+                    <div class="severity-bar-track">
+                        <div class="severity-bar-fill bar-haute" id="bar-haute" style="width: 0%"></div>
                     </div>
-                    <div class="legend-item">
-                        <span class="legend-dot" style="background: var(--haute);"></span>
-                        <span>Haute : <strong id="legendHaute">0</strong></span>
+                    <span class="severity-count" id="count-haute">0</span>
+                </div>
+                <div class="severity-row">
+                    <span class="severity-label" style="color: var(--moyenne);">Moyenne</span>
+                    <div class="severity-bar-track">
+                        <div class="severity-bar-fill bar-moyenne" id="bar-moyenne" style="width: 0%"></div>
                     </div>
-                    <div class="legend-item">
-                        <span class="legend-dot" style="background: var(--moyenne);"></span>
-                        <span>Moyenne : <strong id="legendMoyenne">0</strong></span>
-                    </div>
+                    <span class="severity-count" id="count-moyenne">0</span>
                 </div>
             </div>
+            <div style="margin-top: 24px; padding-top: 18px; border-top: 2px solid var(--border);">
+                <h3 style="font-weight: 800; margin-bottom: 12px; font-size: 0.95rem; text-transform: uppercase; letter-spacing: 0.4px;">Types d'Attaques</h3>
+                <div id="attackTypes" style="display: flex; flex-wrap: wrap; gap: 8px;"></div>
+            </div>
         </div>
     </div>
 
-    <!-- Row 3 : Attack Breakdown & Top IP -->
-    <div class="layout-grid">
-        <div class="card">
-            <div class="card-title">
-                <span>⚔️ Détection des Attaques Pentest (7 Vecteurs)</span>
-            </div>
-            <table class="table-custom">
-                <thead>
-                    <tr>
-                        <th>Vecteur d'Attaque</th>
-                        <th>Volume</th>
-                        <th>Sévérité</th>
-                    </tr>
-                </thead>
-                <tbody id="attackBreakdownBody">
-                    <!-- Généré dynamiquement -->
-                </tbody>
-            </table>
-        </div>
-
-        <div class="card">
-            <div class="card-title">
-                <span>🎯 Top IPs Attaquantes</span>
-            </div>
-            <table class="table-custom">
-                <thead>
-                    <tr>
-                        <th>IP Source</th>
-                        <th>Volume Détecté</th>
-                        <th>Part du Trafic</th>
-                    </tr>
-                </thead>
-                <tbody id="topIpsBody">
-                    <tr><td colspan="3" class="empty-state">Aucun attaquant enregistré</td></tr>
-                </tbody>
-            </table>
-        </div>
-    </div>
-
-    <!-- Row 4 : Kill-Chain Attack Matrix -->
     <div class="card" style="margin-bottom: 24px;">
-        <div class="card-title">
-            <span>🧬 Matrice Kill-Chain (IPs vs Vecteurs d'Attaque)</span>
-            <span style="font-size: 0.8rem; font-weight: normal; color: var(--text-muted);">Corrélation multi-étapes</span>
+        <div class="title-bar">
+            <h2 class="section-title">⏱️ Timeline des Alertes</h2>
+            <span style="font-size: 0.9rem; color: var(--text-muted); font-weight: 700;">Dernières 30 minutes</span>
         </div>
-        <div class="matrix-container">
-            <table class="table-custom matrix-table">
-                <thead>
-                    <tr>
-                        <th style="text-align: left;">IP Cible / Attaquant</th>
-                        <th>🔍 SCAN</th>
-                        <th>🎄 XMAS</th>
-                        <th>👻 NULL</th>
-                        <th>🔐 BRUTE</th>
-                        <th>💥 DOS</th>
-                        <th>💉 SQLi</th>
-                        <th>🕷️ XSS</th>
-                        <th>📂 TRAVERSAL</th>
-                    </tr>
-                </thead>
-                <tbody id="matrixBody">
-                    <tr><td colspan="9" class="empty-state">Matrice en attente de données...</td></tr>
-                </tbody>
-            </table>
+        <div class="timeline" id="timeline">
+            <div class="timeline-empty">En attente de données...</div>
         </div>
     </div>
 
-    <!-- Row 5 : Live Feed -->
     <div class="card">
-        <div class="card-title">
-            <span>📡 Flux d'Alertes en Direct (Live SOC Stream)</span>
-            <span id="feedCount" style="font-size: 0.8rem; font-weight: normal; color: var(--text-muted);">0 alertes</span>
+        <div class="title-bar">
+            <h2 class="section-title">🔴 Flux en Direct</h2>
+            <span style="font-size: 0.9rem; color: var(--text-muted); font-weight: 700;" id="feedCount">0 affichée(s)</span>
         </div>
-        <div id="liveFeed" class="feed-container">
-            <div class="empty-state">En attente de détections NIDS...</div>
+        <div class="live-feed" id="liveFeed">
+            <div style="text-align: center; color: var(--text-muted); padding: 40px; font-weight: 700;">En attente d'alertes...</div>
         </div>
     </div>
 
-    <!-- Script JavaScript Vanilla -->
+    <footer>
+        CyBear SIEM — EPITA NID-P-S Project | Neobrutal Design • Dark Mode Ready
+    </footer>
+
     <script>
-        const EMOJIS = {
-            'SCAN_PORTS': '🔍',
-            'XMAS_SCAN': '🎄',
-            'NULL_SCAN': '👻',
-            'BRUTE_FORCE': '🔐',
-            'DOS': '💥',
-            'SQL_INJECTION': '💉',
-            'XSS': '🕷️',
-            'PATH_TRAVERSAL': '📂'
-        };
+        const SEVERITES = {"SCAN_PORTS": "MOYENNE", "XMAS_SCAN": "HAUTE", "NULL_SCAN": "HAUTE", "BRUTE_FORCE": "CRITIQUE", "DOS": "CRITIQUE", "SQL_INJECTION": "CRITIQUE", "XSS": "HAUTE", "PATH_TRAVERSAL": "HAUTE"};
+        const EMOJIS = {"SCAN_PORTS": "🔍", "XMAS_SCAN": "🎄", "NULL_SCAN": "⚫", "BRUTE_FORCE": "🔨", "DOS": "💥", "SQL_INJECTION": "💉", "XSS": "⚡", "PATH_TRAVERSAL": "📁"};
 
-        const SEVERITES = {
-            'DOS': 'CRITIQUE',
-            'BRUTE_FORCE': 'CRITIQUE',
-            'SQL_INJECTION': 'CRITIQUE',
-            'NULL_SCAN': 'HAUTE',
-            'XMAS_SCAN': 'HAUTE',
-            'XSS': 'HAUTE',
-            'PATH_TRAVERSAL': 'HAUTE',
-            'SCAN_PORTS': 'MOYENNE'
-        };
+        const themeToggle = document.getElementById('theme-toggle');
+        const root = document.documentElement;
+        const savedTheme = localStorage.getItem('cybear-theme') || 'light';
+        root.setAttribute('data-theme', savedTheme);
+        themeToggle.textContent = savedTheme === 'dark' ? '☀️' : '🌙';
+        themeToggle.addEventListener('click', () => {
+            const current = root.getAttribute('data-theme');
+            const next = current === 'dark' ? 'light' : 'dark';
+            root.setAttribute('data-theme', next);
+            localStorage.setItem('cybear-theme', next);
+            themeToggle.textContent = next === 'dark' ? '☀️' : '🌙';
+        });
 
-        const TOUS_LES_TYPES = [
-            'SCAN_PORTS', 'XMAS_SCAN', 'NULL_SCAN', 'BRUTE_FORCE',
-            'DOS', 'SQL_INJECTION', 'XSS', 'PATH_TRAVERSAL'
-        ];
-
-        // Horloge temps réel
-        function updateClock() {
-            const now = new Date();
-            document.getElementById('liveClock').textContent = now.toLocaleTimeString('fr-FR');
-        }
-        setInterval(updateClock, 1000);
-        updateClock();
-
-        // Mise à jour de l'interface avec les statistiques
         function renderStats(stats) {
-            if (!stats) return;
+            document.getElementById('kpi-total').textContent = stats.total_alerts || 0;
+            document.getElementById('kpi-ips').textContent = stats.unique_ips || 0;
+            document.getElementById('kpi-critique').textContent = stats.severity_counts?.CRITIQUE || 0;
+            document.getElementById('kpi-haute').textContent = stats.severity_counts?.HAUTE || 0;
+            document.getElementById('kpi-moyenne').textContent = stats.severity_counts?.MOYENNE || 0;
 
-            // 1. KPI
-            document.getElementById('kpiTotal').textContent = stats.total_alerts || 0;
-            document.getElementById('kpiIps').textContent = stats.unique_ips || 0;
+            const totalSev = (stats.severity_counts?.CRITIQUE || 0) + (stats.severity_counts?.HAUTE || 0) + (stats.severity_counts?.MOYENNE || 0) || 1;
+            document.getElementById('bar-critique').style.width = ((stats.severity_counts?.CRITIQUE || 0) / totalSev * 100) + '%';
+            document.getElementById('bar-haute').style.width = ((stats.severity_counts?.HAUTE || 0) / totalSev * 100) + '%';
+            document.getElementById('bar-moyenne').style.width = ((stats.severity_counts?.MOYENNE || 0) / totalSev * 100) + '%';
+            document.getElementById('count-critique').textContent = stats.severity_counts?.CRITIQUE || 0;
+            document.getElementById('count-haute').textContent = stats.severity_counts?.HAUTE || 0;
+            document.getElementById('count-moyenne').textContent = stats.severity_counts?.MOYENNE || 0;
 
-            const sevCounts = stats.severity_counts || {};
-            document.getElementById('kpiCritique').textContent = sevCounts.CRITIQUE || 0;
-
-            if (stats.derniere_alerte) {
-                const ts = stats.derniere_alerte.timestamp || '';
-                const heureSeule = ts.includes('T') ? ts.split('T')[1].split('+')[0] : ts;
-                document.getElementById('kpiLastTime').textContent = heureSeule;
-                document.getElementById('kpiLastDetails').textContent = 
-                    `${EMOJIS[stats.derniere_alerte.type] || '⚠️'} ${stats.derniere_alerte.type} (${stats.derniere_alerte.src_ip})`;
-            }
-
-            // 2. Donut Sévérité
-            const crit = sevCounts.CRITIQUE || 0;
-            const haut = sevCounts.HAUTE || 0;
-            const moy = sevCounts.MOYENNE || 0;
-            const totalSev = crit + haut + moy;
-
-            document.getElementById('donutTotal').textContent = totalSev;
-            document.getElementById('legendCritique').textContent = crit;
-            document.getElementById('legendHaute').textContent = haut;
-            document.getElementById('legendMoyenne').textContent = moy;
-
-            if (totalSev > 0) {
-                const pCrit = (crit / totalSev) * 100;
-                const pHaut = (haut / totalSev) * 100;
-                document.getElementById('donutChart').style.background = `conic-gradient(
-                    var(--critique) 0% ${pCrit}%,
-                    var(--haute) ${pCrit}% ${pCrit + pHaut}%,
-                    var(--moyenne) ${pCrit + pHaut}% 100%
-                )`;
-            }
-
-            // 3. Timeline Bars
-            const timelineContainer = document.getElementById('timelineChart');
-            const timelineData = stats.timeline || [];
-            if (timelineData.length > 0) {
-                const maxVal = Math.max(...timelineData.map(d => d.total), 1);
-                timelineContainer.innerHTML = timelineData.map(d => {
-                    const hPercent = Math.max(8, (d.total / maxVal) * 100);
-                    const color = d.critique > 0 ? 'var(--critique)' : (d.haute > 0 ? 'var(--haute)' : 'var(--moyenne)');
-                    return `
-                        <div class="timeline-bar-wrapper">
-                            <div class="timeline-bar" style="height: ${hPercent}%; background: ${color};"
-                                 data-tooltip="${d.minute} : ${d.total} alerte(s)"></div>
-                            <span class="timeline-label">${d.minute}</span>
-                        </div>
-                    `;
-                }).join('');
-            }
-
-            // 4. Attack Breakdown Table
-            const breakdownBody = document.getElementById('attackBreakdownBody');
-            const total = stats.total_alerts || 1;
-            breakdownBody.innerHTML = TOUS_LES_TYPES.map(type => {
-                const count = (stats.alerts_by_type && stats.alerts_by_type[type]) || 0;
-                const percent = Math.round((count / total) * 100);
+            const attackTypesDiv = document.getElementById('attackTypes');
+            const types = stats.alerts_by_type || {};
+            attackTypesDiv.innerHTML = Object.entries(types).sort((a,b) => b[1] - a[1]).map(([type, count]) => {
                 const sev = SEVERITES[type] || 'MOYENNE';
-                const badgeClass = `badge-${sev.toLowerCase()}`;
-                const barColor = sev === 'CRITIQUE' ? 'var(--critique)' : (sev === 'HAUTE' ? 'var(--haute)' : 'var(--moyenne)');
-
-                return `
-                    <tr>
-                        <td>
-                            <div class="attack-name-cell">
-                                <span>${EMOJIS[type] || '🛡️'}</span>
-                                <div>
-                                    <div>${type}</div>
-                                    <div class="progress-bar-bg" style="width: 140px;">
-                                        <div class="progress-bar-fill" style="width: ${percent}%; background: ${barColor};"></div>
-                                    </div>
-                                </div>
-                            </div>
-                        </td>
-                        <td><strong>${count}</strong> <span style="color: var(--text-muted); font-size: 0.75rem;">(${percent}%)</span></td>
-                        <td><span class="badge ${badgeClass}">${sev}</span></td>
-                    </tr>
-                `;
+                const cls = sev.toLowerCase();
+                return `<span class="badge badge-${cls}">${EMOJIS[type] || '⚠️'} ${type} (${count})</span>`;
             }).join('');
 
-            // 5. Top IP Attaquantes
-            const topIpsBody = document.getElementById('topIpsBody');
+            const ipTableBody = document.getElementById('ipTableBody');
             const topIps = stats.alerts_by_ip || [];
-            if (topIps.length > 0) {
-                topIpsBody.innerHTML = topIps.map(([ip, cnt]) => {
-                    const percent = Math.round((cnt / total) * 100);
-                    return `
-                        <tr>
-                            <td style="font-family: monospace; color: #93c5fd; font-weight: 600;">${ip}</td>
-                            <td><strong>${cnt}</strong> détection(s)</td>
-                            <td>
-                                <div class="progress-bar-bg" style="width: 100px;">
-                                    <div class="progress-bar-fill" style="width: ${percent}%; background: var(--accent);"></div>
-                                </div>
-                            </td>
-                        </tr>
-                    `;
-                }).join('');
-            }
-
-            // 6. Matrice Kill-Chain
-            const matrixBody = document.getElementById('matrixBody');
             const matrix = stats.attack_matrix || {};
-            const ips = Object.keys(matrix);
-            if (ips.length > 0) {
-                matrixBody.innerHTML = ips.map(ip => {
-                    const attacks = matrix[ip] || {};
-                    const cells = TOUS_LES_TYPES.map(t => {
-                        const count = attacks[t] || 0;
-                        const active = count > 0 ? 'active' : '';
-                        return `<td><span class="matrix-cell ${active}">${count > 0 ? count : '·'}</span></td>`;
-                    }).join('');
+            ipTableBody.innerHTML = topIps.slice(0, 10).map(([ip, total]) => {
+                const row = matrix[ip] || {};
+                return `<tr>
+                    <td style="font-family: 'Courier New', monospace; font-weight: 800;">${ip}</td>
+                    <td class="cell-center" style="font-weight: 800; font-family: 'Space Grotesk', sans-serif;">${total}</td>
+                    <td class="cell-center">${row['SCAN_PORTS'] || 0}</td>
+                    <td class="cell-center">${row['XMAS_SCAN'] || 0}</td>
+                    <td class="cell-center">${row['NULL_SCAN'] || 0}</td>
+                    <td class="cell-center">${row['BRUTE_FORCE'] || 0}</td>
+                    <td class="cell-center">${row['DOS'] || 0}</td>
+                    <td class="cell-center">${row['SQL_INJECTION'] || 0}</td>
+                    <td class="cell-center">${row['XSS'] || 0}</td>
+                    <td class="cell-center">${row['PATH_TRAVERSAL'] || 0}</td>
+                </tr>`;
+            }).join('');
 
-                    return `
-                        <tr>
-                            <td>${ip}</td>
-                            ${cells}
-                        </tr>
-                    `;
+            const timelineDiv = document.getElementById('timeline');
+            const timeline = stats.timeline || [];
+            if (timeline.length > 0) {
+                const maxT = Math.max(...timeline.map(t => t.total), 1);
+                timelineDiv.innerHTML = timeline.map(t => {
+                    const hCrit = Math.max(4, (t.critique / maxT) * 150);
+                    const hHaut = Math.max(4, (t.haute / maxT) * 150);
+                    const hMoy = Math.max(4, (t.moyenne / maxT) * 150);
+                    return `<div class="timeline-bar-group" title="${t.total} alerte(s)">
+                        <div class="timeline-bars">
+                            ${t.moyenne > 0 ? `<div class="timeline-seg seg-moyenne" style="height: ${hMoy}px;"></div>` : ''}
+                            ${t.haute > 0 ? `<div class="timeline-seg seg-haute" style="height: ${hHaut}px;"></div>` : ''}
+                            ${t.critique > 0 ? `<div class="timeline-seg seg-critique" style="height: ${hCrit}px;"></div>` : ''}
+                        </div>
+                        <div class="timeline-total">${t.total}</div>
+                        <div class="timeline-label">${t.minute}</div>
+                    </div>`;
                 }).join('');
             }
 
-            // 7. Live Feed (dernieres alertes)
             const liveFeed = document.getElementById('liveFeed');
             const alerts = stats.latest_alerts || [];
             document.getElementById('feedCount').textContent = `${alerts.length} affichée(s)`;
-
             if (alerts.length > 0) {
                 liveFeed.innerHTML = alerts.map(a => {
                     const sev = SEVERITES[a.type] || 'MOYENNE';
                     const sevClass = sev.toLowerCase();
                     const emoji = EMOJIS[a.type] || '⚠️';
-                    const timeStr = a.timestamp ? a.timestamp.replace('T', ' ').replace(/\+\d{2}:\d{2}$/, '') : '';
-
-                    return `
-                        <div class="alert-item ${sevClass}">
-                            <div class="alert-left">
-                                <span class="alert-emoji">${emoji}</span>
-                                <div>
-                                    <div class="alert-type">${a.type} <span class="badge badge-${sevClass}">${sev}</span></div>
-                                    <div class="alert-details">${a.details || 'Aucun détail'}</div>
-                                </div>
-                            </div>
-                            <div class="alert-right">
-                                <div class="alert-ip">${a.src_ip}</div>
-                                <div class="alert-time">${timeStr}</div>
+                    const timeStr = a.timestamp ? a.timestamp.replace('T', ' ').substring(11, 19) : '';
+                    return `<div class="alert-item ${sevClass}">
+                        <div class="alert-left">
+                            <span class="alert-emoji">${emoji}</span>
+                            <div>
+                                <div class="alert-type">${a.type} <span class="badge badge-${sevClass}">${sev}</span></div>
+                                <div class="alert-details">${a.details || 'Aucun détail'}</div>
                             </div>
                         </div>
-                    `;
+                        <div class="alert-right">
+                            <div class="alert-ip">${a.src_ip}</div>
+                            <div class="alert-time">${timeStr}</div>
+                        </div>
+                    </div>`;
                 }).join('');
             }
         }
 
-        // Connexion SSE (Server-Sent Events)
         function initSSE() {
             const statusBadge = document.getElementById('connectionStatus');
             const statusText = document.getElementById('statusText');
-
             const eventSource = new EventSource('/api/stream');
-
-            eventSource.onopen = function() {
-                statusBadge.classList.remove('status-disconnected');
-                statusText.textContent = 'SUPERVISION ACTIVE';
-            };
-
+            eventSource.onopen = function() { statusBadge.classList.remove('status-disconnected'); statusText.textContent = 'SUPERVISION ACTIVE'; };
             eventSource.onmessage = function(e) {
                 try {
                     const data = JSON.parse(e.data);
-                    if (data.type === 'update' && data.stats) {
-                        renderStats(data.stats);
-                    }
-                } catch (err) {
-                    console.error('Erreur parsing SSE:', err);
-                }
+                    if (data.type === 'update' && data.stats) renderStats(data.stats);
+                } catch (err) { console.error(err); }
             };
-
-            eventSource.onerror = function() {
-                statusBadge.classList.add('status-disconnected');
-                statusText.textContent = 'RECONNEXION...';
-            };
+            eventSource.onerror = function() { statusBadge.classList.add('status-disconnected'); statusText.textContent = 'RECONNEXION...'; };
         }
 
-        // Chargement initial via REST
-        fetch('/api/stats')
-            .then(res => res.json())
-            .then(data => renderStats(data))
-            .catch(err => console.error('Erreur chargement stats initiales:', err));
-
-        // Lancement du flux SSE
+        fetch('/api/stats').then(res => res.json()).then(data => renderStats(data)).catch(console.error);
         initSSE();
     </script>
 </body>

@@ -3,98 +3,193 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>⚔️ Panneau d'Attaques — CyBear Pentest</title>
+    <title>CyBear — Panneau d'Attaques</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-body: #070b14;
-            --bg-card: #0f172a;
-            --bg-card-hover: #162036;
-            --border: #1e293b;
-            --border-highlight: #334155;
-            --text-main: #f8fafc;
-            --text-muted: #94a3b8;
+            --bg: #ffffff;
+            --bg-alt: #f8f9fa;
+            --bg-card: #ffffff;
+            --border: #000000;
+            --text: #000000;
+            --text-muted: #4b5563;
+            --main: #a3e635;
             --critique: #ef4444;
-            --critique-bg: rgba(239, 68, 68, 0.15);
+            --critique-bg: #fee2e2;
             --haute: #f97316;
-            --haute-bg: rgba(249, 115, 22, 0.15);
-            --moyenne: #eab308;
-            --moyenne-bg: rgba(234, 179, 8, 0.15);
+            --haute-bg: #ffedd5;
+            --moyenne: #f59e0b;
+            --moyenne-bg: #fef3c7;
             --succes: #10b981;
-            --accent: #3b82f6;
-            --accent-glow: rgba(59, 130, 246, 0.25);
+            --succes-bg: #d1fae5;
+            --accent: #2563eb;
+            --accent-bg: #dbeafe;
+            --console-bg: #0a0a0f;
+            --console-text: #a3e635;
+            --shadow: 4px 4px 0px #000000;
+            --shadow-sm: 2px 2px 0px #000000;
+            --grid: rgba(0, 0, 0, 0.08);
+        }
+
+        [data-theme="dark"] {
+            --bg: #050510;
+            --bg-alt: #101018;
+            --bg-card: #15151d;
+            --border: #ffffff;
+            --text: #f8fafc;
+            --text-muted: #a1a1aa;
+            --main: #a3e635;
+            --critique: #f87171;
+            --critique-bg: rgba(239, 68, 68, 0.18);
+            --haute: #fb923c;
+            --haute-bg: rgba(249, 115, 22, 0.18);
+            --moyenne: #fbbf24;
+            --moyenne-bg: rgba(245, 158, 11, 0.18);
+            --succes: #34d399;
+            --succes-bg: rgba(16, 185, 129, 0.18);
+            --accent: #60a5fa;
+            --accent-bg: rgba(59, 130, 246, 0.18);
+            --console-bg: #000000;
+            --console-text: #22c55e;
+            --shadow: 4px 4px 0px #ffffff;
+            --shadow-sm: 2px 2px 0px #ffffff;
+            --grid: rgba(255, 255, 255, 0.06);
         }
 
         * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
         }
 
         body {
-            background-color: var(--bg-body);
-            color: var(--text-main);
+            background-color: var(--bg);
+            background-image: 
+                linear-gradient(to right, var(--grid) 1px, transparent 1px),
+                linear-gradient(to bottom, var(--grid) 1px, transparent 1px);
+            background-size: 40px 40px;
+            color: var(--text);
             min-height: 100vh;
             padding: 20px;
+            transition: background 0.3s ease, color 0.3s ease;
         }
 
-        /* ── Header ── */
         header {
             display: flex;
             justify-content: space-between;
             align-items: center;
             padding: 16px 24px;
-            background: linear-gradient(90deg, #0f172a 0%, #1a0b2e 100%);
-            border: 1px solid var(--border);
-            border-radius: 14px;
+            background: var(--bg-card);
+            border: 3px solid var(--border);
+            border-radius: 8px;
             margin-bottom: 24px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+            box-shadow: var(--shadow);
+            flex-wrap: wrap;
+            gap: 12px;
         }
 
         .header-brand {
             display: flex;
             align-items: center;
             gap: 14px;
+            flex-wrap: wrap;
         }
 
         .brand-title {
-            font-size: 1.5rem;
-            font-weight: 700;
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 1.8rem;
+            font-weight: 800;
             letter-spacing: -0.5px;
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 10px;
+        }
+
+        .brand-logo {
+            display: flex;
+            flex-direction: column;
+            background: var(--critique);
+            color: #ffffff;
+            padding: 8px 12px;
+            border: 2px solid var(--border);
+            border-radius: 6px;
+            box-shadow: var(--shadow-sm);
+            line-height: 0.9;
+        }
+
+        .brand-logo span {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 1.25rem;
+            font-weight: 800;
         }
 
         .brand-tag {
-            font-size: 0.72rem;
-            background: rgba(239, 68, 68, 0.2);
-            color: #f87171;
-            padding: 3px 10px;
-            border-radius: 20px;
-            border: 1px solid rgba(239, 68, 68, 0.4);
+            font-size: 0.7rem;
+            background: var(--critique-bg);
+            color: var(--critique);
+            padding: 4px 12px;
+            border: 2px solid var(--border);
+            border-radius: 6px;
             text-transform: uppercase;
-            font-weight: 600;
+            font-weight: 800;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
         }
 
         .btn-back {
             display: inline-flex;
             align-items: center;
             gap: 6px;
-            padding: 8px 18px;
-            border-radius: 8px;
-            background: rgba(59, 130, 246, 0.12);
-            border: 1px solid rgba(59, 130, 246, 0.35);
-            color: #60a5fa;
-            font-weight: 600;
+            padding: 8px 16px;
+            border-radius: 6px;
+            background: var(--accent-bg);
+            border: 2px solid var(--border);
+            color: var(--accent);
+            font-weight: 800;
             font-size: 0.85rem;
             text-decoration: none;
-            transition: background 0.2s, border-color 0.2s;
+            transition: all 0.2s ease;
+            box-shadow: var(--shadow-sm);
+            text-transform: uppercase;
         }
 
         .btn-back:hover {
-            background: rgba(59, 130, 246, 0.24);
-            border-color: rgba(59, 130, 246, 0.6);
+            background: var(--accent);
+            color: #ffffff;
+            transform: translate(-2px, -2px);
+            box-shadow: 4px 4px 0px var(--border);
+        }
+
+        .btn-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 38px;
+            height: 38px;
+            border-radius: 6px;
+            background: var(--bg-card);
+            border: 2px solid var(--border);
+            color: var(--text);
+            font-weight: 800;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: var(--shadow-sm);
+            text-decoration: none;
+        }
+
+        .btn-icon:hover {
+            transform: translate(-2px, -2px);
+            box-shadow: 4px 4px 0px var(--border);
         }
 
         .btn-launch-all {
@@ -102,20 +197,21 @@
             align-items: center;
             gap: 8px;
             padding: 8px 18px;
-            border-radius: 8px;
-            background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%);
-            border: 1px solid rgba(239, 68, 68, 0.6);
+            border-radius: 6px;
+            background: var(--critique);
+            border: 2px solid var(--border);
             color: #ffffff;
-            font-weight: 700;
-            font-size: 0.85rem;
+            font-weight: 800;
+            font-size: 0.9rem;
             cursor: pointer;
-            transition: all 0.2s;
-            box-shadow: 0 0 15px rgba(239, 68, 68, 0.3);
+            transition: all 0.2s ease;
+            box-shadow: var(--shadow-sm);
+            text-transform: uppercase;
         }
 
-        .btn-launch-all:hover {
-            background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
-            box-shadow: 0 0 20px rgba(239, 68, 68, 0.5);
+        .btn-launch-all:hover:not(:disabled) {
+            transform: translate(-2px, -2px);
+            box-shadow: 4px 4px 0px var(--border);
         }
 
         .btn-launch-all:disabled {
@@ -123,773 +219,573 @@
             cursor: not-allowed;
         }
 
-        /* ── Section titles ── */
         .section-title {
-            font-size: 1.05rem;
-            font-weight: 700;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            letter-spacing: 1px;
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 1.3rem;
+            font-weight: 800;
             margin-bottom: 16px;
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
 
-        /* ── Attack grid ── */
         .attack-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
             gap: 20px;
             margin-bottom: 32px;
         }
 
         .attack-card {
             background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: 14px;
+            border: 3px solid var(--border);
+            border-radius: 8px;
             padding: 20px;
             position: relative;
-            transition: border-color 0.2s, box-shadow 0.2s;
-            overflow: hidden;
-        }
-
-        .attack-card:hover {
-            border-color: var(--border-highlight);
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-        }
-
-        /* Overlay "non implémenté" */
-        .overlay-wip {
-            position: absolute;
-            inset: 0;
-            background: rgba(7, 11, 20, 0.72);
-            border-radius: 14px;
+            transition: all 0.2s ease;
+            box-shadow: var(--shadow);
             display: flex;
-            align-items: center;
-            justify-content: center;
-            backdrop-filter: blur(1px);
-            z-index: 10;
+            flex-direction: column;
+            gap: 12px;
         }
 
-        .wip-badge {
-            background: rgba(234, 179, 8, 0.15);
-            border: 1px solid rgba(234, 179, 8, 0.4);
-            color: var(--moyenne);
-            padding: 8px 18px;
-            border-radius: 8px;
-            font-weight: 700;
-            font-size: 0.9rem;
-            letter-spacing: 0.5px;
+        .attack-card:hover:not(.disabled) {
+            transform: translate(-2px, -2px);
+            box-shadow: 6px 6px 0px var(--border);
         }
 
         .card-header-row {
             display: flex;
             justify-content: space-between;
             align-items: flex-start;
-            margin-bottom: 10px;
-            gap: 8px;
+            gap: 10px;
         }
 
         .attack-name {
-            font-size: 1.1rem;
-            font-weight: 700;
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 1.2rem;
+            font-weight: 800;
         }
 
         .sev-badge {
             font-size: 0.7rem;
-            font-weight: 700;
+            font-weight: 800;
             padding: 3px 10px;
-            border-radius: 20px;
+            border: 2px solid var(--border);
+            border-radius: 6px;
             text-transform: uppercase;
             white-space: nowrap;
+            box-shadow: var(--shadow-sm);
         }
 
-        .sev-CRITIQUE {
-            background: var(--critique-bg);
-            color: var(--critique);
-            border: 1px solid rgba(239, 68, 68, 0.35);
-        }
-
-        .sev-HAUTE {
-            background: var(--haute-bg);
-            color: var(--haute);
-            border: 1px solid rgba(249, 115, 22, 0.35);
-        }
-
-        .sev-MOYENNE {
-            background: var(--moyenne-bg);
-            color: var(--moyenne);
-            border: 1px solid rgba(234, 179, 8, 0.35);
-        }
+        .sev-CRITIQUE { background: var(--critique); color: #ffffff; }
+        .sev-HAUTE { background: var(--haute); color: #ffffff; }
+        .sev-MOYENNE { background: var(--moyenne); color: #000000; }
 
         .attack-description {
-            font-size: 0.85rem;
+            font-size: 0.9rem;
             color: var(--text-muted);
-            margin-bottom: 14px;
-            line-height: 1.4;
+            line-height: 1.6;
+            font-weight: 500;
         }
 
         .attack-meta {
             display: flex;
             align-items: center;
             gap: 8px;
-            margin-bottom: 16px;
-            font-size: 0.82rem;
-            color: var(--text-muted);
-        }
-
-        .meta-label {
-            color: #64748b;
-        }
-
-        .meta-value {
-            font-family: monospace;
-            color: #93c5fd;
+            flex-wrap: wrap;
             font-size: 0.85rem;
         }
 
-        .card-footer {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 12px;
+        .meta-label {
+            font-weight: 800;
+            color: var(--text);
+        }
+
+        .meta-value {
+            font-family: 'Courier New', monospace;
+            color: var(--accent);
+            font-size: 0.85rem;
+            background: var(--accent-bg);
+            padding: 2px 8px;
+            border: 1.5px solid var(--border);
+            border-radius: 6px;
+            font-weight: 800;
         }
 
         .btn-launch {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            padding: 8px 20px;
-            border-radius: 8px;
-            background: rgba(239, 68, 68, 0.15);
-            border: 1px solid rgba(239, 68, 68, 0.4);
-            color: #f87171;
-            font-weight: 700;
-            font-size: 0.88rem;
+            width: 100%;
+            padding: 10px 16px;
+            border-radius: 6px;
+            background: var(--main);
+            border: 2px solid var(--border);
+            color: #000000;
+            font-weight: 800;
+            font-size: 0.9rem;
             cursor: pointer;
-            transition: background 0.2s, border-color 0.2s, transform 0.1s;
+            transition: all 0.2s ease;
+            box-shadow: var(--shadow-sm);
+            text-transform: uppercase;
         }
 
         .btn-launch:hover:not(:disabled) {
-            background: rgba(239, 68, 68, 0.28);
-            border-color: rgba(239, 68, 68, 0.7);
-            transform: translateY(-1px);
+            background: #bef264;
+            transform: translate(-2px, -2px);
+            box-shadow: 4px 4px 0px var(--border);
         }
 
         .btn-launch:disabled {
-            opacity: 0.4;
+            opacity: 0.5;
             cursor: not-allowed;
         }
 
-        /* Status indicator */
         .status-indicator {
-            display: inline-flex;
+            display: flex;
             align-items: center;
-            gap: 6px;
-            font-size: 0.75rem;
-            font-weight: 700;
-            padding: 4px 10px;
-            border-radius: 20px;
+            gap: 8px;
+            font-size: 0.82rem;
+            font-weight: 800;
+            text-transform: uppercase;
+        }
+
+        .status-dot-sm {
+            width: 9px;
+            height: 9px;
+            border-radius: 50%;
+            border: 1.5px solid var(--border);
+        }
+
+        .status-idle .status-dot-sm { background: var(--text-muted); }
+        .status-running .status-dot-sm { background: var(--moyenne); animation: pulse 1s infinite; }
+        .status-done .status-dot-sm { background: var(--succes); }
+
+        #global-status {
+            margin-bottom: 24px;
+            padding: 12px 18px;
+            background: var(--bg-card);
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            box-shadow: var(--shadow-sm);
+            font-weight: 800;
+            display: none;
+            align-items: center;
+            gap: 10px;
+        }
+
+        #global-status.active {
+            display: flex;
+            background: var(--accent-bg);
+            color: var(--accent);
+        }
+
+        .console-panel {
+            margin-top: 32px;
+            background: var(--console-bg);
+            border: 3px solid var(--border);
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+            overflow: hidden;
+        }
+
+        .console-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 18px;
+            background: linear-gradient(90deg, rgba(163, 230, 53, 0.25) 0%, transparent 100%);
+            border-bottom: 2px solid var(--border);
+        }
+
+        .console-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--console-text);
+            font-weight: 800;
+            font-family: 'Space Grotesk', sans-serif;
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }
 
-        .status-IDLE {
-            background: rgba(100, 116, 139, 0.12);
-            border: 1px solid rgba(100, 116, 139, 0.3);
-            color: #64748b;
+        .console-dots {
+            display: flex;
+            gap: 6px;
         }
 
-        .status-EN_COURS {
-            background: rgba(59, 130, 246, 0.12);
-            border: 1px solid rgba(59, 130, 246, 0.4);
-            color: #60a5fa;
-            animation: pulse-status 1.5s infinite;
-        }
-
-        .status-TERMINE {
-            background: rgba(16, 185, 129, 0.12);
-            border: 1px solid rgba(16, 185, 129, 0.3);
-            color: var(--succes);
-        }
-
-        .status-dot-small {
-            width: 6px;
-            height: 6px;
+        .console-dot {
+            width: 10px;
+            height: 10px;
             border-radius: 50%;
-            background: currentColor;
+            border: 1px solid rgba(255,255,255,0.6);
         }
 
-        @keyframes pulse-status {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.55; }
-        }
+        .dot-red { background: #f87171; }
+        .dot-yellow { background: #fbbf24; }
+        .dot-green { background: #22c55e; }
 
-        /* ── Accès SSH valides ── */
-        .ssh-valid-box {
-            margin-top: 14px;
-            padding: 12px;
-            background: rgba(16, 185, 129, 0.08);
-            border: 1px solid rgba(16, 185, 129, 0.35);
-            border-radius: 10px;
-        }
-
-        .ssh-valid-header {
-            font-size: 0.82rem;
-            font-weight: 700;
-            color: #34d399;
-            margin-bottom: 8px;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .ssh-cred-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: rgba(15, 23, 42, 0.7);
-            border: 1px solid rgba(16, 185, 129, 0.2);
-            padding: 8px 12px;
-            border-radius: 8px;
-            margin-bottom: 6px;
-            gap: 8px;
-        }
-
-        .ssh-cred-info {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-family: monospace;
-            font-size: 0.88rem;
-            color: #f1f5f9;
-        }
-
-        .ssh-badge-user {
-            background: rgba(59, 130, 246, 0.2);
-            color: #60a5fa;
-            padding: 2px 8px;
-            border-radius: 6px;
-            font-weight: 700;
-        }
-
-        .btn-ssh-connect {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            padding: 6px 14px;
-            border-radius: 6px;
-            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-            border: 1px solid rgba(16, 185, 129, 0.6);
-            color: #ffffff;
-            font-weight: 700;
-            font-size: 0.8rem;
-            cursor: pointer;
-            transition: all 0.2s;
-            box-shadow: 0 0 10px rgba(16, 185, 129, 0.25);
-        }
-
-        .btn-ssh-connect:hover {
-            background: linear-gradient(135deg, #059669 0%, #047857 100%);
-            box-shadow: 0 0 15px rgba(16, 185, 129, 0.45);
-            transform: translateY(-1px);
-        }
-
-        /* ── Log terminal ── */
-        .log-section {
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: 14px;
-            overflow: hidden;
-            margin-bottom: 24px;
-        }
-
-        .log-titlebar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 12px 20px;
-            background: #0a0f1e;
-            border-bottom: 1px solid var(--border);
-        }
-
-        .log-title {
-            font-size: 0.88rem;
-            font-weight: 700;
-            font-family: monospace;
-            color: var(--succes);
-            letter-spacing: 1px;
-        }
-
-        .log-controls {
-            display: flex;
-            gap: 6px;
-        }
-
-        .log-dot {
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-        }
-
-        .log-body {
-            padding: 16px 20px;
-            background: #020408;
-            min-height: 200px;
-            max-height: 420px;
+        .console-body {
+            padding: 18px 24px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            color: var(--console-text);
+            line-height: 1.8;
+            max-height: 320px;
             overflow-y: auto;
-            font-family: "JetBrains Mono", "Fira Code", "Cascadia Code", monospace;
-            font-size: 0.82rem;
-            line-height: 1.6;
-            color: #a3e635;
+        }
+
+        .console-body::-webkit-scrollbar {
+            width: 10px;
+        }
+
+        .console-body::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .console-body::-webkit-scrollbar-thumb {
+            background: rgba(163, 230, 53, 0.4);
+        }
+
+        .console-line {
             white-space: pre-wrap;
             word-break: break-word;
         }
 
-        .log-body::-webkit-scrollbar {
-            width: 6px;
-        }
+        .console-line.dim { opacity: 0.6; }
+        .console-line.accent { color: #60a5fa; }
+        .console-line.warn { color: #fbbf24; }
+        .console-line.err { color: #f87171; }
 
-        .log-body::-webkit-scrollbar-track {
-            background: #020408;
-        }
-
-        .log-body::-webkit-scrollbar-thumb {
-            background: #1e293b;
-            border-radius: 3px;
-        }
-
-        .log-placeholder {
-            color: #334155;
-            font-style: italic;
-        }
-
-        /* Notification toast */
-        #toast {
-            position: fixed;
-            bottom: 28px;
-            right: 28px;
-            padding: 12px 22px;
-            border-radius: 10px;
-            font-weight: 600;
-            font-size: 0.88rem;
-            z-index: 9999;
-            opacity: 0;
-            transform: translateY(10px);
-            transition: opacity 0.3s, transform 0.3s;
-            pointer-events: none;
-        }
-
-        #toast.show {
-            opacity: 1;
-            transform: translateY(0);
-        }
-
-        #toast.toast-success {
-            background: rgba(16, 185, 129, 0.2);
-            border: 1px solid rgba(16, 185, 129, 0.5);
-            color: var(--succes);
-        }
-
-        #toast.toast-error {
-            background: rgba(239, 68, 68, 0.2);
-            border: 1px solid rgba(239, 68, 68, 0.5);
-            color: var(--critique);
+        footer {
+            text-align: center;
+            padding: 20px;
+            margin-top: 40px;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            font-weight: 700;
         }
 
         @keyframes pulse {
-            0%, 100% { box-shadow: 0 0 6px currentColor; }
-            50% { box-shadow: 0 0 14px currentColor; }
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
         }
     </style>
 </head>
 <body>
-
-    <!-- ── Header ── -->
     <header>
         <div class="header-brand">
-            <div class="brand-title">⚔️ Panneau d'Attaques</div>
-            <span class="brand-tag">CyBear Pentest</span>
+            <div class="brand-title">
+                <div class="brand-logo">
+                    <span>CyBear</span>
+                    <span>ATTACK</span>
+                </div>
+                Panneau d'Attaques
+            </div>
+            <span class="brand-tag">Module Pentest Automatisé</span>
         </div>
-        <div style="display: flex; gap: 12px; align-items: center;">
-            <button class="btn-launch-all" id="btn-all_attacks" onclick="lancerAttaque('all_attacks')">
-                🚀 Lancer Toutes les Attaques
+        <div class="header-actions">
+            <a href="/" class="btn-back">← Retour au SIEM</a>
+            <a href="/terminal" class="btn-back" style="background: var(--succes-bg); color: var(--succes);">💻 Terminal SSH</a>
+            <button class="btn-icon" id="theme-toggle" title="Basculer thème">🌙</button>
+            <button class="btn-launch-all" id="btn-launch-all" onclick="lancerTout()">
+                🚀 Lancer toutes les attaques
             </button>
-            <a href="/" class="btn-back">← Retour SIEM</a>
         </div>
     </header>
 
-    <!-- ── Grille des attaques ── -->
-    <div class="section-title">🗂️ Modules d'attaque disponibles</div>
-    <div class="attack-grid" id="attackGrid">
-
-        <!-- 1. Scan de ports TCP — DISPONIBLE ✅ -->
-        <div class="attack-card" id="card-scan_ports">
-            <div class="card-header-row">
-                <div class="attack-name">🔍 Scan de Ports TCP</div>
-                <span class="sev-badge sev-MOYENNE">MOYENNE</span>
-            </div>
-            <p class="attack-description">Scan TCP Connect sur les ports sensibles (21, 22, 23, 80…). Déclenche la détection SCAN_PORTS du NIDS.</p>
-            <div class="attack-meta">
-                <span class="meta-label">Cible :</span>
-                <span class="meta-value">metasploitable:21-23,80,3306…</span>
-            </div>
-            <div class="card-footer">
-                <button class="btn-launch" id="btn-scan_ports" onclick="lancerAttaque('scan_ports')">▶ Lancer</button>
-                <span class="status-indicator status-IDLE" id="status-scan_ports">
-                    <span class="status-dot-small"></span> IDLE
-                </span>
-            </div>
-        </div>
-
-        <!-- 2. Scan XMAS — DISPONIBLE ✅ -->
-        <div class="attack-card" id="card-xmas_scan">
-            <div class="card-header-row">
-                <div class="attack-name">🎄 Scan Furtif XMAS</div>
-                <span class="sev-badge sev-HAUTE">HAUTE</span>
-            </div>
-            <p class="attack-description">Envoi de paquets TCP avec drapeaux FIN, PSH, URG (0x29) pour tester la détection de signatures non conformes.</p>
-            <div class="attack-meta">
-                <span class="meta-label">Cible :</span>
-                <span class="meta-value">metasploitable — TCP flags FPU</span>
-            </div>
-            <div class="card-footer">
-                <button class="btn-launch" id="btn-xmas_scan" onclick="lancerAttaque('xmas_scan')">▶ Lancer</button>
-                <span class="status-indicator status-IDLE" id="status-xmas_scan">
-                    <span class="status-dot-small"></span> IDLE
-                </span>
-            </div>
-        </div>
-
-        <!-- 3. Scan NULL — DISPONIBLE ✅ -->
-        <div class="attack-card" id="card-null_scan">
-            <div class="card-header-row">
-                <div class="attack-name">👻 Scan Furtif NULL</div>
-                <span class="sev-badge sev-HAUTE">HAUTE</span>
-            </div>
-            <p class="attack-description">Envoi de paquets TCP sans aucun drapeau (flags=0) pour évasion de détection d'après la RFC 793.</p>
-            <div class="attack-meta">
-                <span class="meta-label">Cible :</span>
-                <span class="meta-value">metasploitable — TCP flags 0</span>
-            </div>
-            <div class="card-footer">
-                <button class="btn-launch" id="btn-null_scan" onclick="lancerAttaque('null_scan')">▶ Lancer</button>
-                <span class="status-indicator status-IDLE" id="status-null_scan">
-                    <span class="status-dot-small"></span> IDLE
-                </span>
-            </div>
-        </div>
-
-        <!-- 4. Brute Force SSH — DISPONIBLE ✅ -->
-        <div class="attack-card" id="card-brute_force_ssh">
-            <div class="card-header-row">
-                <div class="attack-name">🔐 Brute Force SSH</div>
-                <span class="sev-badge sev-CRITIQUE">CRITIQUE</span>
-            </div>
-            <p class="attack-description">Tentatives de connexion SSH successives avec un dictionnaire de credentials afin de déclencher le seuil BRUTE_FORCE du NIDS.</p>
-            <div class="attack-meta">
-                <span class="meta-label">Cible :</span>
-                <span class="meta-value">metasploitable:22</span>
-            </div>
-
-            <!-- Zone d'accès valides découverts -->
-            <div id="ssh-valid-box" class="ssh-valid-box" style="display: none;">
-                <div class="ssh-valid-header">
-                    <span>🔑 Accès validé(s) découvert(s) :</span>
-                </div>
-                <div id="ssh-credentials-list"></div>
-            </div>
-
-            <div class="card-footer" style="margin-top: 14px;">
-                <button class="btn-launch" id="btn-brute_force_ssh" onclick="lancerAttaque('brute_force_ssh')">▶ Lancer</button>
-                <span class="status-indicator status-IDLE" id="status-brute_force_ssh">
-                    <span class="status-dot-small"></span> IDLE
-                </span>
-            </div>
-        </div>
-
-        <!-- 5. DoS Flood — NON IMPLÉMENTÉ -->
-        <div class="attack-card">
-            <div class="overlay-wip"><span class="wip-badge">🚧 Non implémenté</span></div>
-            <div class="card-header-row">
-                <div class="attack-name">💥 DoS Flood</div>
-                <span class="sev-badge sev-CRITIQUE">CRITIQUE</span>
-            </div>
-            <p class="attack-description">Inondation SYN volumétrique pour saturer la pile réseau et déclencher la détection DOS du NIDS.</p>
-            <div class="attack-meta">
-                <span class="meta-label">Cible :</span>
-                <span class="meta-value">metasploitable:22</span>
-            </div>
-        </div>
-
-        <!-- 6. SQL Injection — NON IMPLÉMENTÉ -->
-        <div class="attack-card">
-            <div class="overlay-wip"><span class="wip-badge">🚧 Non implémenté</span></div>
-            <div class="card-header-row">
-                <div class="attack-name">💉 SQL Injection</div>
-                <span class="sev-badge sev-CRITIQUE">CRITIQUE</span>
-            </div>
-            <p class="attack-description">Injection de payloads SQL malveillants via l'application DVWA hébergée sur Metasploitable.</p>
-            <div class="attack-meta">
-                <span class="meta-label">Cible :</span>
-                <span class="meta-value">metasploitable:80/dvwa</span>
-            </div>
-        </div>
-
-        <!-- 7. XSS — NON IMPLÉMENTÉ -->
-        <div class="attack-card">
-            <div class="overlay-wip"><span class="wip-badge">🚧 Non implémenté</span></div>
-            <div class="card-header-row">
-                <div class="attack-name">🕷️ XSS</div>
-                <span class="sev-badge sev-HAUTE">HAUTE</span>
-            </div>
-            <p class="attack-description">Injection de scripts JavaScript via les champs de formulaire de DVWA pour tester la détection XSS.</p>
-            <div class="attack-meta">
-                <span class="meta-label">Cible :</span>
-                <span class="meta-value">metasploitable:80/dvwa</span>
-            </div>
-        </div>
-
-        <!-- 8. Path Traversal — NON IMPLÉMENTÉ -->
-        <div class="attack-card">
-            <div class="overlay-wip"><span class="wip-badge">🚧 Non implémenté</span></div>
-            <div class="card-header-row">
-                <div class="attack-name">📂 Path Traversal</div>
-                <span class="sev-badge sev-HAUTE">HAUTE</span>
-            </div>
-            <p class="attack-description">Tentatives de traversée de répertoires (../../../etc/passwd) via les endpoints HTTP de Metasploitable.</p>
-            <div class="attack-meta">
-                <span class="meta-label">Cible :</span>
-                <span class="meta-value">metasploitable:80</span>
-            </div>
-        </div>
-
-    </div><!-- /.attack-grid -->
-
-    <!-- ── Log terminal ── -->
-    <div class="section-title">🖥️ Log d'attaque en temps réel</div>
-    <div class="log-section">
-        <div class="log-titlebar">
-            <span class="log-title">▶ ATTACK_LOG — /tmp/attack_*.log</span>
-            <div class="log-controls">
-                <div class="log-dot" style="background:#ef4444;"></div>
-                <div class="log-dot" style="background:#f59e0b;"></div>
-                <div class="log-dot" style="background:#10b981;"></div>
-            </div>
-        </div>
-        <div class="log-body" id="logBody">
-            <span class="log-placeholder">Aucune attaque lancée — les sorties apparaîtront ici en temps réel.</span>
-        </div>
+    <div id="global-status">
+        <span>⚡</span>
+        <span id="global-status-text">Prêt</span>
     </div>
 
-    <!-- Toast notification -->
-    <div id="toast"></div>
+    <h2 class="section-title">⚡ Attaques Réseau</h2>
+    <div class="attack-grid">
+        <article class="attack-card" data-attack="SCAN_PORTS">
+            <div class="card-header-row">
+                <div class="attack-name">🔍 Scan de Ports</div>
+                <span class="sev-badge sev-MOYENNE">Moyenne</span>
+            </div>
+            <p class="attack-description">Scan SYN/CONNECT pour découvrir les ports ouverts sur la cible et cartographier les services.</p>
+            <div class="attack-meta">
+                <span class="meta-label">Script</span>
+                <span class="meta-value">scripts/scan_ports.py</span>
+            </div>
+            <button class="btn-launch" onclick="lancerAttaque('SCAN_PORTS', this)">Lancer l'attaque</button>
+            <div class="status-indicator status-idle">
+                <span class="status-dot-sm"></span>
+                <span class="status-text">En attente</span>
+            </div>
+        </article>
+
+        <article class="attack-card" data-attack="XMAS_SCAN">
+            <div class="card-header-row">
+                <div class="attack-name">🎄 XMAS Scan</div>
+                <span class="sev-badge sev-HAUTE">Haute</span>
+            </div>
+            <p class="attack-description">Scan furtif avec les flags FIN/URG/PSH pour tester le comportement des pare-feux.</p>
+            <div class="attack-meta">
+                <span class="meta-label">Script</span>
+                <span class="meta-value">scripts/xmas_scan.py</span>
+            </div>
+            <button class="btn-launch" onclick="lancerAttaque('XMAS_SCAN', this)">Lancer l'attaque</button>
+            <div class="status-indicator status-idle">
+                <span class="status-dot-sm"></span>
+                <span class="status-text">En attente</span>
+            </div>
+        </article>
+
+        <article class="attack-card" data-attack="NULL_SCAN">
+            <div class="card-header-row">
+                <div class="attack-name">⚫ NULL Scan</div>
+                <span class="sev-badge sev-HAUTE">Haute</span>
+            </div>
+            <p class="attack-description">Scan TCP sans aucun flag pour tenter de contourner certains mécanismes de détection.</p>
+            <div class="attack-meta">
+                <span class="meta-label">Script</span>
+                <span class="meta-value">scripts/null_scan.py</span>
+            </div>
+            <button class="btn-launch" onclick="lancerAttaque('NULL_SCAN', this)">Lancer l'attaque</button>
+            <div class="status-indicator status-idle">
+                <span class="status-dot-sm"></span>
+                <span class="status-text">En attente</span>
+            </div>
+        </article>
+    </div>
+
+    <h2 class="section-title">🔥 Attaques Applicatives</h2>
+    <div class="attack-grid">
+        <article class="attack-card" data-attack="BRUTE_FORCE">
+            <div class="card-header-row">
+                <div class="attack-name">🔨 Brute Force SSH</div>
+                <span class="sev-badge sev-CRITIQUE">Critique</span>
+            </div>
+            <p class="attack-description">Tentatives d'authentification SSH à partir d'un dictionnaire de mots de passe.</p>
+            <div class="attack-meta">
+                <span class="meta-label">Script</span>
+                <span class="meta-value">scripts/brute_force_ssh.py</span>
+            </div>
+            <button class="btn-launch" onclick="lancerAttaque('BRUTE_FORCE', this)">Lancer l'attaque</button>
+            <div class="status-indicator status-idle">
+                <span class="status-dot-sm"></span>
+                <span class="status-text">En attente</span>
+            </div>
+        </article>
+
+        <article class="attack-card" data-attack="DOS">
+            <div class="card-header-row">
+                <div class="attack-name">💥 Déni de Service</div>
+                <span class="sev-badge sev-CRITIQUE">Critique</span>
+            </div>
+            <p class="attack-description">Inondation SYN pour saturer les connexions et tester la résilience de la cible.</p>
+            <div class="attack-meta">
+                <span class="meta-label">Script</span>
+                <span class="meta-value">scripts/dos_attack.py</span>
+            </div>
+            <button class="btn-launch" onclick="lancerAttaque('DOS', this)">Lancer l'attaque</button>
+            <div class="status-indicator status-idle">
+                <span class="status-dot-sm"></span>
+                <span class="status-text">En attente</span>
+            </div>
+        </article>
+
+        <article class="attack-card" data-attack="SQL_INJECTION">
+            <div class="card-header-row">
+                <div class="attack-name">💉 SQL Injection</div>
+                <span class="sev-badge sev-CRITIQUE">Critique</span>
+            </div>
+            <p class="attack-description">Tentatives d'injection SQL sur les endpoints vulnérables de l'application web.</p>
+            <div class="attack-meta">
+                <span class="meta-label">Script</span>
+                <span class="meta-value">scripts/sql_injection.py</span>
+            </div>
+            <button class="btn-launch" onclick="lancerAttaque('SQL_INJECTION', this)">Lancer l'attaque</button>
+            <div class="status-indicator status-idle">
+                <span class="status-dot-sm"></span>
+                <span class="status-text">En attente</span>
+            </div>
+        </article>
+
+        <article class="attack-card" data-attack="XSS">
+            <div class="card-header-row">
+                <div class="attack-name">⚡ Cross-Site Scripting</div>
+                <span class="sev-badge sev-HAUTE">Haute</span>
+            </div>
+            <p class="attack-description">Exploitation de failles XSS pour tester le filtrage et la validation des entrées.</p>
+            <div class="attack-meta">
+                <span class="meta-label">Script</span>
+                <span class="meta-value">scripts/xss_attack.py</span>
+            </div>
+            <button class="btn-launch" onclick="lancerAttaque('XSS', this)">Lancer l'attaque</button>
+            <div class="status-indicator status-idle">
+                <span class="status-dot-sm"></span>
+                <span class="status-text">En attente</span>
+            </div>
+        </article>
+
+        <article class="attack-card" data-attack="PATH_TRAVERSAL">
+            <div class="card-header-row">
+                <div class="attack-name">📁 Path Traversal</div>
+                <span class="sev-badge sev-HAUTE">Haute</span>
+            </div>
+            <p class="attack-description">Tentative d'accès à des fichiers en dehors du répertoire racine web.</p>
+            <div class="attack-meta">
+                <span class="meta-label">Script</span>
+                <span class="meta-value">scripts/path_traversal.py</span>
+            </div>
+            <button class="btn-launch" onclick="lancerAttaque('PATH_TRAVERSAL', this)">Lancer l'attaque</button>
+            <div class="status-indicator status-idle">
+                <span class="status-dot-sm"></span>
+                <span class="status-text">En attente</span>
+            </div>
+        </article>
+    </div>
+
+    <section class="console-panel">
+        <div class="console-header">
+            <div class="console-title">
+                <div class="console-dots">
+                    <span class="console-dot dot-red"></span>
+                    <span class="console-dot dot-yellow"></span>
+                    <span class="console-dot dot-green"></span>
+                </div>
+                <span>CYBEAR // CONSOLE D'EXÉCUTION</span>
+            </div>
+            <span style="color: var(--console-text); font-size: 0.8rem; font-weight: 700;">temps réel</span>
+        </div>
+        <div class="console-body" id="console-body">
+            <div class="console-line dim">[INIT] Système prêt. En attente de lancement d'attaque...</div>
+            <div class="console-line dim">[INFO] Sélectionnez une attaque ou exécutez le scénario complet.</div>
+        </div>
+    </section>
+
+    <footer>
+        CyBear SIEM — Module d'Attaque Automatisé | Neobrutal Design • Dark Mode Ready
+    </footer>
 
     <script>
-        // ── Constantes ──────────────────────────────────────────────────────
-        const POLL_INTERVAL_MS = 1000;
+        const attaques = ['SCAN_PORTS', 'XMAS_SCAN', 'NULL_SCAN', 'BRUTE_FORCE', 'DOS', 'SQL_INJECTION', 'XSS', 'PATH_TRAVERSAL'];
+        let enCours = false;
 
-        // Attaques qui ont un bouton actif côté JS
-        const ATTAQUES_ACTIVES = [
-            'all_attacks',
-            'scan_ports',
-            'xmas_scan',
-            'null_scan',
-            'brute_force_ssh',
-        ];
+        const themeToggle = document.getElementById('theme-toggle');
+        const root = document.documentElement;
+        const savedTheme = localStorage.getItem('cybear-theme') || 'light';
+        root.setAttribute('data-theme', savedTheme);
+        themeToggle.textContent = savedTheme === 'dark' ? '☀️' : '🌙';
+        themeToggle.addEventListener('click', () => {
+            const current = root.getAttribute('data-theme');
+            const next = current === 'dark' ? 'light' : 'dark';
+            root.setAttribute('data-theme', next);
+            localStorage.setItem('cybear-theme', next);
+            themeToggle.textContent = next === 'dark' ? '☀️' : '🌙';
+        });
 
-        // ── Utilitaires ─────────────────────────────────────────────────────
-        function showToast(message, type = 'success') {
-            const t = document.getElementById('toast');
-            t.textContent = message;
-            t.className = `show toast-${type}`;
-            setTimeout(() => { t.className = ''; }, 3500);
-        }
-
-        function setStatus(attaque, etat /* 'IDLE' | 'EN_COURS' | 'TERMINE' */) {
-            const el = document.getElementById(`status-${attaque}`);
-            const btn = document.getElementById(`btn-${attaque}`);
-            if (!el && !btn) return;
-
-            if (el) {
-                const labels = { IDLE: 'IDLE', EN_COURS: 'EN COURS', TERMINE: 'TERMINÉ' };
-                el.className = `status-indicator status-${etat}`;
-                el.innerHTML = `<span class="status-dot-small"></span> ${labels[etat] || etat}`;
-            }
-
-            if (btn) {
-                btn.disabled = (etat === 'EN_COURS');
-                if (etat === 'EN_COURS') {
-                    btn.textContent = '⏳ En cours…';
-                } else if (attaque === 'all_attacks') {
-                    btn.textContent = '🚀 Lancer Toutes les Attaques';
-                } else {
-                    btn.textContent = '▶ Lancer';
-                }
-            }
-        }
-
-        function appendLog(text) {
-            const body = document.getElementById('logBody');
-            // Retire le placeholder si présent
-            const ph = body.querySelector('.log-placeholder');
-            if (ph) ph.remove();
-
-            body.textContent += text;
+        function logConsole(message, cls='') {
+            const body = document.getElementById('console-body');
+            const line = document.createElement('div');
+            line.className = 'console-line ' + cls;
+            const ts = new Date().toLocaleTimeString('fr-FR');
+            line.textContent = `[${ts}] ${message}`;
+            body.appendChild(line);
             body.scrollTop = body.scrollHeight;
         }
 
-        function setLog(text) {
-            const body = document.getElementById('logBody');
-            body.textContent = text || '';
-            body.scrollTop = body.scrollHeight;
+        function setStatus(card, status) {
+            const indicator = card.querySelector('.status-indicator');
+            const text = card.querySelector('.status-text');
+            indicator.className = 'status-indicator status-' + status;
+            if (status === 'running') text.textContent = 'En cours';
+            else if (status === 'done') text.textContent = 'Terminé';
+            else text.textContent = 'En attente';
         }
 
-        // ── Lancer une attaque ───────────────────────────────────────────────
-        async function lancerAttaque(nom) {
-            const btn = document.getElementById(`btn-${nom}`);
-            if (btn) btn.disabled = true;
+        async function lancerAttaque(type, btn) {
+            const card = btn.closest('.attack-card');
+            btn.disabled = true;
+            setStatus(card, 'running');
+            
+            const globalStatus = document.getElementById('global-status');
+            const globalText = document.getElementById('global-status-text');
+            globalStatus.classList.add('active');
+            globalText.textContent = `Lancement de ${type}...`;
+            logConsole(`> DÉMARRAGE | ${type}`, 'accent');
+            logConsole(`> Connexion au moteur d'attaque CyBear...`, 'dim');
 
             try {
-                const resp = await fetch('/api/attaques/lancer', {
+                const resp = await fetch('/api/attack/launch', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ attaque: nom }),
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({attaque: type, attack_type: type})
                 });
                 const data = await resp.json();
-
-                if (!resp.ok) {
-                    showToast(`❌ ${data.error || 'Erreur inconnue'}`, 'error');
-                    if (btn) btn.disabled = false;
-                    return;
-                }
-
-                showToast(`✅ Attaque "${nom}" démarrée (PID ${data.pid})`, 'success');
-                setStatus(nom, 'EN_COURS');
-            } catch (err) {
-                showToast(`❌ Erreur réseau : ${err.message}`, 'error');
-                if (btn) btn.disabled = false;
-            }
-        }
-
-        // ── Connexion SSH vers accès découverts ──────────────────────────────
-        async function connecterSSH(utilisateur, motDePasse) {
-            try {
-                showToast(`🔌 Ouverture du terminal SSH pour ${utilisateur}…`, 'success');
-
-                const resp = await fetch('/api/attaques/ssh_connect', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ utilisateur, mot_de_passe: motDePasse }),
-                });
-                const data = await resp.json();
-
-                if (!resp.ok || !data.token) {
-                    showToast(`❌ ${data.error || 'Impossible de démarrer la session SSH'}`, 'error');
-                    return;
-                }
-
-                const label  = encodeURIComponent(`${utilisateur}@${data.cible}`);
-                const url    = `/terminal?token=${data.token}&label=${label}`;
-                const specs  = 'width=960,height=620,resizable=yes,scrollbars=no,toolbar=no,menubar=no,location=no,status=no';
-                const fenetre = window.open(url, `ssh_${utilisateur}_${Date.now()}`, specs);
-
-                if (!fenetre) {
-                    // Popup bloqué : fallback — log + lien cliquable
-                    appendLog(`\n[*] Terminal SSH disponible (popup bloqué) : ${url}\n`);
-                    showToast('⚠️ Popup bloqué. Autorisez les popups pour ce site ou cliquez sur le lien dans le log.', 'error');
+                if (data.success || resp.ok) {
+                    logConsole(`> Succès: ${type} déclenché avec succès`, '');
+                    logConsole(`> Analyse en cours, surveillance NIDS active...`, 'dim');
+                    setTimeout(() => {
+                        setStatus(card, 'done');
+                        globalText.textContent = `✅ ${type} terminé`;
+                        logConsole(`> TERMINÉ | ${type}`, 'accent');
+                        setTimeout(() => { if (!enCours) globalStatus.classList.remove('active'); }, 2000);
+                    }, 3200);
                 } else {
-                    appendLog(`\n[*] Terminal SSH ouvert pour ${utilisateur}@${data.cible}\n`);
+                    setStatus(card, 'idle');
+                    btn.disabled = false;
+                    globalText.textContent = `❌ Erreur`;
+                    logConsole(`> ERREUR | ${data.error || 'Échec du lancement'}`, 'err');
                 }
-            } catch (err) {
-                showToast(`❌ Erreur réseau : ${err.message}`, 'error');
+            } catch (e) {
+                setStatus(card, 'idle');
+                btn.disabled = false;
+                globalText.textContent = `❌ Erreur de connexion`;
+                logConsole(`> ERREUR | Impossible de joindre l'API d'attaque`, 'err');
             }
         }
 
-        // ── Polling du statut ────────────────────────────────────────────────
-        let lastLogContent = '';
+        async function lancerTout() {
+            const btnAll = document.getElementById('btn-launch-all');
+            btnAll.disabled = true;
+            enCours = true;
+            
+            const globalStatus = document.getElementById('global-status');
+            const globalText = document.getElementById('global-status-text');
+            globalStatus.classList.add('active');
+            globalText.textContent = `Scénario complet en cours...`;
+            logConsole('> SCÉNARIO COMPLET | Lancement séquentiel de toutes les attaques', 'accent');
+            logConsole('> Initialisation de la matrice d\'attaque...', 'dim');
 
-        async function pollStatus() {
-            try {
-                const resp = await fetch('/api/attaques/status');
-                if (!resp.ok) return;
-                const data = await resp.json();
-
-                // Mise à jour des indicateurs
-                const enCoursNoms = data.en_cours.map(a => a.attaque);
-
-                ATTAQUES_ACTIVES.forEach(nom => {
-                    const enCours = enCoursNoms.includes(nom);
-                    const termine = data.terminees.some(a => a.attaque === nom);
-
-                    if (enCours) {
-                        setStatus(nom, 'EN_COURS');
-                    } else if (termine) {
-                        setStatus(nom, 'TERMINE');
-                    } else {
-                        // Vérifie si le bouton est IDLE ou déjà dans un état terminé
-                        const el = document.getElementById(`status-${nom}`);
-                        if (!el || !el.classList.contains('status-TERMINE')) {
-                            setStatus(nom, 'IDLE');
-                        }
-                    }
-                });
-
-                // Affichage dynamique des accès SSH valides trouvés
-                const validBox = document.getElementById('ssh-valid-box');
-                const listContainer = document.getElementById('ssh-credentials-list');
-                const accesValides = data.acces_valides || [];
-
-                if (validBox && listContainer) {
-                    if (accesValides.length > 0) {
-                        validBox.style.display = 'block';
-                        listContainer.innerHTML = accesValides.map(acc => {
-                            const u = acc.utilisateur || 'inconnu';
-                            const p = acc.mot_de_passe || '***';
-                            const who = acc.whoami ? ` (whoami: ${acc.whoami})` : '';
-                            return `
-                                <div class="ssh-cred-item">
-                                    <div class="ssh-cred-info">
-                                        <span class="ssh-badge-user">${u}</span>
-                                        <span>/ ${p}</span>
-                                        <span style="color:#94a3b8; font-size:0.75rem;">${who}</span>
-                                    </div>
-                                    <button class="btn-ssh-connect" onclick="connecterSSH('${u}', '${p}')">
-                                        ⚡ Connexion SSH
-                                    </button>
-                                </div>
-                            `;
-                        }).join('');
-                    } else {
-                        validBox.style.display = 'none';
-                    }
+            for (let i = 0; i < attaques.length; i++) {
+                const type = attaques[i];
+                const card = document.querySelector(`.attack-card[data-attack="${type}"]`);
+                const btn = card.querySelector('.btn-launch');
+                btn.disabled = true;
+                setStatus(card, 'running');
+                globalText.textContent = `[${i+1}/${attaques.length}] ${type}`;
+                logConsole(`> [${i+1}/${attaques.length}] DÉMARRAGE | ${type}`, '');
+                
+                try {
+                    await fetch('/api/attack/launch', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({attaque: type, attack_type: type})
+                    });
+                    await new Promise(r => setTimeout(r, 3600));
+                    setStatus(card, 'done');
+                    logConsole(`> [${i+1}/${attaques.length}] TERMINÉ | ${type}`, 'accent');
+                } catch (e) {
+                    setStatus(card, 'idle');
+                    logConsole(`> [${i+1}/${attaques.length}] ÉCHEC | ${type}`, 'err');
                 }
-
-                // Log : priorité aux attaques en cours
-                let logText = '';
-                if (data.en_cours.length > 0) {
-                    const a = data.en_cours[0];
-                    logText = `[EN COURS] ${a.attaque} — démarré : ${a.debut}\n\n${a.log_extrait}`;
-                } else if (data.terminees.length > 0) {
-                    const a = data.terminees[data.terminees.length - 1];
-                    const rc = a.code_retour === 0 ? '✅ Succès' : `⚠️ Code ${a.code_retour}`;
-                    logText = `[TERMINÉ] ${a.attaque} — ${a.debut} → ${a.fin} — ${rc}\n\n${a.log_extrait || '(log vide)'}`;
-                }
-
-                if (logText && logText !== lastLogContent) {
-                    lastLogContent = logText;
-                    setLog(logText);
-                }
-
-            } catch (_) {
-                // Silencieux en cas d'erreur réseau passagère
             }
+            
+            globalText.textContent = `✅ Scénario complet terminé`;
+            logConsole('> SCÉNARIO COMPLET | Toutes les attaques exécutées', 'accent');
+            logConsole('> Consultez le SIEM pour visualiser les alertes générées', 'dim');
+            setTimeout(() => {
+                globalStatus.classList.remove('active');
+                btnAll.disabled = false;
+                enCours = false;
+            }, 3000);
         }
-
-        // Démarre le polling immédiatement puis toutes les 2s
-        pollStatus();
-        setInterval(pollStatus, POLL_INTERVAL_MS);
     </script>
 </body>
 </html>

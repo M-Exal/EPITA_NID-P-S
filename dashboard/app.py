@@ -234,6 +234,24 @@ ATTAQUES_DISPONIBLES = {
     "xmas_scan": "run_xmas_scan.py",
     "null_scan": "run_null_scan.py",
     "brute_force_ssh": "run_brute_force_ssh.py",
+    "brute_force": "run_brute_force_ssh.py",
+    "dos": "run_dos.py",
+    "dos_attack": "run_dos.py",
+    "sql_injection": "run_sql_injection.py",
+    "xss": "run_xss.py",
+    "xss_attack": "run_xss.py",
+    "path_traversal": "run_path_traversal.py",
+    # Aliases majuscules (UI frontend)
+    "ALL_ATTACKS": "run_all_attacks.py",
+    "SCAN_PORTS": "run_scan_ports.py",
+    "XMAS_SCAN": "run_xmas_scan.py",
+    "NULL_SCAN": "run_null_scan.py",
+    "BRUTE_FORCE": "run_brute_force_ssh.py",
+    "BRUTE_FORCE_SSH": "run_brute_force_ssh.py",
+    "DOS": "run_dos.py",
+    "SQL_INJECTION": "run_sql_injection.py",
+    "XSS": "run_xss.py",
+    "PATH_TRAVERSAL": "run_path_traversal.py",
 }
 
 # État en mémoire des attaques lancées
@@ -261,50 +279,66 @@ def _nettoyer_terminees():
 
 
 @app.route("/attaques")
+@app.route("/attack")
 def panneau_attaques():
     """Affiche le Panneau d'Attaques CyBear Pentest."""
     return render_template("attack_panel.html")
 
 
+@app.route("/api/attack/launch", methods=["POST"])
 @app.route("/api/attaques/lancer", methods=["POST"])
 def api_lancer_attaque():
     """Lance une attaque en background via subprocess.
 
-    Corps JSON attendu : {"attaque": "brute_force_ssh"}
-    Retourne : {"status": "started", "attaque": "...", "log": "..."}
+    Corps JSON attendu : {"attaque": "brute_force_ssh"} ou {"attack_type": "SQL_INJECTION"}
+    Retourne : {"status": "started", "success": true, "attaque": "...", "log": "..."}
     """
     _nettoyer_terminees()
 
     data = request.get_json(silent=True) or {}
-    nom = data.get("attaque", "").strip()
+    nom = (data.get("attack_type") or data.get("attaque") or "").strip()
 
     if not nom:
-        return jsonify({"error": "Paramètre 'attaque' manquant"}), 400
+        return jsonify({
+            "error": "Paramètre 'attaque' ou 'attack_type' manquant",
+            "success": False,
+        }), 400
 
-    if nom not in ATTAQUES_DISPONIBLES:
+    cle = nom
+    if cle not in ATTAQUES_DISPONIBLES:
+        cle_lower = nom.lower()
+        if cle_lower in ATTAQUES_DISPONIBLES:
+            cle = cle_lower
+        elif cle_lower == "brute_force":
+            cle = "brute_force_ssh"
+
+    if cle not in ATTAQUES_DISPONIBLES:
         return jsonify({
             "error": f"Attaque '{nom}' non implémentée",
+            "success": False,
             "disponibles": list(ATTAQUES_DISPONIBLES.keys()),
         }), 400
 
-    if nom in _attaques_en_cours:
+    if cle in _attaques_en_cours or nom in _attaques_en_cours:
         return jsonify({
             "error": f"L'attaque '{nom}' est déjà en cours",
+            "success": False,
             "status": "already_running",
         }), 409
 
     scripts_dir = determiner_scripts_dir()
-    script_file = ATTAQUES_DISPONIBLES[nom]
+    script_file = ATTAQUES_DISPONIBLES[cle]
     script_path = os.path.join(scripts_dir, script_file)
 
     if not os.path.isfile(script_path):
         return jsonify({
             "error": f"Fichier script introuvable : {script_path}",
+            "success": False,
             "scripts_dir": scripts_dir,
         }), 500
 
     timestamp = int(time.time())
-    log_path = f"/tmp/attack_{nom}_{timestamp}.log"
+    log_path = f"/tmp/attack_{cle}_{timestamp}.log"
 
     repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
     pentest_dir = os.path.join(repo_root, "pentest")
@@ -331,9 +365,12 @@ def api_lancer_attaque():
                 env=env,
             )
     except Exception as exc:
-        return jsonify({"error": f"Impossible de démarrer le subprocess : {exc}"}), 500
+        return jsonify({
+            "error": f"Impossible de démarrer le subprocess : {exc}",
+            "success": False,
+        }), 500
 
-    _attaques_en_cours[nom] = {
+    _attaques_en_cours[cle] = {
         "proc": proc,
         "log": log_path,
         "debut": datetime.now(TZ_PARIS).isoformat(timespec="seconds"),
@@ -342,7 +379,9 @@ def api_lancer_attaque():
 
     return jsonify({
         "status": "started",
-        "attaque": nom,
+        "success": True,
+        "attaque": cle,
+        "attack_type": nom,
         "log": log_path,
         "pid": proc.pid,
     })

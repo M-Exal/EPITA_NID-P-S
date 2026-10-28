@@ -1,187 +1,381 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>SSH Terminal — CyBear</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CyBear — Terminal SSH</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/xterm@5.3.0/css/xterm.css" />
     <style>
-        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
-
-        body {
-            background: #0f172a;
-            color: #f1f5f9;
-            font-family: "JetBrains Mono", "Fira Code", "Cascadia Code", monospace;
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
+        :root {
+            --bg: #ffffff;
+            --bg-card: #ffffff;
+            --border: #000000;
+            --text: #000000;
+            --text-muted: #4b5563;
+            --main: #a3e635;
+            --critique: #ef4444;
+            --critique-bg: #fee2e2;
+            --succes: #10b981;
+            --succes-bg: #d1fae5;
+            --accent: #2563eb;
+            --accent-bg: #dbeafe;
+            --terminal-bg: #000000;
+            --terminal-text: #22c55e;
+            --shadow: 4px 4px 0px #000000;
+            --shadow-sm: 2px 2px 0px #000000;
+            --grid: rgba(0, 0, 0, 0.08);
         }
 
-        /* ── Barre supérieure ── */
-        #header {
-            flex-shrink: 0;
-            background: #1e293b;
-            border-bottom: 1px solid #334155;
-            padding: 6px 14px;
+        [data-theme="dark"] {
+            --bg: #050510;
+            --bg-card: #15151d;
+            --border: #ffffff;
+            --text: #f8fafc;
+            --text-muted: #a1a1aa;
+            --main: #a3e635;
+            --critique: #f87171;
+            --critique-bg: rgba(239, 68, 68, 0.18);
+            --succes: #34d399;
+            --succes-bg: rgba(16, 185, 129, 0.18);
+            --accent: #60a5fa;
+            --accent-bg: rgba(59, 130, 246, 0.18);
+            --terminal-bg: #000000;
+            --terminal-text: #22c55e;
+            --shadow: 4px 4px 0px #ffffff;
+            --shadow-sm: 2px 2px 0px #ffffff;
+            --grid: rgba(255, 255, 255, 0.06);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg);
+            background-image: 
+                linear-gradient(to right, var(--grid) 1px, transparent 1px),
+                linear-gradient(to bottom, var(--grid) 1px, transparent 1px);
+            background-size: 40px 40px;
+            color: var(--text);
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+            transition: background 0.3s ease, color 0.3s ease;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 14px 22px;
+            background: var(--bg-card);
+            border: 3px solid var(--border);
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .header-brand {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            flex-wrap: wrap;
+        }
+
+        .brand-title {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 1.6rem;
+            font-weight: 800;
             display: flex;
             align-items: center;
             gap: 10px;
-            font-size: 0.8rem;
-            color: #94a3b8;
-            user-select: none;
         }
 
-        #header .dot-row { display: flex; gap: 6px; align-items: center; }
-        .window-dot {
-            width: 12px; height: 12px;
-            border-radius: 50%;
+        .brand-logo {
+            display: flex;
+            flex-direction: column;
+            background: var(--main);
+            color: #000000;
+            padding: 6px 10px;
+            border: 2px solid var(--border);
+            border-radius: 6px;
+            box-shadow: var(--shadow-sm);
+            line-height: 0.9;
         }
-        .dot-red    { background: #ef4444; }
-        .dot-yellow { background: #fbbf24; }
-        .dot-green  { background: #34d399; }
 
-        #status-dot {
-            width: 8px; height: 8px;
-            border-radius: 50%;
-            background: #fbbf24;
-            transition: background 0.3s;
+        .brand-logo span {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 1.1rem;
+            font-weight: 800;
         }
-        #status-dot.connected { background: #34d399; box-shadow: 0 0 6px #34d399; }
-        #status-dot.error     { background: #ef4444; }
 
-        #target-label { color: #34d399; font-weight: 700; }
-        #status-text  { color: #64748b; font-size: 0.75rem; }
+        .brand-tag {
+            font-size: 0.7rem;
+            background: var(--succes-bg);
+            color: var(--succes);
+            padding: 4px 12px;
+            border: 2px solid var(--border);
+            border-radius: 6px;
+            text-transform: uppercase;
+            font-weight: 800;
+            box-shadow: var(--shadow-sm);
+        }
 
-        /* ── Terminal ── */
-        #terminal-wrapper {
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 14px;
+            border-radius: 6px;
+            border: 2px solid var(--border);
+            font-weight: 800;
+            font-size: 0.85rem;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: var(--shadow-sm);
+            text-transform: uppercase;
+            background: var(--bg-card);
+            color: var(--text);
+        }
+
+        .btn:hover {
+            transform: translate(-2px, -2px);
+            box-shadow: 4px 4px 0px var(--border);
+        }
+
+        .btn-accent {
+            background: var(--accent-bg);
+            color: var(--accent);
+        }
+
+        .btn-success {
+            background: var(--succes-bg);
+            color: var(--succes);
+        }
+
+        .btn-danger {
+            background: var(--critique-bg);
+            color: var(--critique);
+        }
+
+        .panel {
             flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: var(--bg-card);
+            border: 3px solid var(--border);
+            border-radius: 8px;
+            box-shadow: var(--shadow);
             overflow: hidden;
-            padding: 6px 6px 0 6px;
+            min-height: 60vh;
         }
 
-        .xterm { height: 100% !important; }
-        .xterm-viewport { overflow-y: hidden !important; }
-        .xterm-screen { height: 100% !important; }
+        .panel-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 18px;
+            background: linear-gradient(90deg, rgba(163, 230, 53, 0.22) 0%, transparent 100%);
+            border-bottom: 2px solid var(--border);
+        }
+
+        .panel-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 800;
+            font-family: 'Space Grotesk', sans-serif;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .dots {
+            display: flex;
+            gap: 6px;
+        }
+
+        .dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            border: 1px solid rgba(255,255,255,0.6);
+        }
+
+        .dot-red { background: #f87171; }
+        .dot-yellow { background: #fbbf24; }
+        .dot-green { background: #22c55e; }
+
+        #terminal-container {
+            flex: 1;
+            background: var(--terminal-bg);
+            padding: 12px;
+        }
+
+        #terminal {
+            height: 100%;
+            width: 100%;
+        }
+
+        .status-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 18px;
+            border-top: 2px solid var(--border);
+            background: var(--bg-card);
+            font-size: 0.85rem;
+            font-weight: 700;
+        }
+
+        .status-left {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .status-dot {
+            width: 9px;
+            height: 9px;
+            border-radius: 50%;
+            background: var(--succes);
+            border: 1px solid var(--border);
+            box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.12);
+        }
+
+        footer {
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            font-weight: 700;
+        }
     </style>
 </head>
 <body>
-    <div id="header">
-        <div class="dot-row">
-            <div class="window-dot dot-red"    onclick="window.close()"></div>
-            <div class="window-dot dot-yellow"></div>
-            <div class="window-dot dot-green"></div>
+    <header>
+        <div class="header-brand">
+            <div class="brand-title">
+                <div class="brand-logo">
+                    <span>CyBear</span>
+                    <span>TERM</span>
+                </div>
+                Terminal SSH Interactif
+            </div>
+            <span class="brand-tag">RevShell / Accès Cible</span>
         </div>
-        <div id="status-dot"></div>
-        <span>SSH — <strong id="target-label">…</strong></span>
-        <span id="status-text">Connexion en cours…</span>
-    </div>
+        <div class="header-actions">
+            <a href="/" class="btn btn-accent">← SIEM</a>
+            <a href="/attack" class="btn btn-danger">⚔️ Panneau d'Attaques</a>
+            <button class="btn" id="theme-toggle">🌙 Thème</button>
+        </div>
+    </header>
 
-    <div id="terminal-wrapper">
-        <div id="terminal-container" style="width:100%;height:100%;"></div>
-    </div>
+    <section class="panel">
+        <div class="panel-header">
+            <div class="panel-title">
+                <div class="dots">
+                    <span class="dot dot-red"></span>
+                    <span class="dot dot-yellow"></span>
+                    <span class="dot dot-green"></span>
+                </div>
+                <span>cybear@kali ~ shell interactif</span>
+            </div>
+            <span style="color: var(--terminal-text); font-size: 0.8rem; font-weight: 700; font-family: 'JetBrains Mono', monospace;">xterm.js</span>
+        </div>
+        <div id="terminal-container">
+            <div id="terminal"></div>
+        </div>
+        <div class="status-bar">
+            <div class="status-left">
+                <span class="status-dot"></span>
+                <span id="status-text">Connexion en cours...</span>
+            </div>
+            <div>CyBear SIEM • Neobrutal Interface</div>
+        </div>
+    </section>
 
-    <!-- xterm.js 5.3 -->
+    <footer>Terminal SSH sécurisé — Projet NID-P-S</footer>
+
     <script src="https://cdn.jsdelivr.net/npm/xterm@5.3.0/lib/xterm.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/xterm-addon-fit@0.8.0/lib/xterm-addon-fit.js"></script>
-    <!-- Socket.IO 4.7 -->
-    <script src="https://cdn.jsdelivr.net/npm/socket.io-client@4.7.2/dist/socket.io.min.js"></script>
-
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
     <script>
-    (() => {
-        // ── Paramètres URL ────────────────────────────────────────────
-        const params   = new URLSearchParams(window.location.search);
-        const token    = params.get("token") || "";
-        const label    = params.get("label") || "SSH";
-
-        document.getElementById("target-label").textContent = label;
-
-        // ── Terminal xterm.js ─────────────────────────────────────────
-        const term = new Terminal({
-            cursorBlink  : true,
-            scrollback   : 10000,
-            fontFamily   : '"JetBrains Mono", "Fira Code", monospace',
-            fontSize     : 14,
-            lineHeight   : 1.2,
-            theme: {
-                background    : "#0f172a",
-                foreground    : "#f1f5f9",
-                cursor        : "#34d399",
-                cursorAccent  : "#0f172a",
-                selectionBackground: "rgba(52,211,153,0.3)",
-                black         : "#0f172a",   brightBlack   : "#475569",
-                red           : "#ef4444",   brightRed     : "#f87171",
-                green         : "#34d399",   brightGreen   : "#6ee7b7",
-                yellow        : "#fbbf24",   brightYellow  : "#fcd34d",
-                blue          : "#60a5fa",   brightBlue    : "#93c5fd",
-                magenta       : "#c084fc",   brightMagenta : "#d8b4fe",
-                cyan          : "#22d3ee",   brightCyan    : "#67e8f9",
-                white         : "#e2e8f0",   brightWhite   : "#ffffff",
-            },
+        const themeToggle = document.getElementById('theme-toggle');
+        const root = document.documentElement;
+        const savedTheme = localStorage.getItem('cybear-theme') || 'light';
+        root.setAttribute('data-theme', savedTheme);
+        themeToggle.textContent = savedTheme === 'dark' ? '☀️ Thème' : '🌙 Thème';
+        themeToggle.addEventListener('click', () => {
+            const current = root.getAttribute('data-theme');
+            const next = current === 'dark' ? 'light' : 'dark';
+            root.setAttribute('data-theme', next);
+            localStorage.setItem('cybear-theme', next);
+            themeToggle.textContent = next === 'dark' ? '☀️ Thème' : '🌙 Thème';
         });
 
+        const term = new Terminal({
+            cursorBlink: true,
+            fontFamily: 'JetBrains Mono, monospace',
+            fontSize: 14,
+            theme: {
+                background: '#000000',
+                foreground: '#22c55e',
+                cursor: '#a3e635',
+                selectionBackground: 'rgba(163, 230, 53, 0.3)'
+            },
+            rows: 30,
+            cols: 120
+        });
         const fitAddon = new FitAddon.FitAddon();
         term.loadAddon(fitAddon);
-        term.open(document.getElementById("terminal-container"));
+        term.open(document.getElementById('terminal'));
+        fitAddon.fit();
+        window.addEventListener('resize', () => fitAddon.fit());
 
-        const fit = () => {
-            try { fitAddon.fit(); } catch (_) {}
-        };
-        fit();
-        term.focus();
-        document.fonts.ready.then(() => { fit(); term.focus(); });
+        const socket = io();
+        const statusText = document.getElementById('status-text');
 
-        // ── Socket.IO ─────────────────────────────────────────────────
-        const socket = io({ transports: ["websocket", "polling"] });
-
-        const statusDot  = document.getElementById("status-dot");
-        const statusText = document.getElementById("status-text");
-
-        socket.on("connect", () => {
-            statusText.textContent = "Authentification…";
-            socket.emit("join_session", { token });
+        socket.on('connect', () => {
+            statusText.textContent = 'Connecté — Initialisation session SSH';
+            socket.emit('terminal_start', {});
         });
 
-        socket.on("terminal_connected", ({ utilisateur, target, port }) => {
-            statusDot.className = "connected";
-            statusText.textContent = `${utilisateur}@${target}:${port}`;
-            document.title = `${utilisateur}@${target} — CyBear SSH`;
+        socket.on('terminal_output', (data) => {
+            term.write(data.output || '');
         });
 
-        socket.on("terminal_output", ({ data }) => {
-            term.write(data);
+        socket.on('terminal_connected', () => {
+            statusText.textContent = 'Session SSH active';
         });
 
-        socket.on("terminal_error", ({ message }) => {
-            statusDot.className = "error";
-            statusText.textContent = `Erreur : ${message}`;
+        socket.on('terminal_error', (data) => {
+            statusText.textContent = 'Erreur: ' + (data.message || 'inconnue');
+            term.write('\r\n\x1b[31m[ERREUR] ' + (data.message || '') + '\x1b[0m\r\n');
         });
 
-        socket.on("disconnect", () => {
-            statusDot.className = "error";
-            statusText.textContent = "Déconnecté";
-            term.write("\r\n\x1b[33m[Connexion fermée]\x1b[0m\r\n");
+        socket.on('disconnect', () => {
+            statusText.textContent = 'Déconnecté';
         });
 
-        // ── Saisie utilisateur → SSH ──────────────────────────────────
-        term.onData((data) => socket.emit("terminal_input", { data }));
-
-        // ── Redimensionnement PTY ─────────────────────────────────────
-        term.onResize(({ cols, rows }) => {
-            socket.emit("terminal_resize", { cols, rows });
+        term.onData((data) => {
+            socket.emit('terminal_input', { input: data });
         });
-
-        window.addEventListener("resize", () => {
-            fit();
-            // Émet la nouvelle taille après fit
-            setTimeout(() => {
-                socket.emit("terminal_resize", {
-                    cols: term.cols,
-                    rows: term.rows,
-                });
-            }, 50);
-        });
-    })();
     </script>
 </body>
 </html>
