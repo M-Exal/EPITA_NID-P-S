@@ -326,6 +326,76 @@
             50% { opacity: 0.55; }
         }
 
+        /* ── Accès SSH valides ── */
+        .ssh-valid-box {
+            margin-top: 14px;
+            padding: 12px;
+            background: rgba(16, 185, 129, 0.08);
+            border: 1px solid rgba(16, 185, 129, 0.35);
+            border-radius: 10px;
+        }
+
+        .ssh-valid-header {
+            font-size: 0.82rem;
+            font-weight: 700;
+            color: #34d399;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .ssh-cred-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(15, 23, 42, 0.7);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            padding: 8px 12px;
+            border-radius: 8px;
+            margin-bottom: 6px;
+            gap: 8px;
+        }
+
+        .ssh-cred-info {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-family: monospace;
+            font-size: 0.88rem;
+            color: #f1f5f9;
+        }
+
+        .ssh-badge-user {
+            background: rgba(59, 130, 246, 0.2);
+            color: #60a5fa;
+            padding: 2px 8px;
+            border-radius: 6px;
+            font-weight: 700;
+        }
+
+        .btn-ssh-connect {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 6px;
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            border: 1px solid rgba(16, 185, 129, 0.6);
+            color: #ffffff;
+            font-weight: 700;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 0 10px rgba(16, 185, 129, 0.25);
+        }
+
+        .btn-ssh-connect:hover {
+            background: linear-gradient(135deg, #059669 0%, #047857 100%);
+            box-shadow: 0 0 15px rgba(16, 185, 129, 0.45);
+            transform: translateY(-1px);
+        }
+
         /* ── Log terminal ── */
         .log-section {
             background: var(--bg-card);
@@ -517,7 +587,16 @@
                 <span class="meta-label">Cible :</span>
                 <span class="meta-value">metasploitable:22</span>
             </div>
-            <div class="card-footer">
+
+            <!-- Zone d'accès valides découverts -->
+            <div id="ssh-valid-box" class="ssh-valid-box" style="display: none;">
+                <div class="ssh-valid-header">
+                    <span>🔑 Accès validé(s) découvert(s) :</span>
+                </div>
+                <div id="ssh-credentials-list"></div>
+            </div>
+
+            <div class="card-footer" style="margin-top: 14px;">
                 <button class="btn-launch" id="btn-brute_force_ssh" onclick="lancerAttaque('brute_force_ssh')">▶ Lancer</button>
                 <span class="status-indicator status-IDLE" id="status-brute_force_ssh">
                     <span class="status-dot-small"></span> IDLE
@@ -686,6 +765,40 @@
             }
         }
 
+        // ── Connexion SSH vers accès découverts ──────────────────────────────
+        async function connecterSSH(utilisateur, motDePasse) {
+            try {
+                showToast(`🔌 Ouverture du terminal SSH pour ${utilisateur}…`, 'success');
+
+                const resp = await fetch('/api/attaques/ssh_connect', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ utilisateur, mot_de_passe: motDePasse }),
+                });
+                const data = await resp.json();
+
+                if (!resp.ok || !data.token) {
+                    showToast(`❌ ${data.error || 'Impossible de démarrer la session SSH'}`, 'error');
+                    return;
+                }
+
+                const label  = encodeURIComponent(`${utilisateur}@${data.cible}`);
+                const url    = `/terminal?token=${data.token}&label=${label}`;
+                const specs  = 'width=960,height=620,resizable=yes,scrollbars=no,toolbar=no,menubar=no,location=no,status=no';
+                const fenetre = window.open(url, `ssh_${utilisateur}_${Date.now()}`, specs);
+
+                if (!fenetre) {
+                    // Popup bloqué : fallback — log + lien cliquable
+                    appendLog(`\n[*] Terminal SSH disponible (popup bloqué) : ${url}\n`);
+                    showToast('⚠️ Popup bloqué. Autorisez les popups pour ce site ou cliquez sur le lien dans le log.', 'error');
+                } else {
+                    appendLog(`\n[*] Terminal SSH ouvert pour ${utilisateur}@${data.cible}\n`);
+                }
+            } catch (err) {
+                showToast(`❌ Erreur réseau : ${err.message}`, 'error');
+            }
+        }
+
         // ── Polling du statut ────────────────────────────────────────────────
         let lastLogContent = '';
 
@@ -714,6 +827,36 @@
                         }
                     }
                 });
+
+                // Affichage dynamique des accès SSH valides trouvés
+                const validBox = document.getElementById('ssh-valid-box');
+                const listContainer = document.getElementById('ssh-credentials-list');
+                const accesValides = data.acces_valides || [];
+
+                if (validBox && listContainer) {
+                    if (accesValides.length > 0) {
+                        validBox.style.display = 'block';
+                        listContainer.innerHTML = accesValides.map(acc => {
+                            const u = acc.utilisateur || 'inconnu';
+                            const p = acc.mot_de_passe || '***';
+                            const who = acc.whoami ? ` (whoami: ${acc.whoami})` : '';
+                            return `
+                                <div class="ssh-cred-item">
+                                    <div class="ssh-cred-info">
+                                        <span class="ssh-badge-user">${u}</span>
+                                        <span>/ ${p}</span>
+                                        <span style="color:#94a3b8; font-size:0.75rem;">${who}</span>
+                                    </div>
+                                    <button class="btn-ssh-connect" onclick="connecterSSH('${u}', '${p}')">
+                                        ⚡ Connexion SSH
+                                    </button>
+                                </div>
+                            `;
+                        }).join('');
+                    } else {
+                        validBox.style.display = 'none';
+                    }
+                }
 
                 // Log : priorité aux attaques en cours
                 let logText = '';

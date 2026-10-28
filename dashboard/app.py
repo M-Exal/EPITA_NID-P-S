@@ -7,15 +7,40 @@ Inclut également le Panneau d'Attaque (pentest automatisé).
 
 import json
 import os
+import re
 import subprocess
 import sys
+import threading
 import time
+import uuid
 from collections import defaultdict, Counter
 from datetime import datetime
 from zoneinfo import ZoneInfo
+
+import paramiko
+from cryptography.hazmat.primitives import hashes
 from flask import Flask, Response, jsonify, render_template, request
+from flask_socketio import SocketIO, emit
 
 app = Flask(__name__)
+app.config["SECRET_KEY"] = os.getenv("FLASK_SECRET", "cybear-ssh-secret")
+socketio = SocketIO(app, cors_allowed_origins="*", async_mode="threading")
+
+# Tokens SSH en attente : token → {utilisateur, mot_de_passe, target, port}
+_ssh_pending: dict = {}
+# Sessions SSH actives : socket_sid → {client, channel}
+_ssh_actifs: dict = {}
+
+# Patch de compatibilité RSA pour Metasploitable 2 (clé ssh-rsa/SHA-1 dépréciée)
+try:
+    from paramiko.transport import Transport
+    from paramiko.rsakey import RSAKey
+    RSAKey.HASHES["ssh-rsa"] = hashes.SHA1
+    Transport._key_info["ssh-rsa"] = RSAKey
+    if "ssh-rsa" not in Transport._preferred_keys:
+        Transport._preferred_keys = Transport._preferred_keys + ("ssh-rsa",)
+except Exception:
+    pass
 
 # Fuseau horaire de référence pour tous les horodatages ISO (conteneurs en UTC)
 TZ_PARIS = ZoneInfo("Europe/Paris")
@@ -322,9 +347,209 @@ def api_lancer_attaque():
     })
 
 
+def _recuperer_acces_valides() -> list:
+    """Tente de lire les accès valides découverts lors du brute-force SSH."""
+    repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+    candidats = [
+        "/app/data/pentest/pentest_results.json",
+        "/app/data/pentest_results.json",
+        "/tmp/pentest_results.json",
+        os.path.join(repo_root, "data", "pentest", "pentest_results.json"),
+        os.path.join(repo_root, "data", "pentest_results.json"),
+    ]
+    for chemin in candidats:
+        if os.path.isfile(chemin):
+            try:
+                with open(chemin, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                acces = data.get("attaques", {}).get("brute_force_ssh", {}).get("acces_valides", [])
+                if acces:
+                    return acces
+            except Exception:
+                pass
+
+    # Analyse des logs récents (attaques en cours et terminées)
+    sources = list(_attaques_en_cours.values()) + list(reversed(_attaques_terminees))
+    for item in sources:
+        log_path = item.get("log")
+        if log_path and os.path.isfile(log_path):
+            try:
+                with open(log_path, "r", encoding="utf-8", errors="replace") as f:
+                    contenu = f.read()
+                import re
+                matches = re.findall(
+                    r"\[\+\]\s+([a-zA-Z0-9_\-]+):([^\s—]+)\s+—\s+authentification réussie",
+                    contenu,
+                )
+                if matches:
+                    vus = set()
+                    res = []
+                    for u, p in matches:
+                        if (u, p) not in vus:
+                            vus.add((u, p))
+                            res.append({"utilisateur": u, "mot_de_passe": p, "whoami": u})
+                    return res
+            except Exception:
+                pass
+    return []
+
+
+@app.route("/api/attaques/ssh_connect", methods=["POST"])
+def api_ssh_connect():
+    """Crée un token de session SSH et retourne l'URL du terminal."""
+    data = request.get_json(silent=True) or {}
+    user = data.get("utilisateur", "msfadmin")
+    password = data.get("mot_de_passe", "")
+    target = os.getenv("TARGET_HOST", "metasploitable")
+    port = int(os.getenv("SSH_PORT", "22"))
+
+    token = str(uuid.uuid4())
+    _ssh_pending[token] = {
+        "utilisateur": user,
+        "mot_de_passe": password,
+        "target": target,
+        "port": port,
+    }
+
+    return jsonify({
+        "status": "ready",
+        "token": token,
+        "utilisateur": user,
+        "cible": f"{target}:{port}",
+    })
+
+
+@app.route("/terminal")
+def terminal():
+    """Page du terminal SSH interactif (xterm.js)."""
+    return render_template("terminal.html")
+
+
+# ── WebSocket : terminal SSH ──────────────────────────────────────────────────
+
+@socketio.on("join_session")
+def ws_join_session(data):
+    """Ouvre la connexion SSH et démarre le forwarding stdout → WebSocket."""
+    token = data.get("token", "")
+    session = _ssh_pending.pop(token, None)
+    if not session:
+        emit("terminal_output", {
+            "data": "\r\n\x1b[31m[Erreur] Session expirée ou token invalide.\x1b[0m\r\n"
+        })
+        return
+
+    utilisateur = session["utilisateur"]
+    mot_de_passe = session["mot_de_passe"]
+    target = session["target"]
+    port = session["port"]
+    sid = request.sid
+
+    try:
+        client = paramiko.SSHClient()
+        client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        client.connect(
+            hostname=target,
+            port=port,
+            username=utilisateur,
+            password=mot_de_passe,
+            timeout=10.0,
+            banner_timeout=10.0,
+            auth_timeout=10.0,
+            allow_agent=False,
+            look_for_keys=False,
+        )
+
+        channel = client.invoke_shell(term="xterm-256color", width=220, height=50)
+        channel.setblocking(False)
+
+        _ssh_actifs[sid] = {"client": client, "channel": channel}
+
+        emit("terminal_connected", {
+            "utilisateur": utilisateur,
+            "target": target,
+            "port": port,
+        })
+
+        def _lire_sortie():
+            """Thread : lit le canal SSH et relaie vers le WebSocket."""
+            while sid in _ssh_actifs:
+                try:
+                    if channel.recv_ready():
+                        bloc = channel.recv(4096)
+                        if bloc:
+                            socketio.emit(
+                                "terminal_output",
+                                {"data": bloc.decode("utf-8", errors="replace")},
+                                room=sid,
+                            )
+                    if channel.closed or channel.exit_status_ready():
+                        socketio.emit(
+                            "terminal_output",
+                            {"data": "\r\n\x1b[33m[Session fermée]\x1b[0m\r\n"},
+                            room=sid,
+                        )
+                        _ssh_actifs.pop(sid, None)
+                        break
+                    time.sleep(0.03)
+                except Exception:
+                    break
+
+        t = threading.Thread(target=_lire_sortie, daemon=True)
+        t.start()
+        _ssh_actifs[sid]["thread"] = t
+
+    except paramiko.AuthenticationException:
+        emit("terminal_output", {
+            "data": f"\r\n\x1b[31m[Erreur] Authentification refusée pour {utilisateur}.\x1b[0m\r\n"
+        })
+        emit("terminal_error", {"message": f"Authentification refusée pour {utilisateur}"})
+    except Exception as exc:
+        emit("terminal_output", {
+            "data": f"\r\n\x1b[31m[Erreur] {exc}\x1b[0m\r\n"
+        })
+        emit("terminal_error", {"message": str(exc)})
+
+
+@socketio.on("terminal_input")
+def ws_terminal_input(data):
+    """Reçoit la saisie du terminal et l'envoie au canal SSH."""
+    session = _ssh_actifs.get(request.sid)
+    if session:
+        try:
+            session["channel"].send(data.get("data", ""))
+        except Exception:
+            pass
+
+
+@socketio.on("terminal_resize")
+def ws_terminal_resize(data):
+    """Redimensionne le PTY SSH selon la taille du terminal xterm.js."""
+    session = _ssh_actifs.get(request.sid)
+    if session:
+        try:
+            session["channel"].resize_pty(
+                width=int(data.get("cols", 80)),
+                height=int(data.get("rows", 24)),
+            )
+        except Exception:
+            pass
+
+
+@socketio.on("disconnect")
+def ws_disconnect():
+    """Ferme proprement la session SSH à la déconnexion WebSocket."""
+    session = _ssh_actifs.pop(request.sid, None)
+    if session:
+        try:
+            session["channel"].close()
+            session["client"].close()
+        except Exception:
+            pass
+
+
 @app.route("/api/attaques/status")
 def api_status_attaques():
-    """Retourne l'état de toutes les attaques (en cours + terminées)."""
+    """Retourne l'état de toutes les attaques (en cours + terminées) et les accès valides."""
     _nettoyer_terminees()
 
     en_cours = []
@@ -347,6 +572,7 @@ def api_status_attaques():
     return jsonify({
         "en_cours": en_cours,
         "terminees": terminees,
+        "acces_valides": _recuperer_acces_valides(),
     })
 
 
@@ -362,4 +588,4 @@ def _lire_log(path: str, nb_lignes: int = 50) -> str:
 
 if __name__ == "__main__":
     port = int(os.getenv("PORT", "5050"))
-    app.run(host="0.0.0.0", port=port, debug=False, threaded=True)
+    socketio.run(app, host="0.0.0.0", port=port, debug=False)
