@@ -171,6 +171,41 @@ class MoteurDetection:
         })
         print("[NIPS] Protection réinitialisée — règles iptables purgées et quarantaine levée.")
 
+    def _lire_comptes_compromis(self):
+        """Lit les comptes réellement compromis depuis les résultats du pentest.
+
+        Un compte est considéré compromis uniquement si le brute-force a réussi
+        l'authentification ET exécuté whoami (preuve d'intrusion active).
+        """
+        candidats = [
+            "/app/data/pentest/pentest_results.json",
+            "/app/data/pentest_results.json",
+            "/tmp/pentest_results.json",
+        ]
+        data_dir = getattr(self.cfg, "DATA_DIR", None)
+        if data_dir:
+            candidats.insert(0, os.path.join(data_dir, "pentest_results.json"))
+
+        for chemin in candidats:
+            if not os.path.isfile(chemin):
+                continue
+            try:
+                with open(chemin, "r", encoding="utf-8") as f:
+                    donnees = json.load(f)
+                acces = (donnees.get("attaques", {})
+                         .get("brute_force_ssh", {})
+                         .get("acces_valides", []))
+                comptes = []
+                for a in acces:
+                    whoami = a.get("whoami", "").strip()
+                    if whoami and a.get("code_retour", 1) == 0:
+                        comptes.append(whoami)
+                if comptes:
+                    return list(dict.fromkeys(comptes))
+            except Exception:
+                continue
+        return []
+
     def _enregistrer_ip_bloquee_etat(self, ip_src, type_attaque):
         """Met à jour le fichier d'état NIPS partagé avec l'IP bloquée et la quarantaine."""
         if not self.state_file:
@@ -181,10 +216,10 @@ class MoteurDetection:
             blocked_ips.append(ip_src)
         etat["blocked_ips"] = blocked_ips
 
-        # Protection post-compromise : si brute-force confirmé, placer les comptes sensibles en quarantaine
         quarantined = etat.get("quarantined_accounts", [])
         if type_attaque == "BRUTE_FORCE":
-            for compte in ["msfadmin", "root"]:
+            comptes_compromis = self._lire_comptes_compromis()
+            for compte in comptes_compromis:
                 if compte not in quarantined:
                     quarantined.append(compte)
         etat["quarantined_accounts"] = quarantined
