@@ -74,6 +74,7 @@ services:
       - HTTP_PORT=80
       - FTP_PORT=21
     cap_add:
+      - NET_ADMIN
       - NET_RAW
     volumes:
       - ./data/pentest:/app/data
@@ -95,6 +96,7 @@ services:
     ports:
       - "5050:5050"
     cap_add:
+      - NET_ADMIN
       - NET_RAW
     environment:
       - NIDS_ALERT_JSON=/app/data/nids_alerts.json

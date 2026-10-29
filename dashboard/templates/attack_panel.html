@@ -1120,10 +1120,47 @@
         }
 
         // ── Sélection DoS multi-ports ──
+        let _portsActuelsRender = [];
+
         function toggleAllPorts(checked) {
             document.querySelectorAll('#ports-checkbox-list input[type="checkbox"]').forEach(cb => {
                 cb.checked = checked;
             });
+        }
+
+        function afficherPortsDoS(ports) {
+            const selector = document.getElementById('dos-port-selector');
+            const liste = document.getElementById('ports-checkbox-list');
+            if (!selector || !liste) return;
+
+            if (!ports || ports.length === 0) {
+                selector.style.display = 'none';
+                liste.innerHTML = '';
+                _portsActuelsRender = [];
+                return;
+            }
+
+            // Si la liste des ports découverts n'a pas changé, NE PAS RÉÉCRIRE le DOM
+            // afin de préserver fidèlement les cases cochées / décochées par l'utilisateur
+            const memesPorts = (
+                _portsActuelsRender.length === ports.length &&
+                _portsActuelsRender.every((p, idx) => p === ports[idx])
+            );
+
+            if (memesPorts) {
+                selector.style.display = 'block';
+                return;
+            }
+
+            // Premier affichage ou nouveaux ports découverts : rendu avec sélection par défaut
+            _portsActuelsRender = [...ports];
+            liste.innerHTML = ports.map(port => `
+                <label style="display:inline-flex; align-items:center; gap:4px; padding:3px 8px; border:1px solid var(--border); border-radius:4px; background:var(--bg); font-family:'JetBrains Mono',monospace; font-size:0.75rem; font-weight:700; cursor:pointer;">
+                    <input type="checkbox" value="${port}" checked style="accent-color:var(--critique); width:12px; height:12px;">
+                    <span>${port}</span>
+                </label>
+            `).join('');
+            selector.style.display = 'block';
         }
 
         async function chargerPortsOuverts() {
@@ -1131,23 +1168,8 @@
                 const resp = await fetch('/api/attaques/ports_ouverts');
                 if (!resp.ok) return;
                 const data = await resp.json();
-                const ports = data.ports || [];
-                const liste = document.getElementById('ports-checkbox-list');
-                const selector = document.getElementById('dos-port-selector');
-                if (selector) {
-                    if (liste && ports.length > 0) {
-                        liste.innerHTML = ports.map(port => `
-                            <label style="display:inline-flex; align-items:center; gap:4px; padding:3px 8px; border:1px solid var(--border); border-radius:4px; background:var(--bg); font-family:'JetBrains Mono',monospace; font-size:0.75rem; font-weight:700; cursor:pointer;">
-                                <input type="checkbox" value="${port}" checked style="accent-color:var(--critique); width:12px; height:12px;">
-                                <span>${port}</span>
-                            </label>
-                        `).join('');
-                        selector.style.display = 'block';
-                    } else {
-                        selector.style.display = 'none';
-                        if (liste) liste.innerHTML = '';
-                    }
-                }
+                afficherPortsDoS(data.ports || []);
+
                 const nullDetails = document.getElementById('null-scan-details');
                 if (nullDetails) {
                     if (data.os_detecte) {
@@ -1368,26 +1390,8 @@
                     }
                 }
 
-                // 4c. Mise à jour des ports cibles DoS
-                const portsOuverts = data.ports_ouverts || [];
-                const selector = document.getElementById('dos-port-selector');
-                const liste = document.getElementById('ports-checkbox-list');
-                if (selector) {
-                    if (liste && portsOuverts.length > 0) {
-                        const dejaCoches = new Set(Array.from(document.querySelectorAll('#ports-checkbox-list input[type="checkbox"]:checked')).map(cb => parseInt(cb.value)));
-                        const existed = document.querySelectorAll('#ports-checkbox-list input[type="checkbox"]').length > 0;
-                        liste.innerHTML = portsOuverts.map(port => `
-                            <label style="display:inline-flex; align-items:center; gap:4px; padding:3px 8px; border:1px solid var(--border); border-radius:4px; background:var(--bg); font-family:'JetBrains Mono',monospace; font-size:0.75rem; font-weight:700; cursor:pointer;">
-                                <input type="checkbox" value="${port}" ${!existed || dejaCoches.has(port) ? 'checked' : ''} style="accent-color:var(--critique); width:12px; height:12px;">
-                                <span>${port}</span>
-                            </label>
-                        `).join('');
-                        selector.style.display = 'block';
-                    } else {
-                        selector.style.display = 'none';
-                        if (liste) liste.innerHTML = '';
-                    }
-                }
+                // 4c. Mise à jour des ports cibles DoS (sans écraser la sélection utilisateur)
+                afficherPortsDoS(data.ports_ouverts || []);
 
                 // 5. Affichage des logs en temps réel (identique à main)
                 let logText = '';
@@ -1544,6 +1548,8 @@
                 const res = await fetch('/api/alerts/reset', { method: 'POST' });
                 const data = await res.json();
                 if (res.ok && data.status === 'success') {
+                    _portsActuelsRender = [];
+                    afficherPortsDoS([]);
                     showToast("Base et session attaquante réinitialisées.", "success");
                     pollStatus();
                     chargerPortsOuverts();
