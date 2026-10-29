@@ -4,12 +4,16 @@ Script standalone : DoS Flood volumétrique vers la cible.
 
 Usage :
     python run_dos.py [TARGET_HOST]
+
+Variables d'environnement :
+    DOS_PORTS   Ports cibles séparés par virgule (ex: "22,80,443").
+                Si absent, utilise Config.DOS_PORT.
 """
 
 import os
 import sys
+import threading
 
-# Forçage du line-buffering pour affichage temps réel dans le terminal web
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(line_buffering=True)
 
@@ -32,33 +36,58 @@ except ImportError:
     from pentest.config import Config
     from pentest.pentest import Pentester
 
+_print_lock = threading.Lock()
+
+
+def _dos_sur_port(cible, port, count):
+    with _print_lock:
+        print(f"[*] Thread port {port} — démarrage ({count} paquets)", flush=True)
+    pentester = Pentester(cfg=Config)
+    try:
+        pentester.dos_attack(count=count, port=port)
+        stats = pentester.resultats["attaques"].get("dos", {})
+        with _print_lock:
+            print(f"[+] Port {port} terminé — paquets envoyés : {stats.get('paquets_envoyes', '?')}", flush=True)
+    except Exception as exc:
+        with _print_lock:
+            print(f"[!] Erreur port {port} : {exc}", flush=True)
+
 
 def main():
     cible = os.getenv("TARGET_HOST", Config.TARGET_HOST)
-    port = Config.DOS_PORT
     count = Config.DOS_COUNT
-    print(f"[*] Cible : {cible}:{port}", flush=True)
-    print(f"[*] Démarrage du DoS Flood ({count} paquets) — {cible}:{port}", flush=True)
+
+    dos_ports_env = os.getenv("DOS_PORTS", "").strip()
+    if dos_ports_env:
+        ports = []
+        for p in dos_ports_env.split(","):
+            p = p.strip()
+            if p.isdigit():
+                ports.append(int(p))
+        if not ports:
+            ports = [Config.DOS_PORT]
+    else:
+        ports = [Config.DOS_PORT]
+
+    print(f"[*] Cible : {cible}", flush=True)
+    print(f"[*] Ports ciblés : {ports}", flush=True)
+    print(f"[*] Paquets par port : {count}", flush=True)
     print("-" * 60, flush=True)
 
-    pentester = Pentester(cfg=Config)
-
-    try:
-        pentester.dos_attack()
-        pentester.sauvegarder()
-        stats = pentester.resultats["attaques"].get("dos", {})
-        if stats:
-            print("[+] Synthèse DoS Flood :", flush=True)
-            for k, v in stats.items():
-                print(f"    {k}: {v}", flush=True)
-        else:
-            print("[~] Aucun résultat retourné.", flush=True)
-    except Exception as exc:
-        print(f"[!] Erreur durant l'attaque : {exc}", file=sys.stderr, flush=True)
-        sys.exit(1)
+    if len(ports) == 1:
+        _dos_sur_port(cible, ports[0], count)
+    else:
+        threads = [
+            threading.Thread(target=_dos_sur_port, args=(cible, port, count), daemon=True)
+            for port in ports
+        ]
+        for t in threads:
+            t.start()
+        for t in threads:
+            t.join()
 
     print("-" * 60, flush=True)
-    print("[*] DoS Flood terminé.", flush=True)
+    print(f"[*] DoS Flood terminé sur {len(ports)} port(s).", flush=True)
 
 
 if __name__ == "__main__":

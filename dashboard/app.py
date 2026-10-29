@@ -571,6 +571,12 @@ def api_lancer_attaque():
         "PENTEST_DATA_DIR": "/tmp",
     }
 
+    if cle in ("dos", "dos_attack"):
+        ports_dos = request.get_json(silent=True) or {}
+        ports_selectionnes = ports_dos.get("ports", [])
+        if ports_selectionnes:
+            env["DOS_PORTS"] = ",".join(str(p) for p in ports_selectionnes)
+
     try:
         with open(log_path, "w", encoding="utf-8") as log_file:
             proc = subprocess.Popen(
@@ -653,6 +659,50 @@ def _recuperer_acces_valides() -> list:
 def api_acces_valides():
     """Retourne uniquement les accès SSH valides découverts lors du brute-force."""
     return jsonify({"acces": _recuperer_acces_valides()})
+
+
+def _recuperer_ports_ouverts() -> list:
+    """Lit les ports ouverts découverts lors du dernier scan."""
+    repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+    candidats = [
+        "/app/data/pentest/pentest_results.json",
+        "/app/data/pentest_results.json",
+        "/tmp/pentest_results.json",
+        os.path.join(repo_root, "data", "pentest", "pentest_results.json"),
+        os.path.join(repo_root, "data", "pentest_results.json"),
+    ]
+    for chemin in candidats:
+        if os.path.isfile(chemin):
+            try:
+                with open(chemin, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                ports = data.get("attaques", {}).get("scan_ports", {}).get("ports_ouverts", [])
+                if ports:
+                    return [int(p) for p in ports]
+            except Exception:
+                pass
+
+    sources = list(_attaques_en_cours.values()) + list(reversed(_attaques_terminees))
+    for item in sources:
+        if "scan" not in str(item.get("log", "")):
+            continue
+        log_path = item.get("log")
+        if log_path and os.path.isfile(log_path):
+            try:
+                with open(log_path, "r", encoding="utf-8", errors="replace") as f:
+                    contenu = f.read()
+                matches = re.findall(r"Port\s+(\d+)\s+.*ouvert", contenu, re.IGNORECASE)
+                if matches:
+                    return sorted({int(p) for p in matches})
+            except Exception:
+                pass
+    return []
+
+
+@app.route("/api/attaques/ports_ouverts")
+def api_ports_ouverts():
+    """Retourne les ports ouverts découverts lors du dernier scan de ports."""
+    return jsonify({"ports": _recuperer_ports_ouverts()})
 
 
 @app.route("/api/attaques/ssh_connect", methods=["POST"])
