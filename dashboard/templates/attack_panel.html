@@ -486,6 +486,106 @@
             background: var(--bg-alt);
         }
 
+        /* ── Tableau compact des versions / services ── */
+        .services-table-wrapper {
+            margin-top: 10px;
+            border: 2px solid var(--border);
+            border-radius: 6px;
+            background: var(--bg);
+            overflow: hidden;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .services-table-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 5px 8px;
+            background: var(--bg-alt);
+            border-bottom: 2px solid var(--border);
+            font-size: 0.7rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            color: var(--text);
+        }
+
+        .services-count-badge {
+            background: var(--main);
+            color: #000000;
+            padding: 1px 6px;
+            border-radius: 3px;
+            font-weight: 900;
+            font-size: 0.65rem;
+        }
+
+        .services-table-scroll {
+            max-height: 180px;
+            overflow-y: auto;
+        }
+
+        .services-table-scroll::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .services-table-scroll::-webkit-scrollbar-track {
+            background: var(--bg);
+        }
+
+        .services-table-scroll::-webkit-scrollbar-thumb {
+            background: var(--border-highlight);
+            border-radius: 2px;
+        }
+
+        .services-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.72rem;
+        }
+
+        .services-table tr {
+            border-bottom: 1px solid var(--border);
+            transition: background 0.15s ease;
+        }
+
+        .services-table tr:last-child {
+            border-bottom: none;
+        }
+
+        .services-table tr:hover {
+            background: var(--bg-card);
+        }
+
+        .service-tag-cell {
+            padding: 4px 6px;
+            width: 32%;
+            white-space: nowrap;
+            vertical-align: middle;
+        }
+
+        .service-badge-pill {
+            display: inline-flex;
+            align-items: center;
+            padding: 2px 5px;
+            border-radius: 4px;
+            background: var(--bg-alt);
+            border: 1px solid var(--border-highlight);
+            color: var(--main);
+            font-weight: 800;
+            font-size: 0.68rem;
+            letter-spacing: -0.2px;
+        }
+
+        .service-version-cell {
+            padding: 4px 6px;
+            color: var(--text);
+            font-weight: 600;
+            font-size: 0.72rem;
+            word-break: break-word;
+            vertical-align: middle;
+        }
+
         .status-indicator {
             display: flex;
             align-items: center;
@@ -703,7 +803,7 @@
                 <span>scripts/run_scan_ports.py</span>
             </div>
             <button class="btn-launch" onclick="lancerAttaque('SCAN_PORTS', this)">Lancer l'attaque</button>
-            <div id="scan-services-list" style="display:none; margin-top:10px; padding:8px; border-top:1px solid var(--border); max-height:160px; overflow-y:auto; font-size:0.75rem; font-family:'JetBrains Mono',monospace;"></div>
+            <div id="scan-services-list" style="display:none;"></div>
             <div class="status-indicator status-idle">
                 <span class="status-dot-sm"></span>
                 <span class="status-text">En attente</span>
@@ -1047,8 +1147,10 @@
                 if (nullDetails && data.os_detecte) {
                     nullDetails.style.display = 'block';
                     nullDetails.innerHTML = `
-                        <div style="font-weight:800; font-size:0.7rem; text-transform:uppercase; color:var(--text); margin-bottom:4px;">OS Fingerprinting (RFC 793) :</div>
-                        <div style="color:var(--critique); font-weight:800;">${data.os_detecte}</div>
+                        <div style="padding:6px 10px; background:var(--bg); border:2px solid var(--border); border-radius:6px; box-shadow:var(--shadow-sm);">
+                            <div style="font-weight:800; font-size:0.68rem; text-transform:uppercase; color:var(--text-muted); margin-bottom:2px;">OS Détecté (RFC 793)</div>
+                            <div style="color:var(--critique); font-weight:800; font-size:0.75rem; font-family:'JetBrains Mono',monospace;">${data.os_detecte}</div>
+                        </div>
                     `;
                 }
             } catch (_) {}
@@ -1182,21 +1284,56 @@
                     }
                 }
 
-                // 4b. Affichage dynamique des services (Scan de ports) et OS (Scan NULL)
+                // 4b. Affichage dynamique des services (Scan de ports) en tableau compact avec badges
                 const services = data.services || {};
                 const servicesBox = document.getElementById('scan-services-list');
                 if (servicesBox) {
                     const entries = Object.entries(services);
                     if (entries.length > 0) {
+                        const PORT_TAGS = {
+                            21: 'FTP',
+                            22: 'SSH',
+                            23: 'TELNET',
+                            25: 'SMTP',
+                            80: 'HTTP',
+                            111: 'RPC',
+                            139: 'NETBIOS',
+                            445: 'SMB',
+                            512: 'EXEC',
+                            513: 'LOGIN',
+                            514: 'SHELL',
+                            1524: 'ROOTSHELL',
+                            2121: 'FTP',
+                            3306: 'MYSQL',
+                            5432: 'PGSQL',
+                            6667: 'IRC',
+                            8080: 'HTTP'
+                        };
                         servicesBox.style.display = 'block';
                         servicesBox.innerHTML = `
-                            <div style="font-weight:800; font-size:0.7rem; text-transform:uppercase; color:var(--text); margin-bottom:6px;">Services & Versions identifiés :</div>
-                            ${entries.map(([port, b]) => `
-                                <div style="display:flex; gap:6px; align-items:baseline; padding:2px 0;">
-                                    <span style="font-weight:800; color:var(--main); min-width:32px;">:${port}</span>
-                                    <span style="color:var(--text); word-break:break-all;">${b}</span>
+                            <div class="services-table-wrapper">
+                                <div class="services-table-header">
+                                    <span>Services & Versions</span>
+                                    <span class="services-count-badge">${entries.length}</span>
                                 </div>
-                            `).join('')}
+                                <div class="services-table-scroll">
+                                    <table class="services-table">
+                                        <tbody>
+                                            ${entries.map(([port, b]) => {
+                                                const tag = PORT_TAGS[port] || 'TCP';
+                                                return `
+                                                    <tr>
+                                                        <td class="service-tag-cell">
+                                                            <span class="service-badge-pill">${tag} :${port}</span>
+                                                        </td>
+                                                        <td class="service-version-cell">${b}</td>
+                                                    </tr>
+                                                `;
+                                            }).join('')}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
                         `;
                     }
                 }
@@ -1206,8 +1343,10 @@
                 if (nullDetails && osDet) {
                     nullDetails.style.display = 'block';
                     nullDetails.innerHTML = `
-                        <div style="font-weight:800; font-size:0.7rem; text-transform:uppercase; color:var(--text); margin-bottom:4px;">OS Fingerprinting (RFC 793) :</div>
-                        <div style="color:var(--critique); font-weight:800;">${osDet}</div>
+                        <div style="padding:6px 10px; background:var(--bg); border:2px solid var(--border); border-radius:6px; box-shadow:var(--shadow-sm);">
+                            <div style="font-weight:800; font-size:0.68rem; text-transform:uppercase; color:var(--text-muted); margin-bottom:2px;">OS Détecté (RFC 793)</div>
+                            <div style="color:var(--critique); font-weight:800; font-size:0.75rem; font-family:'JetBrains Mono',monospace;">${osDet}</div>
+                        </div>
                     `;
                 }
 
