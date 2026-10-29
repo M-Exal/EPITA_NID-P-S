@@ -45,7 +45,6 @@ def test_detecte_brute_force(moteur, mock_alertes, mock_blocker):
     assert ip_attaquant in mock_blocker.bloques
 
 
-@pytest.mark.skip(reason="À implémenter par le membre en charge du DoS")
 def test_detecte_dos(moteur, mock_alertes, mock_blocker):
     """Test #4 : DoS flood volumétrique (seuil = 5 paquets)."""
     ip_attaquant = "192.168.1.104"

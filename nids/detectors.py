@@ -140,8 +140,18 @@ class MoteurDetection:
 
     def detecte_dos(self, paquet, maintenant):
         """4. Déni de service (DoS Flood volumétrique)."""
-        # TODO: À implémenter
-        pass
+        if not paquet.haslayer(IP):
+            return
+        ip_src = paquet[IP].src
+        self.dos_tracker[ip_src].append(maintenant)
+        while self.dos_tracker[ip_src] and self.dos_tracker[ip_src][0] < maintenant - self.cfg.DOS_WINDOW:
+            self.dos_tracker[ip_src].popleft()
+        if len(self.dos_tracker[ip_src]) > self.cfg.DOS_THRESHOLD:
+            details = (
+                f"Déni de service (DoS) détecté : {len(self.dos_tracker[ip_src])} paquets "
+                f"en {self.cfg.DOS_WINDOW}s"
+            )
+            self.declencher_alerte_et_prevention("DOS", ip_src, details, maintenant)
 
     def detecte_signatures_payload(self, paquet, maintenant):
         """5, 6, 7. Signatures de payload : SQLi, XSS, Path Traversal.
