@@ -238,9 +238,13 @@ def api_alerts_reset():
             except OSError:
                 pass
 
+        _attaques_en_cours.clear()
+        _attaques_terminees.clear()
+        _reinitialiser_session_pentest()
+
         return jsonify({
             "status": "success",
-            "message": "Base d'alertes réinitialisée avec succès."
+            "message": "Base d'alertes et session attaquante réinitialisées avec succès."
         })
     except Exception as exc:
         return jsonify({"status": "error", "message": str(exc)}), 500
@@ -482,6 +486,43 @@ _attaques_en_cours: dict = {}
 _attaques_terminees: list = []
 
 
+def _reinitialiser_session_pentest():
+    """Au démarrage du serveur dashboard, réinitialise toutes les données du pentest.
+
+    Garantit que la page de l'attaquant démarre totalement vierge (aucun compte SSH,
+    aucun port découvert, aucune bannière, aucun statut d'attaque précédent).
+    """
+    repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+    candidats = [
+        "/app/data/pentest/pentest_results.json",
+        "/app/data/pentest_results.json",
+        "/tmp/pentest_results.json",
+        os.path.join(repo_root, "data", "pentest", "pentest_results.json"),
+        os.path.join(repo_root, "data", "nids", "pentest_results.json"),
+        os.path.join(repo_root, "data", "pentest_results.json"),
+    ]
+    for chemin in candidats:
+        if os.path.isfile(chemin):
+            try:
+                os.remove(chemin)
+            except Exception:
+                pass
+
+    try:
+        import glob
+        for f in glob.glob("/tmp/attack_*.log"):
+            try:
+                os.remove(f)
+            except Exception:
+                pass
+    except Exception:
+        pass
+
+
+# Purge initiale au démarrage pour garantir un état vierge
+_reinitialiser_session_pentest()
+
+
 def _nettoyer_terminees():
     """Déplace dans _attaques_terminees les processus qui ont fini."""
     finies = []
@@ -498,6 +539,15 @@ def _nettoyer_terminees():
             })
     for nom in finies:
         del _attaques_en_cours[nom]
+
+
+@app.route("/api/attaques/reset", methods=["POST"])
+def api_reset_attaques():
+    """Réinitialise la session attaquante à la demande (page vierge)."""
+    _attaques_en_cours.clear()
+    _attaques_terminees.clear()
+    _reinitialiser_session_pentest()
+    return jsonify({"success": True, "message": "Session d'attaque réinitialisée avec succès."})
 
 
 @app.route("/attaques")

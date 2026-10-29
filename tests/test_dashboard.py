@@ -325,3 +325,23 @@ def test_nips_lift_quarantine(client, tmp_path, monkeypatch):
     assert len(res_all.get_json()["state"]["quarantined_accounts"]) == 0
 
 
+def test_statut_attaques_vierge_au_demarrage(client):
+    """Vérifie que la page de l'attaquant démarre vierge de toute information (comptes, ports, etc.)."""
+    res = client.get("/api/attaques/status")
+    assert res.status_code == 200
+    data = res.get_json()
+    assert data["en_cours"] == []
+    assert data["terminees"] == []
+    assert data["acces_valides"] == []
+    assert data["ports_ouverts"] == []
+    assert data["services"] == {}
+    assert data["os_detecte"] == ""
+
+
+def test_api_reset_attaques(client):
+    """Vérifie que la route /api/attaques/reset réinitialise la session attaquante."""
+    res = client.post("/api/attaques/reset")
+    assert res.status_code == 200
+    assert res.get_json()["success"] is True
+
+

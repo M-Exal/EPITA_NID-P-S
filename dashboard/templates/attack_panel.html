@@ -1134,24 +1134,34 @@
                 const ports = data.ports || [];
                 const liste = document.getElementById('ports-checkbox-list');
                 const selector = document.getElementById('dos-port-selector');
-                if (liste && selector && ports.length > 0) {
-                    liste.innerHTML = ports.map(port => `
-                        <label style="display:inline-flex; align-items:center; gap:4px; padding:3px 8px; border:1px solid var(--border); border-radius:4px; background:var(--bg); font-family:'JetBrains Mono',monospace; font-size:0.75rem; font-weight:700; cursor:pointer;">
-                            <input type="checkbox" value="${port}" checked style="accent-color:var(--critique); width:12px; height:12px;">
-                            <span>${port}</span>
-                        </label>
-                    `).join('');
-                    selector.style.display = 'block';
+                if (selector) {
+                    if (liste && ports.length > 0) {
+                        liste.innerHTML = ports.map(port => `
+                            <label style="display:inline-flex; align-items:center; gap:4px; padding:3px 8px; border:1px solid var(--border); border-radius:4px; background:var(--bg); font-family:'JetBrains Mono',monospace; font-size:0.75rem; font-weight:700; cursor:pointer;">
+                                <input type="checkbox" value="${port}" checked style="accent-color:var(--critique); width:12px; height:12px;">
+                                <span>${port}</span>
+                            </label>
+                        `).join('');
+                        selector.style.display = 'block';
+                    } else {
+                        selector.style.display = 'none';
+                        if (liste) liste.innerHTML = '';
+                    }
                 }
                 const nullDetails = document.getElementById('null-scan-details');
-                if (nullDetails && data.os_detecte) {
-                    nullDetails.style.display = 'block';
-                    nullDetails.innerHTML = `
-                        <div style="padding:6px 10px; background:var(--bg); border:2px solid var(--border); border-radius:6px; box-shadow:var(--shadow-sm);">
-                            <div style="font-weight:800; font-size:0.68rem; text-transform:uppercase; color:var(--text-muted); margin-bottom:2px;">OS Détecté (RFC 793)</div>
-                            <div style="color:var(--critique); font-weight:800; font-size:0.75rem; font-family:'JetBrains Mono',monospace;">${data.os_detecte}</div>
-                        </div>
-                    `;
+                if (nullDetails) {
+                    if (data.os_detecte) {
+                        nullDetails.style.display = 'block';
+                        nullDetails.innerHTML = `
+                            <div style="padding:6px 10px; background:var(--bg); border:2px solid var(--border); border-radius:6px; box-shadow:var(--shadow-sm);">
+                                <div style="font-weight:800; font-size:0.68rem; text-transform:uppercase; color:var(--text-muted); margin-bottom:2px;">OS Détecté (RFC 793)</div>
+                                <div style="color:var(--critique); font-weight:800; font-size:0.75rem; font-family:'JetBrains Mono',monospace;">${data.os_detecte}</div>
+                            </div>
+                        `;
+                    } else {
+                        nullDetails.style.display = 'none';
+                        nullDetails.innerHTML = '';
+                    }
                 }
             } catch (_) {}
         }
@@ -1335,19 +1345,48 @@
                                 </div>
                             </div>
                         `;
+                    } else {
+                        servicesBox.style.display = 'none';
+                        servicesBox.innerHTML = '';
                     }
                 }
 
                 const osDet = data.os_detecte || '';
                 const nullDetails = document.getElementById('null-scan-details');
-                if (nullDetails && osDet) {
-                    nullDetails.style.display = 'block';
-                    nullDetails.innerHTML = `
-                        <div style="padding:6px 10px; background:var(--bg); border:2px solid var(--border); border-radius:6px; box-shadow:var(--shadow-sm);">
-                            <div style="font-weight:800; font-size:0.68rem; text-transform:uppercase; color:var(--text-muted); margin-bottom:2px;">OS Détecté (RFC 793)</div>
-                            <div style="color:var(--critique); font-weight:800; font-size:0.75rem; font-family:'JetBrains Mono',monospace;">${osDet}</div>
-                        </div>
-                    `;
+                if (nullDetails) {
+                    if (osDet) {
+                        nullDetails.style.display = 'block';
+                        nullDetails.innerHTML = `
+                            <div style="padding:6px 10px; background:var(--bg); border:2px solid var(--border); border-radius:6px; box-shadow:var(--shadow-sm);">
+                                <div style="font-weight:800; font-size:0.68rem; text-transform:uppercase; color:var(--text-muted); margin-bottom:2px;">OS Détecté (RFC 793)</div>
+                                <div style="color:var(--critique); font-weight:800; font-size:0.75rem; font-family:'JetBrains Mono',monospace;">${osDet}</div>
+                            </div>
+                        `;
+                    } else {
+                        nullDetails.style.display = 'none';
+                        nullDetails.innerHTML = '';
+                    }
+                }
+
+                // 4c. Mise à jour des ports cibles DoS
+                const portsOuverts = data.ports_ouverts || [];
+                const selector = document.getElementById('dos-port-selector');
+                const liste = document.getElementById('ports-checkbox-list');
+                if (selector) {
+                    if (liste && portsOuverts.length > 0) {
+                        const dejaCoches = new Set(Array.from(document.querySelectorAll('#ports-checkbox-list input[type="checkbox"]:checked')).map(cb => parseInt(cb.value)));
+                        const existed = document.querySelectorAll('#ports-checkbox-list input[type="checkbox"]').length > 0;
+                        liste.innerHTML = portsOuverts.map(port => `
+                            <label style="display:inline-flex; align-items:center; gap:4px; padding:3px 8px; border:1px solid var(--border); border-radius:4px; background:var(--bg); font-family:'JetBrains Mono',monospace; font-size:0.75rem; font-weight:700; cursor:pointer;">
+                                <input type="checkbox" value="${port}" ${!existed || dejaCoches.has(port) ? 'checked' : ''} style="accent-color:var(--critique); width:12px; height:12px;">
+                                <span>${port}</span>
+                            </label>
+                        `).join('');
+                        selector.style.display = 'block';
+                    } else {
+                        selector.style.display = 'none';
+                        if (liste) liste.innerHTML = '';
+                    }
                 }
 
                 // 5. Affichage des logs en temps réel (identique à main)
@@ -1359,6 +1398,8 @@
                     const a = termineesList[termineesList.length - 1];
                     const rc = a.code_retour === 0 ? '[SUCCÈS]' : `[CODE RETOUR ${a.code_retour}]`;
                     logText = `[TERMINÉ] ${a.attaque} — ${a.debut} → ${a.fin} — ${rc}\n\n${a.log_extrait || '(log vide)'}`;
+                } else {
+                    logText = "[*] Système CyBear Pentest initialisé.\n[*] Aucun scénario d'attaque exécuté dans cette session.\n[*] Cliquez sur « Lancer l'attaque » pour exécuter un module.";
                 }
 
                 if (logText && logText !== lastLogContent) {
@@ -1496,14 +1537,16 @@
         }
 
         async function reinitialiserBase() {
-            if (!confirm("Voulez-vous vraiment réinitialiser toutes les alertes de la base ?")) {
+            if (!confirm("Voulez-vous vraiment réinitialiser toutes les alertes de la base et la session d'attaque ?")) {
                 return;
             }
             try {
                 const res = await fetch('/api/alerts/reset', { method: 'POST' });
                 const data = await res.json();
                 if (res.ok && data.status === 'success') {
-                    alert("Base d'alertes réinitialisée.");
+                    showToast("Base et session attaquante réinitialisées.", "success");
+                    pollStatus();
+                    chargerPortsOuverts();
                 } else {
                     alert("Erreur lors de la réinitialisation : " + (data.message || 'inconnue'));
                 }
