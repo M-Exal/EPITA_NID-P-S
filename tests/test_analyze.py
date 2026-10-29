@@ -131,5 +131,5 @@ def test_analyse_correlation_et_taux_detection(tmp_path):
 
     # Restitution textuelle
     texte = analyzer.generer_synthese_texte(rapport)
-    assert "RAPPORT DE SYNTHÈSE FORENSIQUE" in texte
+    assert "RAPPORT DE SYNTHESE FORENSIQUE" in texte
     assert "100.0%" in texte

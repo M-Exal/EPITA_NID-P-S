@@ -1,4 +1,4 @@
-# 🎤 Support & Trame de Soutenance Orale (15 minutes)
+# Support & Trame de Soutenance Orale (15 minutes)
 
 **EPITA — Majeure Sécurité (ING3)**  
 **Projet : Honeypot, Automatisation de Pentest & NIDS / NIPS en Python**  
@@ -7,7 +7,7 @@
 
 ---
 
-## ⏱️ Grille de Répartition du Temps & des Rôles (15 min chrono)
+## Grille de Répartition du Temps & des Rôles (15 min chrono)
 
 | Slide | Titre & Thématique | Intervenant Principal | Durée Estimée |
 | :---: | :--- | :--- | :---: |
@@ -25,7 +25,7 @@
 
 ---
 
-## 🖥️ Détail Slide par Slide (Contenu Visuel & Script Narratif)
+## Detail Slide par Slide (Contenu Visuel & Script Narratif)
 
 ---
 
@@ -135,7 +135,7 @@
 
 ---
 
-## 💡 Anticipation des Questions du Jury / Client
+## Anticipation des Questions du Jury / Client
 
 1. **"Pourquoi Scapy plutôt que libpcap ou tcpdump natif pour le NIDS ?"**
    * *Réponse :* Scapy permet une manipulation native en Python des couches applicatives et protocolaires avec un décodage direct des objets, idéal pour prototyper rapidement des règles de détection sur-mesure (drapeaux TCP, extraction Raw HTTP) sans overhead de compilation.

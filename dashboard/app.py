@@ -392,20 +392,44 @@ def api_stats():
 @app.route("/api/analyse")
 def api_analyse():
     """Retourne l'analyse forensique consolidée des alertes NIDS et journaux cibles."""
-    racine = Path(__file__).resolve().parents[1]
-    analysis_dir = str(racine / "analysis")
-    if analysis_dir not in sys.path:
-        sys.path.insert(0, analysis_dir)
+    candidats_analysis = [
+        os.path.join(os.path.dirname(__file__), "..", "analysis"),
+        os.path.join(os.path.dirname(__file__), "analysis"),
+        "/app/analysis",
+    ]
+    for c in candidats_analysis:
+        c_abs = os.path.abspath(c)
+        if os.path.isdir(c_abs) and c_abs not in sys.path:
+            sys.path.insert(0, c_abs)
+
     try:
         from analyze import LogAnalyzer
-        target_dir = os.getenv("METASPLOITABLE_LOG_DIR", str(racine / "data" / "metasploitable" / "log"))
+
+        candidats_logs = [
+            os.getenv("METASPLOITABLE_LOG_DIR"),
+            "/app/data/metasploitable_logs",
+            os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "data", "metasploitable", "log")),
+            os.path.abspath(os.path.join(os.path.dirname(__file__), "data", "metasploitable_logs")),
+        ]
+        target_dir = next((p for p in candidats_logs if p and os.path.isdir(p)), None)
+
+        candidats_pentest = [
+            os.getenv("PENTEST_RESULTS_JSON"),
+            "/app/data/pentest/pentest_results.json",
+            os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "data", "pentest", "pentest_results.json")),
+            "/tmp/pentest_results.json",
+        ]
+        pentest_results = next((p for p in candidats_pentest if p and os.path.isfile(p)), None)
+
         analyzer = LogAnalyzer(
             target_dir=target_dir,
             nids_alerts=ALERT_JSON_PATH,
+            pentest_results=pentest_results,
         )
         rapport = analyzer.generer_rapport()
         return jsonify(rapport)
     except Exception as e:
+        app.logger.error("Erreur analyse forensique : %s", e, exc_info=True)
         return jsonify({"status": "error", "message": str(e)}), 500
 
 

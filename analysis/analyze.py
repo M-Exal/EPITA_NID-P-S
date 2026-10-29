@@ -415,43 +415,43 @@ class LogAnalyzer:
 
         lignes = []
         lignes.append("=" * 68)
-        lignes.append(" 🛡️  RAPPORT DE SYNTHÈSE FORENSIQUE & ANALYSE DES JOURNAUX")
-        lignes.append(f"    Date d'analyse : {r['date_analyse']} (Heure de Paris)")
+        lignes.append(" RAPPORT DE SYNTHESE FORENSIQUE ET ANALYSE DES JOURNAUX")
+        lignes.append(f" Date d'analyse : {r['date_analyse']} (Heure de Paris)")
         lignes.append("=" * 68)
 
         # Section NIDS
-        lignes.append("\n[1] MOTEUR DE DÉTECTION NIDS / NIPS")
-        lignes.append(f"  • Total alertes émises : {nids['total']}")
+        lignes.append("\n[1] MOTEUR DE DETECTION NIDS / NIPS")
+        lignes.append(f"  - Total alertes emises : {nids['total']}")
         if nids["types"]:
-            lignes.append("  • Répartition par type d'attaque :")
+            lignes.append("  - Répartition par type d'attaque :")
             for t, count in nids["types"].items():
-                lignes.append(f"      - {t:<22} : {count:>4} alerte(s)")
+                lignes.append(f"      * {t:<22} : {count:>4} alerte(s)")
         if nids["top_sources"]:
-            lignes.append("  • Top adresses IP suspectes :")
+            lignes.append("  - Top adresses IP suspectes :")
             for ip, count in list(nids["top_sources"].items())[:5]:
-                lignes.append(f"      - {ip:<22} : {count:>4} événement(s)")
+                lignes.append(f"      * {ip:<22} : {count:>4} evenement(s)")
 
         # Section Honeypot
         lignes.append("\n[2] CIBLE & HONEYPOT (Metasploitable 2)")
-        lignes.append(f"  • Total événements capturés : {meta['total_evenements']}")
-        lignes.append(f"  • Authentifications SSH      : {meta['logins_echoues']} échouée(s), {meta['logins_reussis']} réussie(s)")
-        lignes.append(f"  • Requêtes Web (Apache/DVWA) : {meta['requetes_http']}")
+        lignes.append(f"  - Total evenements captures : {meta['total_evenements']}")
+        lignes.append(f"  - Authentifications SSH     : {meta['logins_echoues']} echouee(s), {meta['logins_reussis']} reussie(s)")
+        lignes.append(f"  - Requetes Web (Apache/DVWA): {meta['requetes_http']}")
         if meta["http"]["signatures_web"]:
             sig = meta["http"]["signatures_web"]
-            lignes.append(f"      - Injections SQL tracées : {sig['sqli']}")
-            lignes.append(f"      - Injections XSS tracées : {sig['xss']}")
-            lignes.append(f"      - Traversées répertoire  : {sig['path_traversal']}")
+            lignes.append(f"      * Injections SQL tracees : {sig['sqli']}")
+            lignes.append(f"      * Injections XSS tracees : {sig['xss']}")
+            lignes.append(f"      * Traversees repertoire : {sig['path_traversal']}")
 
         # Section Corrélation
-        lignes.append("\n[3] CORRÉLATION CROISÉE PENTEST ↔ NIDS")
-        lignes.append(f"  • Taux de détection NIDS    : {corr['taux_detection_pct']}% ({corr['attaques_detectees_nids']}/{corr['total_attaques_pentest']})")
-        lignes.append(f"  • Évaluation globale        : {corr['evaluation_globale']}")
+        lignes.append("\n[3] CORRELATION CROISEE PENTEST / NIDS")
+        lignes.append(f"  - Taux de detection NIDS    : {corr['taux_detection_pct']}% ({corr['attaques_detectees_nids']}/{corr['total_attaques_pentest']})")
+        lignes.append(f"  - Evaluation globale        : {corr['evaluation_globale']}")
         lignes.append("-" * 68)
-        lignes.append(f"  {'Scénario Pentest':<20} | {'Alerte NIDS':<16} | {'Détection':<10} | {'Trace Cible'}")
+        lignes.append(f"  {'Scenario Pentest':<20} | {'Alerte NIDS':<16} | {'Detection':<10} | {'Trace Cible'}")
         lignes.append("-" * 68)
         for m in corr["matrice_correlation"]:
-            det = "✅ OUI" if m["detectee_par_nids"] else "❌ NON"
-            trc = "✅ OUI" if m["trace_enregistree_honeypot"] else "⚠️  NON"
+            det = "OUI" if m["detectee_par_nids"] else "NON"
+            trc = "OUI" if m["trace_enregistree_honeypot"] else "NON"
             lignes.append(f"  {m['attaque_pentest']:<20} | {m['alerte_nids_attendue']:<16} | {det:<10} | {trc}")
         lignes.append("=" * 68)
 

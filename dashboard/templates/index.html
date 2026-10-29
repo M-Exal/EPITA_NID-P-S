@@ -831,7 +831,7 @@
                 <span class="nips-status-badge" id="nips-badge">OFF</span>
             </div>
             <a href="/attaques" class="btn-attack-link">Panneau d'Attaques</a>
-            <button class="btn-link" onclick="ouvrirAnalyseForensique()" title="Analyse des logs Metasploitable, NIDS et corrélation" style="border-color: var(--accent); color: var(--accent);">📊 Rapport Forensique</button>
+            <button class="btn-link" onclick="ouvrirAnalyseForensique()" title="Analyse forensique et corrélation des journaux" style="border-color: var(--accent); color: var(--accent);">Rapport Forensique</button>
             <button class="btn-link btn-reset" id="btn-reset-db" onclick="reinitialiserBase()">Vider la base</button>
             <button class="btn-link" id="theme-toggle">Thème</button>
             <div class="status-badge" id="connectionStatus">
@@ -1011,19 +1011,19 @@
         <div class="modal-card">
             <div class="modal-header">
                 <div style="display: flex; align-items: center; gap: 10px;">
-                    <span class="badge badge-accent">FORENSICS & LOGS</span>
-                    <h2 style="font-size: 1.15rem; margin: 0; font-family: 'Space Grotesk', sans-serif;">Rapport d'Analyse Forensique & Corrélation</h2>
+                    <span class="badge badge-accent">FORENSIC ANALYSIS</span>
+                    <h2 style="font-size: 1.15rem; margin: 0; font-family: 'Space Grotesk', sans-serif; text-transform: uppercase; letter-spacing: 0.5px;">Analyse Forensique & Correlation</h2>
                 </div>
                 <button class="modal-close-btn" onclick="fermerAnalyseForensique()">&times;</button>
             </div>
             <div class="modal-body" id="forensique-content">
-                <div style="text-align: center; padding: 30px; font-family: 'JetBrains Mono', monospace;">
+                <div style="text-align: center; padding: 30px; font-family: 'JetBrains Mono', monospace; color: var(--text-muted);">
                     Chargement de l'analyse forensique...
                 </div>
             </div>
             <div class="modal-footer">
-                <button class="btn-link" onclick="chargerAnalyseForensique()">🔄 Actualiser</button>
-                <button class="btn-link" onclick="telechargerRapportJSON()">💾 Télécharger JSON</button>
+                <button class="btn-link" onclick="chargerAnalyseForensique()">Actualiser</button>
+                <button class="btn-link" onclick="telechargerRapportJSON()">Exporter JSON</button>
                 <button class="btn-link btn-attack-link" onclick="fermerAnalyseForensique()">Fermer</button>
             </div>
         </div>
@@ -1431,7 +1431,7 @@
 
         async function chargerAnalyseForensique() {
             const conteneur = document.getElementById('forensique-content');
-            conteneur.innerHTML = '<div style="text-align: center; padding: 30px; font-family: \'JetBrains Mono\', monospace;">⏳ Génération et corrélation des journaux en cours...</div>';
+            conteneur.innerHTML = '<div style="text-align: center; padding: 30px; font-family: \'JetBrains Mono\', monospace; color: var(--text-muted);">Chargement et correlation des donnees en cours...</div>';
             try {
                 const res = await fetch('/api/analyse');
                 if (!res.ok) throw new Error('HTTP ' + res.status);
@@ -1439,7 +1439,7 @@
                 dernierRapportForensique = data;
                 rendreAnalyseForensique(data);
             } catch (e) {
-                conteneur.innerHTML = '<div style="color: var(--critique); padding: 20px;">Erreur lors de la récupération de l\'analyse : ' + e.message + '</div>';
+                conteneur.innerHTML = '<div style="color: var(--critique); padding: 20px; font-family: \'JetBrains Mono\', monospace;">Erreur lors de la recuperation de l\'analyse : ' + e.message + '</div>';
             }
         }
 
@@ -1454,47 +1454,47 @@
             let html = `
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 14px; margin-bottom: 20px;">
                 <div class="card" style="margin: 0; padding: 14px;">
-                    <div style="font-weight: 800; font-family: 'Space Grotesk', sans-serif; margin-bottom: 6px;">🛡️ Moteur NIDS</div>
-                    <div>Total alertes émises : <strong>${nids.total || 0}</strong></div>
-                    <div style="font-size: 0.82rem; color: var(--text-muted); margin-top: 4px;">
-                        ${Object.entries(nids.types || {}).map(([t, c]) => `<span>${t}: <strong>${c}</strong></span>`).join(' • ') || 'Aucune alerte enregistrée'}
+                    <div style="font-weight: 800; font-family: 'Space Grotesk', sans-serif; text-transform: uppercase; letter-spacing: 0.5px; font-size: 0.85rem; margin-bottom: 8px;">Moteur NIDS</div>
+                    <div>Alertes enregistrees : <strong style="font-family: 'JetBrains Mono', monospace;">${nids.total || 0}</strong></div>
+                    <div style="font-size: 0.8rem; color: var(--text-muted); font-family: 'JetBrains Mono', monospace; margin-top: 6px;">
+                        ${Object.entries(nids.types || {}).map(([t, c]) => `<span>${t}: <strong>${c}</strong></span>`).join(' | ') || 'Aucune alerte'}
                     </div>
                 </div>
                 <div class="card" style="margin: 0; padding: 14px;">
-                    <div style="font-weight: 800; font-family: 'Space Grotesk', sans-serif; margin-bottom: 6px;">🎯 Honeypot Metasploitable 2</div>
-                    <div>Événements capturés : <strong>${meta.total_evenements || 0}</strong></div>
-                    <div style="font-size: 0.82rem; color: var(--text-muted); margin-top: 4px;">
-                        SSH : ${meta.logins_echoues || 0} échecs / ${meta.logins_reussis || 0} succès<br>
-                        Web : ${meta.requetes_http || 0} req (SQLi: ${sigs.sqli || 0}, XSS: ${sigs.xss || 0}, Traversal: ${sigs.path_traversal || 0})
+                    <div style="font-weight: 800; font-family: 'Space Grotesk', sans-serif; text-transform: uppercase; letter-spacing: 0.5px; font-size: 0.85rem; margin-bottom: 8px;">Cible Metasploitable 2</div>
+                    <div>Evenements captures : <strong style="font-family: 'JetBrains Mono', monospace;">${meta.total_evenements || 0}</strong></div>
+                    <div style="font-size: 0.8rem; color: var(--text-muted); font-family: 'JetBrains Mono', monospace; margin-top: 6px;">
+                        SSH : ${meta.logins_echoues || 0} echecs, ${meta.logins_reussis || 0} succes<br>
+                        HTTP : ${meta.requetes_http || 0} req (SQLi: ${sigs.sqli || 0}, XSS: ${sigs.xss || 0}, Traversal: ${sigs.path_traversal || 0})
                     </div>
                 </div>
                 <div class="card" style="margin: 0; padding: 14px; border-color: ${corr.taux_detection_pct === 100 ? 'var(--succes)' : 'var(--haute)'};">
-                    <div style="font-weight: 800; font-family: 'Space Grotesk', sans-serif; margin-bottom: 6px;">📊 Corrélation Pentest ↔ NIDS</div>
-                    <div>Taux de détection : <strong style="font-size: 1.15rem; color: ${corr.taux_detection_pct === 100 ? 'var(--succes)' : 'var(--haute)'};">${corr.taux_detection_pct || 0}%</strong></div>
-                    <div style="font-size: 0.82rem; color: var(--text-muted); margin-top: 4px;">
+                    <div style="font-weight: 800; font-family: 'Space Grotesk', sans-serif; text-transform: uppercase; letter-spacing: 0.5px; font-size: 0.85rem; margin-bottom: 8px;">Correlation Pentest / NIDS</div>
+                    <div>Taux de detection : <strong style="font-size: 1.15rem; font-family: 'JetBrains Mono', monospace; color: ${corr.taux_detection_pct === 100 ? 'var(--succes)' : 'var(--haute)'};">${corr.taux_detection_pct || 0}%</strong></div>
+                    <div style="font-size: 0.8rem; color: var(--text-muted); font-family: 'JetBrains Mono', monospace; margin-top: 6px;">
                         ${corr.evaluation_globale || ''}
                     </div>
                 </div>
             </div>
 
-            <div style="font-weight: 800; font-family: 'Space Grotesk', sans-serif; margin-bottom: 8px;">Matrice de Corrélation Croisée</div>
+            <div style="font-weight: 800; font-family: 'Space Grotesk', sans-serif; text-transform: uppercase; letter-spacing: 0.5px; font-size: 0.85rem; margin-bottom: 8px;">Matrice de Correlation Croisee</div>
             <div class="table-responsive">
                 <table>
                     <thead>
                         <tr>
                             <th>Attaque Pentest</th>
-                            <th>Alerte NIDS Attendue</th>
-                            <th>Détection NIDS</th>
-                            <th>Trace Honeypot</th>
+                            <th>Alerte Attendue</th>
+                            <th>Detection NIDS</th>
+                            <th>Trace Cible</th>
                         </tr>
                     </thead>
                     <tbody>
                         ${(corr.matrice_correlation || []).map(m => `
                             <tr>
                                 <td><code>${m.attaque_pentest}</code></td>
-                                <td><strong>${m.alerte_nids_attendue}</strong></td>
-                                <td>${m.detectee_par_nids ? '<span class="badge badge-succes">DÉTECTÉ</span>' : '<span class="badge badge-critique">MANQUÉ</span>'}</td>
-                                <td>${m.trace_enregistree_honeypot ? '<span class="badge badge-succes">TRACÉ</span>' : '<span class="badge badge-moyenne">NON TRACÉ</span>'}</td>
+                                <td><strong style="font-family: 'JetBrains Mono', monospace;">${m.alerte_nids_attendue}</strong></td>
+                                <td>${m.detectee_par_nids ? '<span class="badge badge-succes">DETECTE</span>' : '<span class="badge badge-critique">NON DETECTE</span>'}</td>
+                                <td>${m.trace_enregistree_honeypot ? '<span class="badge badge-succes">TRACE</span>' : '<span class="badge badge-moyenne">NON TRACE</span>'}</td>
                             </tr>
                         `).join('')}
                     </tbody>
