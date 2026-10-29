@@ -1,8 +1,8 @@
 # Architecture de Sécurité : NIDS / NIPS & Metasploitable 2 (Honeypot)
 
-Ce projet implémente une solution intégrée de surveillance, détection d'intrusion (**NIDS**), prévention active (**NIPS**) et pentest automatisé, déployée au moyen de conteneurs Docker.
+Ce projet implémente une solution intégrée de surveillance, détection d'intrusion (**NIDS**), prévention active (**NIPS**), analyse forensique de journaux et pentest automatisé, déployée au moyen de conteneurs Docker.
 
-Dans cette architecture, **Metasploitable 2** est utilisé comme honeypot / cible vulnérable centrale afin d'attirer et d'analyser le trafic hostile en conditions réelles.
+Dans cette architecture, **Metasploitable 2** est utilisé comme honeypot et cible vulnérable centrale afin d'attirer et d'analyser le trafic hostile en conditions réelles.
 
 ---
 
@@ -12,6 +12,7 @@ Dans cette architecture, **Metasploitable 2** est utilisé comme honeypot / cibl
                           ┌────────────────────────────┐
                           │     Module de Pentest      │
                           │   (Attaquant Automatisé)   │
+                          │   8 scénarios d'attaque    │
                           └─────────────┬──────────────┘
                                         │ (Trafic d'attaque)
                                         ▼
@@ -25,27 +26,31 @@ Dans cette architecture, **Metasploitable 2** est utilisé comme honeypot / cibl
 │   │  • SSH (Port 22)                  │◄═════►│  • Analyse comportementale         │   │
 │   │  • Telnet (Port 23)               │       │  • Détection de signatures         │   │
 │   │  • FTP vsftpd (Port 21)           │       │  • Blocage actif (iptables DROP)   │   │
-│   │  • MySQL, Samba, etc.             │       │                                    │   │
+│   │  • MySQL, Samba, etc.             │       │  • Quarantaine système (PAM)       │   │
 │   └───────────────────────────────────┘       └────────────────────────────────────┘   │
 │                     ▲                                                                  │
 │                     └────── Pile Réseau Partagée (network_mode: service:...)           ┘
 └────────────────────────────────────────────────────────────────────────────────────────┘
                                         │
+                    ┌───────────────────┴───────────────────┐
+                    ▼                                       ▼
+  ┌───────────────────────────────────┐   ┌───────────────────────────────────┐
+  │    Alertes & Journalisation       │   │    Analyse Forensique & Logs      │
+  │  • nids_alerts.json / log         │   │  • analysis/analyze.py            │
+  │  • Chiffrement Fernet (AES/HMAC)  │   │  • auth.log & access.log cibles   │
+  │  • Notification par mail (SMTP)   │   │  • Corrélation croisée 3 sources  │
+  │  • Bot Discord (Webhook temps réel│   │  • Calcul du taux de détection %  │
+  └─────────────────┬─────────────────┘   └─────────────────┬─────────────────┘
+                    │                                       │
+                    └───────────────────┬───────────────────┘
+                                        │ (Volume partagé /app/data)
                                         ▼
-                      ┌───────────────────────────────────┐
-                      │    Alertes & Journalisation       │
-                      │  • nids_alerts.json / log         │
-                      │  • Chiffrement Fernet (AES/HMAC)  │
-                      │  • Notification par mail (SMTP)   │
-                      │  • Bot Discord (Webhook temps réel)│
-                      └─────────────┬─────────────────────┘
-                                    │ (Volume partagé /app/data)
-                                    ▼
                       ┌───────────────────────────────────┐
                       │    Dashboard SIEM (SOC Web)       │
                       │  • Flask + SSE (Temps Réel)       │
                       │  • SOC : http://localhost:5050/   │
                       │  • Attaques : /attaques           │
+                      │  • Analyse Forensique : /api/analyse
                       │  • KPI, Matrice Kill-Chain, Live  │
                       └───────────────────────────────────┘
 ```
@@ -53,10 +58,10 @@ Dans cette architecture, **Metasploitable 2** est utilisé comme honeypot / cibl
 ### Le Rôle de Metasploitable 2 en tant que Honeypot
 Contrairement à des honeypots émulés basiques, **Metasploitable 2** fournit un environnement Linux complet délibérément vulnérable :
 * **Services applicatifs réels** : Serveur Web Apache exécutant des applications cibles telles que **DVWA** (*Damn Vulnerable Web Application*) et **Mutillidae**.
-* **Services d'authentification et d'accès distant** : Serveur OpenSSH, démon Telnet, serveur FTP (*vsftpd* avec sa fameuse backdoor historique).
+* **Services d'authentification et d'accès distant** : Serveur OpenSSH, démon Telnet, serveur FTP (*vsftpd* avec sa porte dérobée historique).
 * **Bases de données et partages** : MySQL, PostgreSQL, Samba.
 
-Cette diversité permet de tester une palette réaliste d'attaques réseau et applicatives, sans simulation artificielle.
+Cette diversité permet de tester une palette réaliste d'attaques réseau et applicatives, sans simulation artificielle, tout en générant de véritables journaux système (`/var/log/auth.log` et `/var/log/apache2/access.log`).
 
 ### Le Couplage Réseau NIDS ↔ Honeypot
 Le conteneur NIDS s'attache à la cible via la directive :
@@ -70,7 +75,51 @@ Cette configuration place le NIDS dans le **même espace de noms réseau (networ
 
 ---
 
-## 2. Fonctionnement de la Détection (NIDS)
+## 2. Structure du Dépôt
+
+```
+EPITA_NID-P-S/
+├── analysis/               # Module d'analyse forensique et corrélation des journaux
+│   ├── analyze.py          # Analyseur multi-sources (NIDS, Honeypot, Pentest)
+│   └── requirements.txt    # Dépendances bibliothèque standard
+├── dashboard/              # Interface Web SIEM et Panneau d'Attaques
+│   ├── app.py              # Backend Flask, SSE streaming, endpoints API
+│   ├── static/             # Feuilles de style neobrutales, icônes, scripts
+│   └── templates/          # Vues HTML (SIEM, Panneau d'attaque, terminal)
+├── data/                   # Données persistantes partagées
+│   ├── metasploitable/log/ # Journaux synchronisés de la cible (auth.log, access.log)
+│   ├── nids/               # Alertes JSON, clés Fernet, rapports chiffrés
+│   └── pentest/            # Résultats d'exécution des campagnes d'attaque
+├── docs/                   # Comptes-rendus de séances et support de soutenance
+│   ├── bilan_seance_1.md
+│   ├── bilan_intermediaire_seance_2.md
+│   └── support_soutenance.md # Trame et script oral (15 min chrono)
+├── mail/                   # Chiffrement et expédition sécurisée de rapports
+│   ├── crypto_utils.py     # Chiffrement/déchiffrement Fernet (AES-128 + HMAC)
+│   ├── decrypt_report.py   # Utilitaire CLI de déchiffrement
+│   └── send_report.py      # Client SMTP avec support TLS
+├── nids/                   # Moteur de capture et détection Scapy
+│   ├── alerting.py         # Gestionnaire d'alertes JSON et log
+│   ├── config.py           # Seuils temporels et signatures d'attaque
+│   ├── detectors.py        # 7 détecteurs comportementaux et DPI, module NIPS
+│   ├── discord_notifier.py # Intégration Webhook Discord
+│   └── nids.py             # Point d'entrée de la sonde Scapy
+├── pentest/                # Moteur d'attaque automatisé
+│   ├── config.py           # Configuration cibles, ports et pools IP
+│   └── pentest.py          # Orchestrateur des 8 scénarios d'attaque
+├── scripts/                # Scripts utilitaires et lanceurs unitaires
+│   ├── quarantine_agent.sh # Démon de quarantaine PAM sur Metasploitable
+│   ├── run_all_attacks.py  # Exécution séquentielle du pentest
+│   ├── run_*.py            # Lanceurs unitaires par type d'attaque
+│   └── simulate_attacks.py # Simulateur d'alertes pour démonstration
+├── tests/                  # Suite de tests unitaires (72 tests pytest)
+├── docker-compose.yml      # Orchestration multi-conteneurs
+└── README.md
+```
+
+---
+
+## 3. Fonctionnement de la Détection (NIDS)
 
 Le NIDS capture le trafic réseau en temps réel via la bibliothèque **Scapy** (`sniff()`) et combine deux paradigmes d'analyse complémentaires :
 
@@ -96,8 +145,8 @@ La détection comportementale repose sur des structures de files d'attente à fe
 
 La détection par signatures inspecte la structure des en-têtes et le contenu de la charge utile (`Raw payload`) des paquets à la recherche de motifs révélateurs d'une attaque.
 
-1. **Scans Furtifs TCP (Drapeaux Invalides)** :
-   * **NULL Scan** : Paquet TCP sans aucun drapeau activé (`flags == 0`). Ce paquet enfreint la RFC 793 et sert à contourner certains pare-feux non avec état. Détecté sous l'étiquette `NULL_SCAN`.
+1. **Scans Furtifs TCP (Drapeaux Invalides RFC 793)** :
+   * **NULL Scan** : Paquet TCP sans aucun drapeau activé (`flags == 0`). Détecté sous l'étiquette `NULL_SCAN`.
    * **XMAS Scan** : Paquet TCP arborant les drapeaux FIN, PSH et URG simultanément (`flags == 0x29`). Détecté sous l'étiquette `XMAS_SCAN`.
 
 2. **Injections SQL (SQLi)** :
@@ -123,7 +172,7 @@ Pour éviter la saturation des journaux d'alertes lorsqu'un attaquant transmet d
 
 ---
 
-## 3. Fonctionnement de la Prévention (NIPS)
+## 4. Fonctionnement de la Prévention (NIPS) & Quarantaine
 
 Le passage du mode détection passive (**NIDS**) au mode prévention active (**NIPS**) confère au système la capacité d'interrompre l'attaque en cours d'exécution.
 
@@ -144,247 +193,132 @@ Le passage du mode détection passive (**NIDS**) au mode prévention active (**N
 │  [ Cible Metasploitable 2 ]                                  │
 │    2. Tout paquet ultérieur de 172.18.0.5 est jeté au        │
 │       niveau noyau Linux avant d'atteindre les démons.       │
+│                                                              │
+│  [ Agent de Quarantaine PAM ]                                │
+│    3. Verrouillage système du compte compromis (passwd -l)   │
 └──────────────────────────────────────────────────────────────┘
 ```
 
-### Le Processus de Neutralisation
-
-1. **Déclenchement** : Dès qu'une menace est qualifiée (anomalie critique ou signature confirmée), le moteur appelle le sous-système de prévention si `NIPS_ENABLED=true`.
+1. **Déclenchement** : Dès qu'une menace est qualifiée, le moteur appelle le sous-système de prévention si `NIPS_ENABLED=true`.
 2. **Capacités Linux requises** : Le conteneur NIDS dispose des capacités `cap_add: [NET_ADMIN, NET_RAW]`.
 3. **Application de la règle** :
    ```bash
    iptables -I INPUT -s <IP_ATTAQUANT> -j DROP
    ```
    L'option `-I INPUT` insère la règle en **toute première position** de la chaîne `INPUT`. Dès lors, le noyau Linux rejette immédiatement (`DROP`) tout paquet provenant de cette IP, sans réponse TCP RST ni ICMP.
-4. **Dé-doublonnage des blocages** : Les adresses IP bloquées sont mémorisées dans un ensemble (`set`) pour éviter l'exécution redondante de commandes système.
+4. **Quarantaine Système Dynamique** : En cas de compromission de compte (Brute-Force SSH avéré), l'agent [quarantine_agent.sh](file:///Users/alex/EPITA/ing3/EPITA_NID-P-S/scripts/quarantine_agent.sh) applique un verrouillage immédiat au niveau PAM (`passwd -l`), tuant les sessions actives de l'attaquant.
 
 ---
 
-### NIDS (Détection) vs NIPS (Prévention) : Quand Activer Chaque Mode ?
+### NIDS (Détection) vs NIPS (Prévention)
 
-Le système propose deux modes opératoires selon le contexte :
-
-| Mode | Variable d'environnement | Comportement | Cas d'usage recommandé |
+| Mode | Variable d'environnement | Comportement | Cas d'usage |
 | :--- | :--- | :--- | :--- |
-| **NIDS (Démo / Validation)** | `NIPS_ENABLED=false` *(par défaut)* | **Détection pure** : les alertes sont levées, loguées, notifiées sur Discord et affichées sur le SIEM, **sans bloquer l'IP source**. | **Soutenance & Démonstration** : permet de dérouler l'intégralité du pentest d'un seul run sans interruption. |
-| **NIPS (Production / Mitigation)** | `NIPS_ENABLED=true` | **Prévention active** : dès la première alerte qualifiée, l'IP source est immédiatement bloquée via `iptables DROP`. | **Environnement de production / Démonstration isolée du blocage** : mitigation immédiate de l'attaquant au niveau noyau. |
-
-> [!WARNING]
-> En mode **NIPS actif** (`NIPS_ENABLED=true`), dès que la première attaque du conteneur `pentest` est détectée (ex: `SCAN_PORTS`), son adresse IP est bannie au niveau du noyau. C'est pourquoi le mode démo (`NIPS_ENABLED=false`) est activé par défaut dans `docker-compose.yml`.
-
-#### Activer le Mode Production (NIPS actif) :
-```bash
-# Via variable en ligne de commande :
-NIPS_ENABLED=true docker compose up -d
-
-# Ou en modifiant le fichier .env :
-# NIPS_ENABLED=true
-```
-
-#### Débloquer Manuellement une IP en Soutenance (sans redémarrer) :
-Pour démontrer le blocage puis réautoriser l'IP de test sans redémarrer les conteneurs :
-```bash
-# 1. Lister les règles de filtrage actives :
-docker exec -it metasploitable iptables -L INPUT -n --line-numbers
-
-# 2. Supprimer la règle de blocage pour une IP spécifique :
-docker exec -it metasploitable iptables -D INPUT -s <IP_ATTAQUANT> -j DROP
-
-# 3. Ou supprimer la règle par son numéro de ligne (ex: règle n°1) :
-docker exec -it metasploitable iptables -D INPUT 1
-```
-*(Note : le conteneur NIDS et Metasploitable 2 partageant la même pile réseau, la commande peut également s'exécuter via `docker exec -it nids_service iptables ...`).*
+| **NIDS (Démo / Validation)** | `NIPS_ENABLED=false` *(par défaut)* | **Détection pure** : alertes loguées, notifiées sur Discord et affichées sur le SIEM, **sans bloquer l'IP source**. | **Soutenance & Démonstration** : déroule l'intégralité du pentest sans interruption. |
+| **NIPS (Production / Mitigation)** | `NIPS_ENABLED=true` | **Prévention active** : blocage immédiat via `iptables DROP` dès le seuil franchi. | **Mitigation opérationnelle** : neutralisation au niveau du noyau Linux. |
 
 ---
 
-## 4. Chiffrement & Transmission Sécurisée
+## 5. Analyse Forensique & Corrélation Multi-Sources
 
-Conformément au cahier des charges, les données sensibles recueillies par le NIDS ne doivent pas être transmises en clair :
-* **Format des alertes** : Enregistrées localement en format texte structuré (`nids_alerts.log`) et JSON (`nids_alerts.json`).
-* **Chiffrement Symétrique Authentifié** : Utilisation du standard **Fernet** (implémentation de la bibliothèque Python `cryptography`), qui combine :
+Le module [analysis/analyze.py](file:///Users/alex/EPITA/ing3/EPITA_NID-P-S/analysis/analyze.py) assure la consolidation et la vérification croisée des données recueillies au cours des attaques :
+
+1. **Données du NIDS** : Distribution des alertes par type, sévérité et adresses IP sources (`data/nids/nids_alerts.json`).
+2. **Données du Honeypot** : Analyse des connexions SSH échouées/réussies (`auth.log`) et des requêtes HTTP sur DVWA avec empreintes SQLi, XSS et traversées de répertoires (`access.log`).
+3. **Données du Pentest** : Répertoire des modules d'attaque exécutés (`data/pentest/pentest_results.json`).
+4. **Matrice de Corrélation** : Évalue pour chaque attaque émise si la trace correspondante figure dans les journaux de la cible et si l'alerte attendue a bien été levée par le NIDS, calculant le **taux de détection global** ($100\%$).
+
+### Exécution en Ligne de Commande :
+```bash
+# Rapport texte synthétique dans la console :
+python3 analysis/analyze.py
+
+# Sortie au format JSON :
+python3 analysis/analyze.py --json
+
+# Synchronisation directe depuis le conteneur actif :
+python3 analysis/analyze.py --sync-docker
+```
+
+---
+
+## 6. Chiffrement & Transmission Sécurisée par E-mail
+
+Conformément aux exigences du cahier des charges, les données d'intrusion font l'objet d'un chiffrement robuste avant expédition :
+* **Standard Utilisé** : **Fernet** (bibliothèque Python `cryptography`), associant :
   * Chiffrement symétrique **AES-128 en mode CBC**.
   * Signature d'intégrité et d'authenticité **HMAC-SHA256**.
-* **Transmission du Rapport** : À l'arrêt gracieux du service (`SIGTERM`/`SIGINT`), le journal d'alertes est chiffré (`nids_alerts.enc`) puis transmis par e-mail au destinataire désigné via un canal SMTP sécurisé en TLS.
-* **Notifications Discord en Temps Réel** : Relais instantané de toute détection vers un channel Discord via Webhook (`DISCORD_WEBHOOK_URL`), avec embeds stylisés par niveau de gravité (`CRITIQUE`, `HAUTE`, `MOYENNE`), tags d'alerte et mention `@here` automatique pour les attaques critiques.
-* **Déchiffrement** : L'administrateur déchiffre le rapport à l'aide de l'utilitaire `decrypt_report.py` et de la clé secrète partagée.
+* **Transmission du Rapport** : À l'arrêt du service ou sur demande, la synthèse forensique consolidée est chiffrée (`nids_alerts.enc`) puis transmise par courriel via SMTP sécurisé en TLS.
+* **Notifications Discord en Temps Réel** : Transmission instantanée des alertes vers un canal Discord (`DISCORD_WEBHOOK_URL`) avec sévérité et tags d'intrusion.
+* **Déchiffrement** : Utilitaire [mail/decrypt_report.py](file:///Users/alex/EPITA/ing3/EPITA_NID-P-S/mail/decrypt_report.py) permettant de restaurer le rapport en clair à l'aide de la clé secrète partagée.
 
 ---
 
-## 5. Supervision SIEM en Temps Réel (CyBear SIEM)
+## 7. Supervision SIEM (CyBear SIEM)
 
-Un module de supervision web type **SOC / SIEM** est inclus dans le projet (`dashboard/`) :
-* **Technologie** : Backend Flask avec flux **SSE (*Server-Sent Events*)** pour la transmission instantanée sans rechargement de page.
-* **Interface** : Thème sombre typé cybersécurité, autonome sans dépendance CDN externe.
-* **Indicateurs & Visualisations** :
-  * **Compteurs KPI** : Total des détections, nombre d'IPs hostiles uniques, alertes critiques, dernière détection horodatée.
-  * **Chronologie des Attaques** : Diagramme en barres dynamique par tranche de minute.
-  * **Jauge de Sévérité** : Répartition proportionnelle CSS *conic-gradient* (*Critique / Haute / Moyenne*).
-  * **Typologie des Attaques Pentest** : Statut d'apparition, volume et pourcentages.
-  * **Matrice Kill-Chain** : Corrélation multi-étapes croisant chaque IP source avec les vecteurs d'attaque.
-  * **Flux d'Alertes en Direct** : Défilement animé des intrusions au fil de leur détection par Scapy.
-
-L'interface est accessible par défaut sur **`http://localhost:5050`** (port 5050 choisi pour éviter tout conflit avec AirPlay sur macOS).
+Le dashboard web de supervision SOC ([dashboard/](file:///Users/alex/EPITA/ing3/EPITA_NID-P-S/dashboard)) offre une vue temps réel sur l'ensemble de l'activité défensive et offensive :
+* **URL du SOC** : **`http://localhost:5050`**
+* **Flux temps réel** : Streaming via Server-Sent Events (SSE) sans rechargement de page.
+* **Composants d'affichage** :
+  * Compteurs KPI (Total alertes, adresses IP uniques, alertes critiques).
+  * Matrice Kill-Chain croisant adresses IP et vecteurs d'attaque.
+  * Flux d'alertes en direct avec horodatage et niveau de criticité.
+  * **Modale d'Analyse Forensique** (bouton *Rapport Forensique*) : Affiche les métriques cibles, le taux de détection et permet d'exporter le rapport JSON complet.
 
 ### Panneau d'Attaques Web Interactif (`/attaques`)
-
-En complément de la supervision passive, une interface offensive dédiée est intégrée au dashboard pour piloter les scénarios de test :
-* **Accès** : Bouton **"⚔️ Attaques"** dans le bandeau du SIEM ou directement via **`http://localhost:5050/attaques`**.
-* **Cartes interactives disponibles** :
-  1. 🔍 **Scan de Ports TCP Connect** (`scan_ports`) — Déclenche `SCAN_PORTS`.
-  2. 🎄 **Scan Furtif XMAS** (`xmas_scan`) — Envoi de paquets avec drapeaux FIN, PSH et URG (0x29).
-  3. 👻 **Scan Furtif NULL** (`null_scan`) — Envoi de paquets TCP sans drapeaux (flags=0, RFC 793).
-  4. 🔑 **Brute-Force SSH** (`brute_force_ssh`) — Tentatives d'authentification SSH répétées.
-* **Déclenchement unitaire à la demande** : Bouton **"▶ Lancer"** sur chaque carte pour exécuter le vecteur de scan ou de brute-force.
-* **Console d'audit en direct** : Terminal intégré sombre avec autoscroll affichant les sorties des scripts en temps réel et le code de retour final (`✅ Succès` ou code d'erreur).
-* **Corrélation immédiate avec le SOC** : Les scans génèrent du trafic hostile inspecté par Scapy ; les alertes correspondantes s'affichent en direct sur le SOC (**`http://localhost:5050/`**) et Discord.
+* **URL** : **`http://localhost:5050/attaques`**
+* Déclenchement à la demande des 8 scénarios d'attaque : Scan TCP Connect, Scan XMAS, Scan NULL, Brute-Force SSH, DoS Flood, Injections SQL, XSS et Traversée de répertoire.
+* Console terminal sombre intégrée avec retour en streaming direct.
 
 ---
 
-## 6. Guide d'Utilisation
+## 8. Guide de Démarrage Rapide
 
 ### Prérequis
 * Docker Engine 20.10+
 * Docker Compose v2+
+* Python 3.10+ (pour exécution locale des tests)
 
-### A. Configuration Préalable (.env)
-
-Copiez le modèle de configuration et renseignez vos variables si souhaité :
+### A. Configuration (.env)
 ```bash
 cp .env.example .env
 ```
-Pour activer les alertes Discord, ajoutez simplement l'URL de votre webhook :
-```env
-DISCORD_WEBHOOK_URL=https://discord.com/api/webhooks/...
-```
+Renseignez les variables nécessaires (`DISCORD_WEBHOOK_URL`, identifiants SMTP si envoi de mail souhaité).
 
----
-
-### B. Démarrer l'Environnement Complet (Honeypot + NIDS + SIEM Dashboard)
-
+### B. Lancement de l'Environnement Complet
 ```bash
-# Lancement en arrière-plan : Metasploitable 2, NIDS/NIPS et Dashboard SIEM
+# Démarrage des conteneurs en arrière-plan :
 docker compose up -d
-```
 
-Pour reconstruire le Dashboard après modification du code :
-```bash
-docker compose up -d --build dashboard
-```
-
-Pour vérifier que les trois conteneurs sont actifs :
-```bash
+# Vérification du statut des services :
 docker compose ps
 ```
 
-Ouvrez immédiatement votre navigateur sur le SIEM :
-👉 **[http://localhost:5050](http://localhost:5050)**
+Accédez aux interfaces :
+* **SIEM SOC** : http://localhost:5050/
+* **Panneau d'Attaque** : http://localhost:5050/attaques
 
-Pour observer les journaux du NIDS en direct :
+### C. Lancement du Pentest Automatisé
 ```bash
-docker compose logs -f nids
-```
-
----
-
-### C. Tester la Supervision en Temps Réel (Simulation Rapide)
-
-Vous pouvez simuler l'injection successive des 7 attaques du pentest pour vérifier l'affichage direct sur le dashboard sans attendre le trafic réseau réel :
-```bash
-# Exécution du simulateur d'attaques
-python3 scripts/simulate_attacks.py
-```
-Les indicateurs, la matrice et le flux de `http://localhost:5050` se mettront à jour instantanément sous vos yeux.
-
----
-
-### D. Lancer le Pentest Automatisé (3 Méthodes)
-
-Le pentest exécute les 7 types d'attaques réelles contre la cible Metasploitable 2. Trois méthodes d'exécution sont à votre disposition selon vos besoins :
-
-#### Méthode 1 : Via le Panneau d'Attaques Web (Recommandé pour soutenance)
-1. Ouvrez votre navigateur sur **`http://localhost:5050/attaques`** (ou cliquez sur le bouton **"⚔️ Attaques"** depuis le SIEM).
-2. Pour tester un vecteur de scan ou d'authentification : cliquez sur **"▶ Lancer"** sur la carte souhaitée (`Scan de Ports TCP`, `Scan Furtif XMAS`, `Scan Furtif NULL`, ou `Brute Force SSH`).
-3. Les sorties défilent en streaming direct dans le terminal intégré au fur et à mesure des tentatives, et les alertes NIDS correspondantes apparaissent instantanément sur le tableau de bord SOC (**`http://localhost:5050/`**) et Discord.
-
-#### Méthode 2 : Via les scripts autonomes en CLI (`scripts/run_*.py`)
-Chaque attaque dispose d'un script standalone exécutable directement en ligne de commande :
-```bash
-# Exécution d'une attaque ciblée :
-python3 scripts/run_scan_ports.py       # 1. Scan TCP Connect
-python3 scripts/run_xmas_scan.py        # 2. Scan TCP XMAS (flags FPU)
-python3 scripts/run_null_scan.py        # 3. Scan Furtif TCP NULL (flags 0)
-python3 scripts/run_brute_force_ssh.py   # 4. Force Brute SSH (25 paires)
-```
-*(Note : les scripts détectent automatiquement s'ils s'exécutent sur l'hôte en ciblant `127.0.0.1` avec les ports 2222/8080, ou au sein du conteneur en ciblant `metasploitable`).*
-
-#### Méthode 3 : Via le conteneur Docker dédié
-```bash
-# Exécution du conteneur d'attaque via son profil dédié
+# Via le conteneur Docker dédié :
 docker compose --profile attaque run --rm pentest
+
+# Ou via les lanceurs unitaires :
+python3 scripts/run_scan_ports.py
+python3 scripts/run_xmas_scan.py
+python3 scripts/run_null_scan.py
+python3 scripts/run_brute_force_ssh.py
+python3 scripts/run_dos.py
+python3 scripts/run_sql_injection.py
+python3 scripts/run_xss.py
+python3 scripts/run_path_traversal.py
 ```
 
----
-
-### E. Analyse et Consolidation des Résultats
-
-Pour générer la synthèse consolidée entre les attaques subies par la cible et les détections du NIDS :
+### D. Exécution des Tests Unitaires
 ```bash
-python3 analysis/analyze.py
-```
-
-Pour obtenir la sortie au format JSON :
-```bash
-python3 analysis/analyze.py --json
-```
-
----
-
-### F. Exécution des Tests Unitaires
-
-Pour valider l'intégrité de l'ensemble des modules (détecteurs, prévention NIPS, gestion des alertes, notification Discord, dashboard SIEM, routes d'attaque, chiffrement, configuration) :
-```bash
+# Exécution de la suite complète (72 tests) :
 python3 -m pytest -v
 ```
 
----
-
-### G. Lancement du projet (mode Docker — recommandé)
-
-> ⚠️ **Le projet fonctionne uniquement en mode Docker complet.** Les scripts
-> d'attaque ciblent `metasploitable:22` via le réseau interne Docker `honeynet`.
-> En dehors de Docker, ce nom d'hôte ne se résout pas et les attaques échouent.
-
-```bash
-# Démarrer tout l'environnement (Metasploitable + NIDS + Dashboard) :
-docker compose up -d
-
-# Ouvrir l'interface dans le navigateur :
-#   • SOC Temps Réel  : http://localhost:5050/
-#   • Panneau d'Attaque : http://localhost:5050/attaques
-
-# Lancer une attaque individuelle depuis le conteneur pentest :
-docker compose --profile attaque run --rm pentest
-
-# Suivre les logs en temps réel :
-docker compose logs -f
-docker compose logs -f nids       # NIDS uniquement
-docker compose logs -f dashboard  # Dashboard uniquement
-
-# Arrêter tout :
-docker compose down
-```
-
-**NIPS actif (blocage iptables) :**
-```bash
-# Par défaut NIPS_ENABLED=false (mode démo — toutes les attaques passent).
-# Pour activer le blocage réel en production :
-NIPS_ENABLED=true docker compose up -d
-```
-
-**Tests unitaires (hors Docker) :**
-```bash
-python3 -m venv venv && source venv/bin/activate
-pip install -r dashboard/requirements.txt
-python3 -m pytest -v
-```
-
+### E. Préparation de la Soutenance
+Consultez le document [docs/support_soutenance.md](file:///Users/alex/EPITA/ing3/EPITA_NID-P-S/docs/support_soutenance.md) pour la trame détaillée de présentation orale de 15 minutes (Slide par slide, timing et script narratif pour l'équipe).
