@@ -1,0 +1,87 @@
+/* =========================================================================
+   CyBear SIEM & Pentest — Neobrutal Design System
+   Shared polish layer, loaded BEFORE each page's own <style> block so every
+   page-specific rule keeps final say in the cascade. Everything below is
+   additive/cosmetic only: no selector here renames or removes an id, class
+   or function the dashboard's inline <script> blocks depend on.
+   ========================================================================= */
+
+:root {
+    /* The light theme never defined this token, so components that read it
+       (scrollbar thumbs, service badges) rendered see-through. */
+    --border-highlight: rgba(0, 0, 0, 0.18);
+    --focus-ring: rgba(163, 230, 53, 0.65);
+}
+
+/* ── Accessibility: one consistent keyboard focus ring everywhere ── */
+:focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 2px;
+    border-radius: 3px;
+}
+
+/* ── Text selection tinted to the brand color instead of the OS default ── */
+::selection {
+    background: var(--main);
+    color: #000000;
+}
+
+/* ── Thin, on-brand scrollbars instead of the chunky browser default ── */
+html {
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-highlight) var(--bg-alt, var(--bg));
+}
+
+*::-webkit-scrollbar {
+    width: 9px;
+    height: 9px;
+}
+
+*::-webkit-scrollbar-track {
+    background: var(--bg-alt, var(--bg));
+}
+
+*::-webkit-scrollbar-thumb {
+    background: var(--border-highlight);
+    border-radius: 5px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+    background: var(--main-hover, var(--main));
+}
+
+/* ── Smooth one-time entrance on page load, never replayed on data refresh ── */
+body {
+    animation: cybear-fade-in 0.35s ease;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+@keyframes cybear-fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+/* ── SSE connection dot: ambient glow matching whatever state color it inherits ── */
+.status-dot {
+    box-shadow: 0 0 6px currentColor;
+}
+
+/* ── Consistent breathing room under the NIPS alert banner ── */
+.nips-banner {
+    margin-bottom: 20px;
+}
+
+/* ── Toast notifications: a glyph cue so color isn't the only signal ── */
+#toast.toast-success::before { content: "✓  "; }
+#toast.toast-error::before { content: "✕  "; }
+#toast.toast-info::before { content: "ℹ  "; }
+
+/* ── Slightly livelier buttons: same colors/shadows, smoother feel ── */
+.btn-link, .btn-attack-link, .btn-launch-all, .btn-launch, .btn, .btn-lime,
+.btn-nips-action, .btn-reset-nips, .btn-nips-unblock, .btn-nips-block {
+    -webkit-tap-highlight-color: transparent;
+    transition: transform 0.12s ease, box-shadow 0.12s ease, opacity 0.15s ease;
+}
