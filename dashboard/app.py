@@ -52,9 +52,7 @@ DEFAULT_JSON = os.path.abspath(
 ALERT_JSON_PATH = os.getenv("NIDS_ALERT_JSON", DEFAULT_JSON)
 
 # Fichier d'état partagé du NIPS (prévention, IPs bloquées, comptes sous quarantaine)
-DEFAULT_NIPS_STATE = os.path.abspath(
-    os.path.join(os.path.dirname(__file__), "..", "data", "nids", "nips_state.json")
-)
+DEFAULT_NIPS_STATE = os.path.join(os.path.dirname(ALERT_JSON_PATH), "nips_state.json")
 NIPS_STATE_PATH = os.getenv("NIDS_NIPS_STATE", DEFAULT_NIPS_STATE)
 
 
@@ -78,6 +76,9 @@ def _lire_nips_state():
         "enabled": False,
         "blocked_ips": [],
         "quarantined_accounts": [],
+        "pending_unblock": [],
+        "pending_block": [],
+        "allowed_ips": [],
         "reset_requested": False,
     }
 
@@ -256,10 +257,105 @@ def api_nips_reset():
     state["reset_requested"] = True
     state["blocked_ips"] = []
     state["quarantined_accounts"] = []
+    state["pending_unblock"] = []
+    state["pending_block"] = []
+    state["allowed_ips"] = []
     _ecrire_nips_state(state)
     return jsonify({
         "status": "success",
         "message": "Protection NIPS réinitialisée — règles iptables purgées et accès restaurés.",
+        "state": state,
+    })
+
+
+@app.route("/api/nips/ip/unblock", methods=["POST"])
+def api_nips_unblock_ip():
+    """Débloque / ré-autorise une IP spécifique dans le NIPS (retrait iptables DROP)."""
+    data = request.get_json(silent=True) or {}
+    ip = str(data.get("ip", "")).strip()
+    if not ip:
+        return jsonify({"status": "error", "message": "Adresse IP requise"}), 400
+
+    state = _lire_nips_state()
+    blocked = state.get("blocked_ips", [])
+    if ip in blocked:
+        blocked = [x for x in blocked if x != ip]
+    state["blocked_ips"] = blocked
+
+    # Déblocage iptables via file d'attente synchronisée
+    pending_unblock = state.get("pending_unblock", [])
+    if ip not in pending_unblock:
+        pending_unblock.append(ip)
+    state["pending_unblock"] = pending_unblock
+
+    # Retirer de pending_block si présent
+    pending_block = state.get("pending_block", [])
+    state["pending_block"] = [x for x in pending_block if x != ip]
+
+    # Conserver dans l'historique des IPs autorisées
+    allowed = state.get("allowed_ips", [])
+    if ip not in allowed:
+        allowed.append(ip)
+    state["allowed_ips"] = allowed
+
+    _ecrire_nips_state(state)
+    return jsonify({
+        "status": "success",
+        "message": f"IP {ip} ré-autorisée. Suppression de la règle iptables DROP en cours.",
+        "state": state,
+    })
+
+
+@app.route("/api/nips/ip/block", methods=["POST"])
+def api_nips_block_ip():
+    """Bloque manuellement une IP spécifique dans le NIPS (ajout iptables DROP)."""
+    data = request.get_json(silent=True) or {}
+    ip = str(data.get("ip", "")).strip()
+    if not ip:
+        return jsonify({"status": "error", "message": "Adresse IP requise"}), 400
+
+    state = _lire_nips_state()
+    blocked = state.get("blocked_ips", [])
+    if ip not in blocked:
+        blocked.append(ip)
+    state["blocked_ips"] = blocked
+
+    # Blocage iptables via file d'attente synchronisée
+    pending_block = state.get("pending_block", [])
+    if ip not in pending_block:
+        pending_block.append(ip)
+    state["pending_block"] = pending_block
+
+    # Retirer de pending_unblock si présent
+    pending_unblock = state.get("pending_unblock", [])
+    state["pending_unblock"] = [x for x in pending_unblock if x != ip]
+
+    _ecrire_nips_state(state)
+    return jsonify({
+        "status": "success",
+        "message": f"IP {ip} bloquée (iptables DROP).",
+        "state": state,
+    })
+
+
+@app.route("/api/nips/quarantine/lift", methods=["POST"])
+def api_nips_lift_quarantine():
+    """Lève la quarantaine d'un compte ou de tous les comptes SSH."""
+    data = request.get_json(silent=True) or {}
+    compte = data.get("account")
+    state = _lire_nips_state()
+
+    quarantined = state.get("quarantined_accounts", [])
+    if compte:
+        quarantined = [x for x in quarantined if x != compte]
+    else:
+        quarantined = []
+    state["quarantined_accounts"] = quarantined
+
+    _ecrire_nips_state(state)
+    return jsonify({
+        "status": "success",
+        "message": "Quarantaine levée.",
         "state": state,
     })
 

@@ -83,7 +83,7 @@ class MoteurDetection:
             pass
 
     def synchroniser_etat_nips(self):
-        """Synchronise l'état NIPS (activation dynamique ou purge iptables demandée)."""
+        """Synchronise l'état NIPS (activation dynamique, purge ou gestion granulaire par IP)."""
         if not self.state_file:
             return
         etat = self._lire_etat_nips()
@@ -97,6 +97,32 @@ class MoteurDetection:
         if "enabled" in etat:
             self.cfg.NIPS_ENABLED = bool(etat["enabled"])
 
+        # 3. Synchronisation des déblocages demandés (pending_unblock)
+        pending_unblock = etat.get("pending_unblock", [])
+        if pending_unblock:
+            for ip in pending_unblock:
+                self._executer_deblocage_systeme(ip)
+                self.ips_bloquees.discard(ip)
+            etat["pending_unblock"] = []
+            self._ecrire_etat_nips(etat)
+
+        # 4. Synchronisation des blocages demandés (pending_block)
+        pending_block = etat.get("pending_block", [])
+        if pending_block:
+            for ip in pending_block:
+                if getattr(self.cfg, "NIPS_ENABLED", False):
+                    self._executer_blocage_systeme(ip)
+                self.ips_bloquees.add(ip)
+            etat["pending_block"] = []
+            self._ecrire_etat_nips(etat)
+
+        # 5. Cohérence de synchronisation : si une IP est dans self.ips_bloquees mais plus dans etat["blocked_ips"]
+        desirees = set(etat.get("blocked_ips", []))
+        a_debloquer = [ip for ip in self.ips_bloquees if ip not in desirees]
+        for ip in a_debloquer:
+            self._executer_deblocage_systeme(ip)
+            self.ips_bloquees.discard(ip)
+
     def _executer_blocage_systeme(self, ip_src):
         """Applique la règle de blocage iptables (DROP) pour isoler l'attaquant."""
         try:
@@ -105,6 +131,25 @@ class MoteurDetection:
             return True
         except Exception as e:
             print(f"[!] Erreur exécution blocage iptables ({ip_src}) : {e}")
+            return False
+
+    def _executer_deblocage_systeme(self, ip_src):
+        """Supprime les règles iptables DROP pour ré-autoriser l'IP."""
+        try:
+            cmd = ["iptables", "-D", "INPUT", "-s", ip_src, "-j", "DROP"]
+            # Exécuter en boucle au cas où la règle a été insérée plusieurs fois
+            supprime = False
+            for _ in range(10):
+                res = subprocess.run(cmd, check=False, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                if res.returncode == 0:
+                    supprime = True
+                else:
+                    break
+            if supprime:
+                print(f"[NIPS] Règle iptables DROP retirée — IP {ip_src} ré-autorisée.")
+            return True
+        except Exception as e:
+            print(f"[!] Erreur déblocage iptables ({ip_src}) : {e}")
             return False
 
     def reinitialiser_protection(self):
@@ -119,6 +164,9 @@ class MoteurDetection:
             "enabled": getattr(self.cfg, "NIPS_ENABLED", False),
             "blocked_ips": [],
             "quarantined_accounts": [],
+            "pending_unblock": [],
+            "pending_block": [],
+            "allowed_ips": [],
             "reset_requested": False,
         })
         print("[NIPS] Protection réinitialisée — règles iptables purgées et quarantaine levée.")

@@ -267,3 +267,61 @@ def test_nips_quarantine_blocks_ssh_connect(client, tmp_path, monkeypatch):
     assert res_apres.status_code == 200
     assert res_apres.get_json()["status"] == "ready"
 
+
+def test_nips_unblock_and_block_ip(client, tmp_path, monkeypatch):
+    """Vérifie le déblocage et reblocage sélectif d'une adresse IP."""
+    state_file = tmp_path / "nips_state.json"
+    monkeypatch.setattr("app.NIPS_STATE_PATH", str(state_file))
+
+    with open(state_file, "w", encoding="utf-8") as f:
+        json.dump({
+            "enabled": True,
+            "blocked_ips": ["172.19.0.3", "192.168.1.50"],
+            "quarantined_accounts": ["msfadmin"],
+            "pending_unblock": [],
+            "pending_block": [],
+            "allowed_ips": [],
+            "reset_requested": False,
+        }, f)
+
+    # Débloquer 172.19.0.3
+    res_unblock = client.post("/api/nips/ip/unblock", json={"ip": "172.19.0.3"})
+    assert res_unblock.status_code == 200
+    data = res_unblock.get_json()
+    assert "172.19.0.3" not in data["state"]["blocked_ips"]
+    assert "172.19.0.3" in data["state"]["pending_unblock"]
+    assert "172.19.0.3" in data["state"]["allowed_ips"]
+
+    # Rebloquer 172.19.0.3
+    res_block = client.post("/api/nips/ip/block", json={"ip": "172.19.0.3"})
+    assert res_block.status_code == 200
+    data_block = res_block.get_json()
+    assert "172.19.0.3" in data_block["state"]["blocked_ips"]
+    assert "172.19.0.3" in data_block["state"]["pending_block"]
+
+
+def test_nips_lift_quarantine(client, tmp_path, monkeypatch):
+    """Vérifie la levée manuelle de quarantaine pour un compte SSH."""
+    state_file = tmp_path / "nips_state.json"
+    monkeypatch.setattr("app.NIPS_STATE_PATH", str(state_file))
+
+    with open(state_file, "w", encoding="utf-8") as f:
+        json.dump({
+            "enabled": True,
+            "blocked_ips": [],
+            "quarantined_accounts": ["msfadmin", "root"],
+            "reset_requested": False,
+        }, f)
+
+    # Lever quarantaine pour msfadmin uniquement
+    res = client.post("/api/nips/quarantine/lift", json={"account": "msfadmin"})
+    assert res.status_code == 200
+    assert "msfadmin" not in res.get_json()["state"]["quarantined_accounts"]
+    assert "root" in res.get_json()["state"]["quarantined_accounts"]
+
+    # Lever toute quarantaine
+    res_all = client.post("/api/nips/quarantine/lift", json={})
+    assert res_all.status_code == 200
+    assert len(res_all.get_json()["state"]["quarantined_accounts"]) == 0
+
+

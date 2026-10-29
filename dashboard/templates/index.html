@@ -315,6 +315,65 @@
             opacity: 0.9;
         }
 
+        /* ── Contrôle et Liste des IP NIPS ── */
+        .nips-ip-input {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.82rem;
+            font-weight: 700;
+            padding: 7px 12px;
+            border: 2px solid var(--border);
+            border-radius: 6px;
+            background: var(--bg);
+            color: var(--text);
+            outline: none;
+            width: 150px;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .nips-ip-input:focus {
+            border-color: var(--main);
+        }
+
+        .btn-nips-action {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 6px;
+            border: 2px solid var(--border);
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 0.8rem;
+            font-weight: 800;
+            cursor: pointer;
+            box-shadow: var(--shadow-sm);
+            transition: transform 0.1s ease;
+        }
+
+        .btn-nips-action:active {
+            transform: translate(2px, 2px);
+            box-shadow: none;
+        }
+
+        .btn-nips-unblock {
+            background: var(--main) !important;
+            color: #000000 !important;
+        }
+
+        .btn-nips-unblock:hover {
+            opacity: 0.9;
+        }
+
+        .btn-nips-block {
+            background: var(--critique) !important;
+            color: #ffffff !important;
+            border-color: #000000 !important;
+        }
+
+        .btn-nips-block:hover {
+            opacity: 0.9;
+        }
+
         .status-badge {
             display: flex;
             align-items: center;
@@ -758,6 +817,42 @@
         </div>
     </div>
 
+    <!-- ── Panneau de Gestion du Filtrage IP (Visible lorsque le NIPS est actif) ── -->
+    <div id="nips-management-panel" class="card" style="display: none; margin-bottom: 24px;">
+        <div class="title-bar" style="flex-wrap: wrap; gap: 12px;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <span class="nips-shield-tag" style="background: var(--main); color: #000000;">NIPS ACTIF</span>
+                <h2 class="section-title">Filtrage Réseau iptables & Liste des Adresses IP</h2>
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                <input type="text" id="custom-ip-input" placeholder="IP (ex: 172.19.0.3)" class="nips-ip-input" />
+                <button class="btn-nips-action btn-nips-block" onclick="bloquerIpManuel()">Bloquer IP</button>
+                <button class="btn-nips-action btn-nips-unblock" onclick="debloquerIpManuel()">Débloquer IP</button>
+            </div>
+        </div>
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Adresse IP</th>
+                        <th>Statut Filtrage</th>
+                        <th>Activité & Alertes Associées</th>
+                        <th class="cell-center" style="width: 200px;">Action iptables</th>
+                    </tr>
+                </thead>
+                <tbody id="nipsIpTableBody">
+                    <tr><td colspan="4" style="text-align: center; color: var(--text-muted); padding: 20px; font-weight: 700;">Aucune IP actuellement filtrée ou suspecte</td></tr>
+                </tbody>
+            </table>
+        </div>
+        <div id="nips-quarantine-box" style="display: none; margin-top: 14px; padding: 12px 16px; background: var(--critique-bg); border: 2px solid var(--critique); border-radius: 6px; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
+            <div style="font-size: 0.85rem; font-family: 'JetBrains Mono', monospace; font-weight: 700;">
+                Compte(s) SSH sous quarantaine : <span id="nips-quarantine-accounts" style="color: var(--critique); font-weight: 800;"></span>
+            </div>
+            <button class="btn-link btn-reset-nips" style="padding: 6px 14px; font-size: 0.8rem;" onclick="leverQuarantaineComptes()">Lever la quarantaine</button>
+        </div>
+    </div>
+
     <div class="dashboard-grid">
         <div class="card">
             <div class="title-bar">
@@ -954,17 +1049,26 @@
                 liveFeed.innerHTML = '<div style="text-align: center; color: var(--text-muted); padding: 32px; font-weight: 700;">En attente d\'alertes NIDS…</div>';
             }
 
+            currentStats = stats;
             if (stats.nips) {
-                updateNIPSUI(stats.nips);
+                updateNIPSUI(stats.nips, stats);
             }
         }
 
-        function updateNIPSUI(nips) {
+        let currentStats = null;
+        let currentNIPS = null;
+
+        function updateNIPSUI(nips, stats) {
             if (!nips) return;
+            currentNIPS = nips;
+            if (stats) currentStats = stats;
+            const currentData = currentStats || {};
+
             const slider = document.getElementById('nips-slider');
             const badge = document.getElementById('nips-badge');
             const banner = document.getElementById('nips-banner');
             const bannerText = document.getElementById('nips-banner-text');
+            const panel = document.getElementById('nips-management-panel');
 
             if (slider) slider.checked = !!nips.enabled;
             if (badge) {
@@ -975,6 +1079,7 @@
             const blockedIps = nips.blocked_ips || [];
             const quarantined = nips.quarantined_accounts || [];
 
+            // 1. Bannière d'alerte haute
             if (nips.enabled && (blockedIps.length > 0 || quarantined.length > 0)) {
                 let msg = '';
                 if (blockedIps.length > 0) {
@@ -988,6 +1093,139 @@
             } else {
                 if (banner) banner.style.display = 'none';
             }
+
+            // 2. Panneau de contrôle des IP (visible quand NIPS actif)
+            if (panel) {
+                if (nips.enabled) {
+                    panel.style.display = 'block';
+                    renderNipsIpTable(nips, currentData);
+                } else {
+                    panel.style.display = 'none';
+                }
+            }
+
+            // 3. Boîte de quarantaine des comptes
+            const quarantineBox = document.getElementById('nips-quarantine-box');
+            if (quarantineBox) {
+                if (nips.enabled && quarantined.length > 0) {
+                    quarantineBox.style.display = 'flex';
+                    document.getElementById('nips-quarantine-accounts').textContent = quarantined.join(', ');
+                } else {
+                    quarantineBox.style.display = 'none';
+                }
+            }
+        }
+
+        function renderNipsIpTable(nips, stats) {
+            const tbody = document.getElementById('nipsIpTableBody');
+            if (!tbody) return;
+
+            const blockedIps = nips.blocked_ips || [];
+            const allowedIps = nips.allowed_ips || [];
+            const alertIps = (stats?.alerts_by_ip || []).map(x => x[0]);
+            const allIps = Array.from(new Set([...blockedIps, ...allowedIps, ...alertIps]));
+
+            if (allIps.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: var(--text-muted); padding: 20px; font-weight: 700;">Aucune IP filtrée ou suspecte pour le moment</td></tr>';
+                return;
+            }
+
+            const matrix = stats?.attack_matrix || {};
+            tbody.innerHTML = allIps.map(ip => {
+                const isBlocked = blockedIps.includes(ip);
+                const row = matrix[ip] || {};
+                const attacks = Object.entries(row).filter(([_, c]) => c > 0).map(([t, c]) => `${t}: ${c}`).join(' • ');
+                const alertDetail = attacks || 'Trafic surveillé';
+
+                const statusBadge = isBlocked
+                    ? `<span class="badge" style="background: var(--critique-bg); color: var(--critique); border: 2px solid rgba(248, 113, 113, 0.4);">BLOQUÉE (DROP)</span>`
+                    : `<span class="badge" style="background: rgba(163, 230, 53, 0.15); color: var(--main); border: 2px solid rgba(163, 230, 53, 0.4);">AUTORISÉE (ACCEPT)</span>`;
+
+                const actionButton = isBlocked
+                    ? `<button class="btn-nips-action btn-nips-unblock" onclick="debloquerIp('${ip}')">Débloquer</button>`
+                    : `<button class="btn-nips-action btn-nips-block" onclick="bloquerIp('${ip}')">Bloquer</button>`;
+
+                return `<tr>
+                    <td style="font-family: 'JetBrains Mono', monospace; font-weight: 800; color: ${isBlocked ? 'var(--critique)' : 'var(--main)'};">${ip}</td>
+                    <td>${statusBadge}</td>
+                    <td style="font-size: 0.82rem; font-family: 'JetBrains Mono', monospace; color: var(--text-muted);">${alertDetail}</td>
+                    <td class="cell-center">${actionButton}</td>
+                </tr>`;
+            }).join('');
+        }
+
+        async function debloquerIp(ip) {
+            try {
+                const res = await fetch('/api/nips/ip/unblock', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ ip: ip })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    updateNIPSUI(data.state, currentStats);
+                } else {
+                    alert("Erreur déblocage : " + (data.message || 'inconnue'));
+                }
+            } catch (err) {
+                alert("Erreur réseau : " + err.message);
+            }
+        }
+
+        async function bloquerIp(ip) {
+            try {
+                const res = await fetch('/api/nips/ip/block', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ ip: ip })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    updateNIPSUI(data.state, currentStats);
+                } else {
+                    alert("Erreur blocage : " + (data.message || 'inconnue'));
+                }
+            } catch (err) {
+                alert("Erreur réseau : " + err.message);
+            }
+        }
+
+        function debloquerIpManuel() {
+            const input = document.getElementById('custom-ip-input');
+            const ip = input ? input.value.trim() : '';
+            if (!ip) {
+                alert("Veuillez saisir une adresse IP valide (ex: 172.19.0.3)");
+                return;
+            }
+            debloquerIp(ip);
+            input.value = '';
+        }
+
+        function bloquerIpManuel() {
+            const input = document.getElementById('custom-ip-input');
+            const ip = input ? input.value.trim() : '';
+            if (!ip) {
+                alert("Veuillez saisir une adresse IP valide (ex: 172.19.0.3)");
+                return;
+            }
+            bloquerIp(ip);
+            input.value = '';
+        }
+
+        async function leverQuarantaineComptes() {
+            try {
+                const res = await fetch('/api/nips/quarantine/lift', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({})
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    updateNIPSUI(data.state, currentStats);
+                }
+            } catch (err) {
+                alert("Erreur réseau : " + err.message);
+            }
         }
 
         async function basculerNIPS(actif) {
@@ -998,7 +1236,7 @@
                     body: JSON.stringify({ enabled: actif })
                 });
                 const nips = await res.json();
-                updateNIPSUI(nips);
+                updateNIPSUI(nips, currentStats);
             } catch (err) {
                 console.error("Erreur toggle NIPS:", err);
             }
@@ -1012,7 +1250,7 @@
                 const res = await fetch('/api/nips/reset', { method: 'POST' });
                 const data = await res.json();
                 if (res.ok) {
-                    updateNIPSUI(data.state);
+                    updateNIPSUI(data.state, currentStats);
                 } else {
                     alert("Erreur réinitialisation NIPS : " + (data.message || 'inconnue'));
                 }
