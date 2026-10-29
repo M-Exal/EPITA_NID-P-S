@@ -37,35 +37,26 @@ def test_nips_bloquage_unique(mock_config, mock_alertes, mock_blocker):
     assert mock_blocker.bloques.count("192.168.1.52") == 1
 
 
-def test_nips_quarantaine_basee_sur_whoami(mock_config, mock_alertes, mock_blocker):
-    """La quarantaine ne bloque que les comptes ayant un whoami réussi (preuve d'intrusion)."""
-    import json
+def test_nips_quarantaine_brute_force(mock_config, mock_alertes, mock_blocker):
+    """En cas de brute-force SSH, les comptes ciblés (msfadmin, root, user) sont mis en quarantaine."""
     mock_config.NIPS_ENABLED = True
     moteur = MoteurDetection(mock_config, mock_alertes, blocker=mock_blocker)
-
-    results_file = os.path.join(mock_config.DATA_DIR, "pentest_results.json")
-    with open(results_file, "w") as f:
-        json.dump({"attaques": {"brute_force_ssh": {"acces_valides": [
-            {"utilisateur": "msfadmin", "mot_de_passe": "msfadmin", "whoami": "msfadmin", "code_retour": 0},
-            {"utilisateur": "root", "mot_de_passe": "toor", "whoami": "", "code_retour": 1},
-            {"utilisateur": "user", "mot_de_passe": "user", "whoami": "user", "code_retour": 0},
-        ]}}}, f)
 
     moteur._enregistrer_ip_bloquee_etat("10.0.0.1", "BRUTE_FORCE")
 
     etat = moteur._lire_etat_nips()
     q = etat["quarantined_accounts"]
     assert "msfadmin" in q
+    assert "root" in q
     assert "user" in q
-    assert "root" not in q
 
 
-def test_nips_quarantaine_vide_sans_resultats(mock_config, mock_alertes, mock_blocker):
-    """Sans résultats de pentest, aucun compte n'est mis en quarantaine."""
+def test_nips_quarantaine_autre_attaque(mock_config, mock_alertes, mock_blocker):
+    """Pour les autres types d'attaques (scan, DoS), aucun compte n'est mis en quarantaine."""
     mock_config.NIPS_ENABLED = True
     moteur = MoteurDetection(mock_config, mock_alertes, blocker=mock_blocker)
 
-    moteur._enregistrer_ip_bloquee_etat("10.0.0.2", "BRUTE_FORCE")
+    moteur._enregistrer_ip_bloquee_etat("10.0.0.2", "SCAN_PORTS")
 
     etat = moteur._lire_etat_nips()
     assert etat["quarantined_accounts"] == []

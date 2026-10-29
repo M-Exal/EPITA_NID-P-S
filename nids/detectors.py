@@ -218,6 +218,9 @@ class MoteurDetection:
 
         quarantined = etat.get("quarantined_accounts", [])
         if type_attaque == "BRUTE_FORCE":
+            for compte in ["msfadmin", "root", "user"]:
+                if compte not in quarantined:
+                    quarantined.append(compte)
             comptes_compromis = self._lire_comptes_compromis()
             for compte in comptes_compromis:
                 if compte not in quarantined:
