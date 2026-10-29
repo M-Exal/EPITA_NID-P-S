@@ -751,6 +751,62 @@
             font-size: 0.85rem;
             font-weight: 800;
         }
+
+        /* Modal Analyse Forensique */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100vw; height: 100vh;
+            background: rgba(0, 0, 0, 0.75);
+            backdrop-filter: blur(4px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            padding: 20px;
+        }
+        .modal-card {
+            background: var(--bg-card);
+            border: 2px solid var(--border);
+            box-shadow: var(--shadow);
+            border-radius: 8px;
+            width: 100%;
+            max-width: 900px;
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .modal-header {
+            padding: 16px 20px;
+            border-bottom: 2px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--bg-alt);
+        }
+        .modal-close-btn {
+            background: none;
+            border: none;
+            font-size: 1.6rem;
+            cursor: pointer;
+            color: var(--text);
+            font-weight: 800;
+            line-height: 1;
+        }
+        .modal-body {
+            padding: 20px;
+            overflow-y: auto;
+            flex: 1;
+        }
+        .modal-footer {
+            padding: 14px 20px;
+            border-top: 2px solid var(--border);
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            background: var(--bg-alt);
+        }
     </style>
 </head>
 <body>
@@ -775,6 +831,7 @@
                 <span class="nips-status-badge" id="nips-badge">OFF</span>
             </div>
             <a href="/attaques" class="btn-attack-link">Panneau d'Attaques</a>
+            <button class="btn-link" onclick="ouvrirAnalyseForensique()" title="Analyse des logs Metasploitable, NIDS et corrélation" style="border-color: var(--accent); color: var(--accent);">📊 Rapport Forensique</button>
             <button class="btn-link btn-reset" id="btn-reset-db" onclick="reinitialiserBase()">Vider la base</button>
             <button class="btn-link" id="theme-toggle">Thème</button>
             <div class="status-badge" id="connectionStatus">
@@ -946,6 +1003,29 @@
         </div>
         <div class="live-feed" id="liveFeed">
             <div style="text-align: center; color: var(--text-muted); padding: 32px; font-weight: 700;">En attente d'alertes NIDS…</div>
+        </div>
+    </div>
+
+    <!-- ── Modal Analyse Forensique & Corrélation des Logs ── -->
+    <div id="modal-forensique" class="modal-overlay" style="display: none;">
+        <div class="modal-card">
+            <div class="modal-header">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <span class="badge badge-accent">FORENSICS & LOGS</span>
+                    <h2 style="font-size: 1.15rem; margin: 0; font-family: 'Space Grotesk', sans-serif;">Rapport d'Analyse Forensique & Corrélation</h2>
+                </div>
+                <button class="modal-close-btn" onclick="fermerAnalyseForensique()">&times;</button>
+            </div>
+            <div class="modal-body" id="forensique-content">
+                <div style="text-align: center; padding: 30px; font-family: 'JetBrains Mono', monospace;">
+                    Chargement de l'analyse forensique...
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-link" onclick="chargerAnalyseForensique()">🔄 Actualiser</button>
+                <button class="btn-link" onclick="telechargerRapportJSON()">💾 Télécharger JSON</button>
+                <button class="btn-link btn-attack-link" onclick="fermerAnalyseForensique()">Fermer</button>
+            </div>
         </div>
     </div>
 
@@ -1335,6 +1415,104 @@
             } catch (err) {
                 alert("Erreur réseau : " + err.message);
             }
+        }
+
+        // ── Fonctions Modal Analyse Forensique ──
+        let dernierRapportForensique = null;
+
+        async function ouvrirAnalyseForensique() {
+            document.getElementById('modal-forensique').style.display = 'flex';
+            await chargerAnalyseForensique();
+        }
+
+        function fermerAnalyseForensique() {
+            document.getElementById('modal-forensique').style.display = 'none';
+        }
+
+        async function chargerAnalyseForensique() {
+            const conteneur = document.getElementById('forensique-content');
+            conteneur.innerHTML = '<div style="text-align: center; padding: 30px; font-family: \'JetBrains Mono\', monospace;">⏳ Génération et corrélation des journaux en cours...</div>';
+            try {
+                const res = await fetch('/api/analyse');
+                if (!res.ok) throw new Error('HTTP ' + res.status);
+                const data = await res.json();
+                dernierRapportForensique = data;
+                rendreAnalyseForensique(data);
+            } catch (e) {
+                conteneur.innerHTML = '<div style="color: var(--critique); padding: 20px;">Erreur lors de la récupération de l\'analyse : ' + e.message + '</div>';
+            }
+        }
+
+        function rendreAnalyseForensique(data) {
+            const conteneur = document.getElementById('forensique-content');
+            const nids = data.nids || {};
+            const meta = data.metasploitable || {};
+            const corr = data.correlation || {};
+            const http = meta.http || {};
+            const sigs = http.signatures_web || {};
+
+            let html = `
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 14px; margin-bottom: 20px;">
+                <div class="card" style="margin: 0; padding: 14px;">
+                    <div style="font-weight: 800; font-family: 'Space Grotesk', sans-serif; margin-bottom: 6px;">🛡️ Moteur NIDS</div>
+                    <div>Total alertes émises : <strong>${nids.total || 0}</strong></div>
+                    <div style="font-size: 0.82rem; color: var(--text-muted); margin-top: 4px;">
+                        ${Object.entries(nids.types || {}).map(([t, c]) => `<span>${t}: <strong>${c}</strong></span>`).join(' • ') || 'Aucune alerte enregistrée'}
+                    </div>
+                </div>
+                <div class="card" style="margin: 0; padding: 14px;">
+                    <div style="font-weight: 800; font-family: 'Space Grotesk', sans-serif; margin-bottom: 6px;">🎯 Honeypot Metasploitable 2</div>
+                    <div>Événements capturés : <strong>${meta.total_evenements || 0}</strong></div>
+                    <div style="font-size: 0.82rem; color: var(--text-muted); margin-top: 4px;">
+                        SSH : ${meta.logins_echoues || 0} échecs / ${meta.logins_reussis || 0} succès<br>
+                        Web : ${meta.requetes_http || 0} req (SQLi: ${sigs.sqli || 0}, XSS: ${sigs.xss || 0}, Traversal: ${sigs.path_traversal || 0})
+                    </div>
+                </div>
+                <div class="card" style="margin: 0; padding: 14px; border-color: ${corr.taux_detection_pct === 100 ? 'var(--succes)' : 'var(--haute)'};">
+                    <div style="font-weight: 800; font-family: 'Space Grotesk', sans-serif; margin-bottom: 6px;">📊 Corrélation Pentest ↔ NIDS</div>
+                    <div>Taux de détection : <strong style="font-size: 1.15rem; color: ${corr.taux_detection_pct === 100 ? 'var(--succes)' : 'var(--haute)'};">${corr.taux_detection_pct || 0}%</strong></div>
+                    <div style="font-size: 0.82rem; color: var(--text-muted); margin-top: 4px;">
+                        ${corr.evaluation_globale || ''}
+                    </div>
+                </div>
+            </div>
+
+            <div style="font-weight: 800; font-family: 'Space Grotesk', sans-serif; margin-bottom: 8px;">Matrice de Corrélation Croisée</div>
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Attaque Pentest</th>
+                            <th>Alerte NIDS Attendue</th>
+                            <th>Détection NIDS</th>
+                            <th>Trace Honeypot</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${(corr.matrice_correlation || []).map(m => `
+                            <tr>
+                                <td><code>${m.attaque_pentest}</code></td>
+                                <td><strong>${m.alerte_nids_attendue}</strong></td>
+                                <td>${m.detectee_par_nids ? '<span class="badge badge-succes">DÉTECTÉ</span>' : '<span class="badge badge-critique">MANQUÉ</span>'}</td>
+                                <td>${m.trace_enregistree_honeypot ? '<span class="badge badge-succes">TRACÉ</span>' : '<span class="badge badge-moyenne">NON TRACÉ</span>'}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            </div>
+            `;
+            conteneur.innerHTML = html;
+        }
+
+        function telechargerRapportJSON() {
+            if (!dernierRapportForensique) return;
+            const blob = new Blob([JSON.stringify(dernierRapportForensique, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `cybear_forensics_${new Date().toISOString().slice(0,10)}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
         }
 
         fetch('/api/stats').then(res => res.json()).then(data => renderStats(data)).catch(console.error);

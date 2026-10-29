@@ -15,6 +15,7 @@ import time
 import uuid
 from collections import defaultdict, Counter
 from datetime import datetime
+from pathlib import Path
 from zoneinfo import ZoneInfo
 
 import paramiko
@@ -386,6 +387,26 @@ def api_stats():
     stats = calculer_statistiques(alertes)
     stats["nips"] = _lire_nips_state()
     return jsonify(stats)
+
+
+@app.route("/api/analyse")
+def api_analyse():
+    """Retourne l'analyse forensique consolidée des alertes NIDS et journaux cibles."""
+    racine = Path(__file__).resolve().parents[1]
+    analysis_dir = str(racine / "analysis")
+    if analysis_dir not in sys.path:
+        sys.path.insert(0, analysis_dir)
+    try:
+        from analyze import LogAnalyzer
+        target_dir = os.getenv("METASPLOITABLE_LOG_DIR", str(racine / "data" / "metasploitable" / "log"))
+        analyzer = LogAnalyzer(
+            target_dir=target_dir,
+            nids_alerts=ALERT_JSON_PATH,
+        )
+        rapport = analyzer.generer_rapport()
+        return jsonify(rapport)
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
 
 
 @app.route("/api/stream")

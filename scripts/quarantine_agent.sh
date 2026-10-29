@@ -50,5 +50,12 @@ while true; do
             fi
         done
     fi
+
+    # Synchronisation des journaux vers le volume d'analyse si monté
+    if [ -d "/app/metasploitable_logs" ]; then
+        [ -f /var/log/auth.log ] && cp -f /var/log/auth.log /app/metasploitable_logs/auth.log 2>/dev/null
+        [ -f /var/log/apache2/access.log ] && cp -f /var/log/apache2/access.log /app/metasploitable_logs/access.log 2>/dev/null
+    fi
+
     sleep 1
 done

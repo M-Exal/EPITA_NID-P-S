@@ -44,10 +44,27 @@ class NIDSService:
         # Notification Discord d'arrêt (synchrone pour garantir l'envoi)
         self.alertes.discord.envoyer_arret()
 
+        # Génération du rapport consolidé forensique si possible, sinon repli sur le log brut
+        source_a_chiffrer = self.cfg.ALERT_LOG
+        rapport_txt = os.path.join(self.cfg.DATA_DIR, "nids_report.txt")
+        try:
+            analysis_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "analysis"))
+            if analysis_path not in sys.path:
+                sys.path.append(analysis_path)
+            from analyze import LogAnalyzer
+            target_log_dir = os.path.join(self.cfg.DATA_DIR, "..", "metasploitable", "log")
+            analyzer = LogAnalyzer(target_dir=target_log_dir, nids_alerts=self.cfg.ALERT_JSON)
+            synthese = analyzer.generer_synthese_texte()
+            with open(rapport_txt, "w", encoding="utf-8") as f:
+                f.write(synthese)
+            source_a_chiffrer = rapport_txt
+        except Exception:
+            pass
+
         # Chiffrement du rapport final
-        if os.path.exists(self.cfg.ALERT_LOG):
+        if source_a_chiffrer and os.path.exists(source_a_chiffrer):
             taille = chiffrer_fichier(
-                self.cfg.ALERT_LOG,
+                source_a_chiffrer,
                 self.cfg.ENCRYPTED_REPORT,
                 self.cle
             )

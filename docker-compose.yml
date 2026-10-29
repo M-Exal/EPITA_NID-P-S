@@ -16,6 +16,7 @@ services:
     command: sh -c "/bin/services.sh && /usr/local/bin/quarantine_agent.sh"
     volumes:
       - ./data/nids:/app/data
+      - ./data/metasploitable/log:/app/metasploitable_logs
       - ./scripts/quarantine_agent.sh:/usr/local/bin/quarantine_agent.sh:ro
     ports:
       - "2222:22"     # SSH
@@ -109,9 +110,11 @@ services:
       - FTP_PORT=21
     volumes:
       - ./data/nids:/app/data
+      - ./data/metasploitable/log:/app/data/metasploitable_logs
       - ./dashboard:/app
       - ./scripts:/app/scripts
       - ./pentest:/app/pentest
+      - ./analysis:/app/analysis
     networks:
       - honeynet
     depends_on:

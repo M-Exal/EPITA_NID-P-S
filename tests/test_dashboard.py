@@ -345,3 +345,15 @@ def test_api_reset_attaques(client):
     assert res.get_json()["success"] is True
 
 
+def test_api_analyse(client):
+    """Vérifie que la route /api/analyse retourne le rapport forensique consolidé."""
+    res = client.get("/api/analyse")
+    assert res.status_code == 200
+    data = res.get_json()
+    assert "date_analyse" in data
+    assert "nids" in data
+    assert "metasploitable" in data
+    assert "correlation" in data
+
+
+
