@@ -703,19 +703,6 @@
                 <span>scripts/run_scan_ports.py</span>
             </div>
             <button class="btn-launch" onclick="lancerAttaque('SCAN_PORTS', this)">Lancer l'attaque</button>
-            <div id="dos-port-selector" style="display:none; margin-top:12px; border:2px solid var(--border); border-radius:6px; padding:12px; background:var(--bg); box-shadow:var(--shadow-sm);">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-                    <span style="font-weight:800; font-size:0.82rem; text-transform:uppercase; letter-spacing:0.05em;">Ports ouverts — cibles DoS</span>
-                    <div style="display:flex; gap:8px;">
-                        <button onclick="toggleAllPorts(true)" style="font-size:0.72rem; font-weight:800; padding:2px 8px; border:2px solid var(--border); border-radius:4px; background:var(--bg-card); cursor:pointer; color:var(--text);">Tout</button>
-                        <button onclick="toggleAllPorts(false)" style="font-size:0.72rem; font-weight:800; padding:2px 8px; border:2px solid var(--border); border-radius:4px; background:var(--bg-card); cursor:pointer; color:var(--text);">Aucun</button>
-                    </div>
-                </div>
-                <div id="ports-checkbox-list" style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:12px;"></div>
-                <button id="btn-dos-selection" onclick="lancerDosSurSelection(this)" class="btn-launch" style="background:var(--critique); color:#ffffff; border-color:var(--critique);">
-                    Lancer DoS sur sélection
-                </button>
-            </div>
             <div class="status-indicator status-idle">
                 <span class="status-dot-sm"></span>
                 <span class="status-text">En attente</span>
@@ -794,6 +781,19 @@
                 <span>scripts/run_dos.py</span>
             </div>
             <button class="btn-launch" onclick="lancerAttaque('DOS', this)">Lancer l'attaque</button>
+            <div id="dos-port-selector" style="display:none; margin-top:10px; padding:10px; border-top:1px solid var(--border);">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                    <span style="font-weight:800; font-size:0.72rem; text-transform:uppercase; letter-spacing:0.04em; color:var(--critique);">Ports cibles</span>
+                    <div style="display:flex; gap:4px;">
+                        <button onclick="toggleAllPorts(true)" style="font-size:0.65rem; font-weight:700; padding:2px 6px; border:1px solid var(--border); border-radius:3px; background:var(--bg); cursor:pointer; color:var(--text);">Tout</button>
+                        <button onclick="toggleAllPorts(false)" style="font-size:0.65rem; font-weight:700; padding:2px 6px; border:1px solid var(--border); border-radius:3px; background:var(--bg); cursor:pointer; color:var(--text);">Aucun</button>
+                    </div>
+                </div>
+                <div id="ports-checkbox-list" style="display:flex; flex-wrap:wrap; gap:6px; margin-bottom:8px;"></div>
+                <button id="btn-dos-selection" onclick="lancerDosSurSelection(this)" class="btn-launch" style="background:var(--critique); color:#fff; border-color:var(--critique); font-size:0.78rem; padding:6px 14px;">
+                    Lancer sur sélection
+                </button>
+            </div>
             <div class="status-indicator status-idle">
                 <span class="status-dot-sm"></span>
                 <span class="status-text">En attente</span>
@@ -977,10 +977,16 @@
             setLog(`[LANCEMENT] Démarrage de ${nom} en arrière-plan…\nLecture du flux /tmp/attack_*.log en cours...`);
 
             try {
+                const payload = { attaque: nom, attack_type: nom };
+                if (nom === 'DOS') {
+                    const checked = document.querySelectorAll('#ports-checkbox-list input[type="checkbox"]:checked');
+                    const ports = Array.from(checked).map(cb => parseInt(cb.value)).filter(Boolean);
+                    if (ports.length > 0) payload.ports = ports;
+                }
                 const resp = await fetch('/api/attaques/lancer', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ attaque: nom, attack_type: nom }),
+                    body: JSON.stringify(payload),
                 });
                 const data = await resp.json();
 
@@ -1028,8 +1034,8 @@
                 const selector = document.getElementById('dos-port-selector');
                 if (!liste || !selector || ports.length === 0) return;
                 liste.innerHTML = ports.map(port => `
-                    <label style="display:inline-flex; align-items:center; gap:6px; padding:5px 10px; border:2px solid var(--border); border-radius:6px; background:var(--bg-card); font-family:'JetBrains Mono',monospace; font-size:0.82rem; font-weight:800; cursor:pointer; box-shadow:var(--shadow-sm);">
-                        <input type="checkbox" value="${port}" checked style="accent-color:var(--critique); width:14px; height:14px;">
+                    <label style="display:inline-flex; align-items:center; gap:4px; padding:3px 8px; border:1px solid var(--border); border-radius:4px; background:var(--bg); font-family:'JetBrains Mono',monospace; font-size:0.75rem; font-weight:700; cursor:pointer;">
+                        <input type="checkbox" value="${port}" checked style="accent-color:var(--critique); width:12px; height:12px;">
                         <span>${port}</span>
                     </label>
                 `).join('');
@@ -1199,9 +1205,11 @@
         }
 
         let currentNIPS = null;
+        let _nipsToggleLock = 0;
 
         function updateNIPSUI(nips) {
             if (!nips) return;
+            if (Date.now() < _nipsToggleLock) return;
             currentNIPS = nips;
             const slider = document.getElementById('nips-slider');
             const badge = document.getElementById('nips-badge');
@@ -1275,6 +1283,7 @@
         }
 
         async function basculerNIPS(actif) {
+            _nipsToggleLock = Date.now() + 3000;
             try {
                 const res = await fetch('/api/nips/toggle', {
                     method: 'POST',
@@ -1282,6 +1291,7 @@
                     body: JSON.stringify({ enabled: actif })
                 });
                 const nips = await res.json();
+                _nipsToggleLock = 0;
                 updateNIPSUI(nips);
                 showToast(`NIPS ${actif ? 'activé (blocage actif)' : 'désactivé (détection seule)'}`, 'info');
                 pollStatus();
@@ -1328,6 +1338,7 @@
 
         // Démarrage immédiat puis toutes les 1s
         pollStatus();
+        chargerPortsOuverts();
         setInterval(pollStatus, POLL_INTERVAL_MS);
     </script>
 </body>

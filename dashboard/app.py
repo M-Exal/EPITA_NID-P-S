@@ -53,7 +53,22 @@ ALERT_JSON_PATH = os.getenv("NIDS_ALERT_JSON", DEFAULT_JSON)
 
 # Fichier d'état partagé du NIPS (prévention, IPs bloquées, comptes sous quarantaine)
 DEFAULT_NIPS_STATE = os.path.join(os.path.dirname(ALERT_JSON_PATH), "nips_state.json")
-NIPS_STATE_PATH = os.getenv("NIDS_NIPS_STATE", DEFAULT_NIPS_STATE)
+_nips_candidate = os.getenv("NIDS_NIPS_STATE", DEFAULT_NIPS_STATE)
+
+def _resoudre_nips_path(candidate):
+    d = os.path.dirname(candidate)
+    try:
+        os.makedirs(d, exist_ok=True)
+        test = os.path.join(d, ".nips_write_test")
+        with open(test, "w") as f:
+            f.write("ok")
+        os.remove(test)
+        return candidate
+    except (OSError, PermissionError):
+        fallback = os.path.join("/tmp", "nips_state.json")
+        return fallback
+
+NIPS_STATE_PATH = _resoudre_nips_path(_nips_candidate)
 
 
 def _lire_nips_state():
@@ -571,9 +586,8 @@ def api_lancer_attaque():
         "PENTEST_DATA_DIR": "/tmp",
     }
 
-    if cle in ("dos", "dos_attack"):
-        ports_dos = request.get_json(silent=True) or {}
-        ports_selectionnes = ports_dos.get("ports", [])
+    if cle.lower() in ("dos", "dos_attack"):
+        ports_selectionnes = data.get("ports", [])
         if ports_selectionnes:
             env["DOS_PORTS"] = ",".join(str(p) for p in ports_selectionnes)
 
