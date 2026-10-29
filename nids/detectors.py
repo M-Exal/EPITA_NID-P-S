@@ -13,7 +13,9 @@ Détections implémentées :
   7. PATH_TRAVERSAL (signature de traversée d'arborescence)
 """
 
-import subprocess  # noqa: F401
+import json
+import os
+import subprocess
 import time
 from collections import defaultdict, deque
 from scapy.layers.inet import IP, TCP
@@ -39,17 +41,115 @@ class MoteurDetection:
         # Ensemble des IPs bloquées par le NIPS
         self.ips_bloquees = set()
 
+        # Fichier d'état partagé avec le Dashboard
+        self.state_file = getattr(self.cfg, "NIPS_STATE_FILE", None)
+        if self.state_file and not os.path.exists(self.state_file):
+            self._ecrire_etat_nips({
+                "enabled": getattr(self.cfg, "NIPS_ENABLED", False),
+                "blocked_ips": [],
+                "quarantined_accounts": [],
+                "reset_requested": False,
+            })
+
+    def _lire_etat_nips(self):
+        """Lit l'état NIPS depuis le fichier JSON partagé."""
+        if not self.state_file or not os.path.exists(self.state_file):
+            return {
+                "enabled": getattr(self.cfg, "NIPS_ENABLED", False),
+                "blocked_ips": list(self.ips_bloquees),
+                "quarantined_accounts": [],
+                "reset_requested": False,
+            }
+        try:
+            with open(self.state_file, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except Exception:
+            return {
+                "enabled": getattr(self.cfg, "NIPS_ENABLED", False),
+                "blocked_ips": list(self.ips_bloquees),
+                "quarantined_accounts": [],
+                "reset_requested": False,
+            }
+
+    def _ecrire_etat_nips(self, etat):
+        """Écrit l'état NIPS dans le fichier JSON partagé."""
+        if not self.state_file:
+            return
+        try:
+            os.makedirs(os.path.dirname(self.state_file), exist_ok=True)
+            with open(self.state_file, "w", encoding="utf-8") as f:
+                json.dump(etat, f, indent=2)
+        except Exception:
+            pass
+
+    def synchroniser_etat_nips(self):
+        """Synchronise l'état NIPS (activation dynamique ou purge iptables demandée)."""
+        if not self.state_file:
+            return
+        etat = self._lire_etat_nips()
+
+        # 1. Traitement de la demande de réinitialisation
+        if etat.get("reset_requested"):
+            self.reinitialiser_protection()
+            return
+
+        # 2. Synchronisation de l'activation NIPS
+        if "enabled" in etat:
+            self.cfg.NIPS_ENABLED = bool(etat["enabled"])
+
     def _executer_blocage_systeme(self, ip_src):
-        """Applique la règle de blocage iptables (à implémenter si besoin)."""
-        # TODO: Implémenter le blocage système (ex: iptables -I INPUT -s <ip> -j DROP)
-        return True
+        """Applique la règle de blocage iptables (DROP) pour isoler l'attaquant."""
+        try:
+            cmd = getattr(self.cfg, "BLOCK_COMMAND", "iptables -I INPUT -s {ip} -j DROP").format(ip=ip_src).split()
+            subprocess.run(cmd, check=False, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            return True
+        except Exception as e:
+            print(f"[!] Erreur exécution blocage iptables ({ip_src}) : {e}")
+            return False
+
+    def reinitialiser_protection(self):
+        """Réinitialise toutes les règles iptables et lève la quarantaine des comptes."""
+        try:
+            subprocess.run(["iptables", "-F", "INPUT"], check=False, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        except Exception as e:
+            print(f"[!] Erreur vidage iptables : {e}")
+
+        self.ips_bloquees.clear()
+        self._ecrire_etat_nips({
+            "enabled": getattr(self.cfg, "NIPS_ENABLED", False),
+            "blocked_ips": [],
+            "quarantined_accounts": [],
+            "reset_requested": False,
+        })
+        print("[NIPS] Protection réinitialisée — règles iptables purgées et quarantaine levée.")
+
+    def _enregistrer_ip_bloquee_etat(self, ip_src, type_attaque):
+        """Met à jour le fichier d'état NIPS partagé avec l'IP bloquée et la quarantaine."""
+        if not self.state_file:
+            return
+        etat = self._lire_etat_nips()
+        blocked_ips = etat.get("blocked_ips", [])
+        if ip_src not in blocked_ips:
+            blocked_ips.append(ip_src)
+        etat["blocked_ips"] = blocked_ips
+
+        # Protection post-compromise : si brute-force confirmé, placer les comptes sensibles en quarantaine
+        quarantined = etat.get("quarantined_accounts", [])
+        if type_attaque == "BRUTE_FORCE":
+            for compte in ["msfadmin", "root"]:
+                if compte not in quarantined:
+                    quarantined.append(compte)
+        etat["quarantined_accounts"] = quarantined
+        self._ecrire_etat_nips(etat)
 
     def bloquer_ip(self, ip_src, type_attaque):
         """Déclenche la prévention active NIPS."""
+        self.synchroniser_etat_nips()
         if self.cfg.NIPS_ENABLED and ip_src not in self.ips_bloquees:
             self.ips_bloquees.add(ip_src)
             self.blocker(ip_src)
             print(f"[NIPS] IP {ip_src} bloquée ({type_attaque})")
+            self._enregistrer_ip_bloquee_etat(ip_src, type_attaque)
 
     def declencher_alerte_et_prevention(self, type_attaque, ip_src, details, maintenant):
         """Émet l'alerte NIDS et déclenche le blocage NIPS avec cooldown anti-spam."""

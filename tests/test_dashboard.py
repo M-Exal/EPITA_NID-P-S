@@ -42,7 +42,12 @@ def client(tmp_path, monkeypatch):
     with open(test_alerts_file, "w", encoding="utf-8") as f:
         json.dump(sample_alerts, f)
 
+    test_nips_file = tmp_path / "nips_state.json"
+    with open(test_nips_file, "w", encoding="utf-8") as f:
+        json.dump({"enabled": False, "blocked_ips": [], "quarantined_accounts": [], "reset_requested": False}, f)
+
     monkeypatch.setattr("app.ALERT_JSON_PATH", str(test_alerts_file))
+    monkeypatch.setattr("app.NIPS_STATE_PATH", str(test_nips_file))
     app.config["TESTING"] = True
     with app.test_client() as c:
         yield c
@@ -122,6 +127,22 @@ def test_api_ssh_connect(client):
     assert "cible" in data
 
 
+def test_api_ssh_connect_quarantined(client):
+    """Vérifie que /api/attaques/ssh_connect bloque un compte en quarantaine si le NIPS est actif."""
+    client.post("/api/nips/toggle", json={"enabled": True})
+    # Simuler quarantaine
+    import app
+    st = app._lire_nips_state()
+    st["quarantined_accounts"] = ["msfadmin"]
+    app._ecrire_nips_state(st)
+
+    res = client.post("/api/attaques/ssh_connect", json={"utilisateur": "msfadmin"})
+    assert res.status_code == 403
+    data = res.get_json()
+    assert data["status"] == "quarantined"
+    assert data["nips_bloque"] is True
+
+
 def test_api_attaques_lancer_validation(client):
     """Vérifie la validation des paramètres de /api/attaques/lancer."""
     # Requête sans body ou sans clé 'attaque'
@@ -187,4 +208,62 @@ def test_api_alerts_reset(client):
     # Après le reset : 0 alerte
     res_after = client.get("/api/alerts")
     assert len(res_after.get_json()) == 0
+
+
+def test_nips_status_and_toggle(client, tmp_path, monkeypatch):
+    """Vérifie la consultation et le basculement dynamique du mode NIPS."""
+    state_file = tmp_path / "nips_state.json"
+    monkeypatch.setattr("app.NIPS_STATE_PATH", str(state_file))
+
+    # Statut initial
+    res = client.get("/api/nips/status")
+    assert res.status_code == 200
+    data = res.get_json()
+    assert data["enabled"] is False
+
+    # Activation NIPS
+    res_toggle = client.post("/api/nips/toggle", json={"enabled": True})
+    assert res_toggle.status_code == 200
+    assert res_toggle.get_json()["enabled"] is True
+
+    # Désactivation NIPS
+    res_off = client.post("/api/nips/toggle", json={"enabled": False})
+    assert res_off.status_code == 200
+    assert res_off.get_json()["enabled"] is False
+
+
+def test_nips_quarantine_blocks_ssh_connect(client, tmp_path, monkeypatch):
+    """Vérifie que le NIPS actif révoque l'accès SSH aux comptes sous quarantaine."""
+    state_file = tmp_path / "nips_state.json"
+    monkeypatch.setattr("app.NIPS_STATE_PATH", str(state_file))
+
+    # Écrire un état avec NIPS actif et msfadmin en quarantaine
+    import json
+    with open(state_file, "w", encoding="utf-8") as f:
+        json.dump({
+            "enabled": True,
+            "blocked_ips": ["172.19.0.3"],
+            "quarantined_accounts": ["msfadmin"],
+            "reset_requested": False,
+        }, f)
+
+    # Tentative de connexion avec le compte sous quarantaine
+    res = client.post("/api/attaques/ssh_connect", json={
+        "utilisateur": "msfadmin",
+        "mot_de_passe": "msfadmin",
+    })
+    assert res.status_code == 403
+    assert res.get_json()["status"] == "quarantined"
+
+    # Réinitialisation de la protection NIPS
+    res_reset = client.post("/api/nips/reset")
+    assert res_reset.status_code == 200
+
+    # L'accès est de nouveau autorisé une fois la quarantaine levée
+    res_apres = client.post("/api/attaques/ssh_connect", json={
+        "utilisateur": "msfadmin",
+        "mot_de_passe": "msfadmin",
+    })
+    assert res_apres.status_code == 200
+    assert res_apres.get_json()["status"] == "ready"
 

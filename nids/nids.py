@@ -8,6 +8,8 @@ de détection, et génère un rapport chiffré à l'arrêt du service.
 import os
 import signal
 import sys
+import threading
+import time
 from scapy.all import sniff
 
 from alerting import AlertManager
@@ -63,6 +65,15 @@ class NIDSService:
 
         sys.exit(0)
 
+    def _surveiller_commandes_nips(self):
+        """Thread d'arrière-plan surveillant les commandes de réinitialisation et de mode NIPS."""
+        while self.en_cours:
+            try:
+                self.moteur.synchroniser_etat_nips()
+            except Exception:
+                pass
+            time.sleep(0.8)
+
     def demarrer(self):
         """Lance la capture Scapy."""
         signal.signal(signal.SIGINT, self.arreter)
@@ -78,6 +89,10 @@ class NIDSService:
 
         # Notification Discord de démarrage
         self.alertes.discord.envoyer_demarrage()
+
+        # Thread de synchronisation NIPS (commandes Dashboard & purge iptables)
+        t_sync = threading.Thread(target=self._surveiller_commandes_nips, daemon=True)
+        t_sync.start()
 
         try:
             sniff(

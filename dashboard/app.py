@@ -51,6 +51,46 @@ DEFAULT_JSON = os.path.abspath(
 )
 ALERT_JSON_PATH = os.getenv("NIDS_ALERT_JSON", DEFAULT_JSON)
 
+# Fichier d'état partagé du NIPS (prévention, IPs bloquées, comptes sous quarantaine)
+DEFAULT_NIPS_STATE = os.path.abspath(
+    os.path.join(os.path.dirname(__file__), "..", "data", "nids", "nips_state.json")
+)
+NIPS_STATE_PATH = os.getenv("NIDS_NIPS_STATE", DEFAULT_NIPS_STATE)
+
+
+def _lire_nips_state():
+    """Lit l'état courant du NIPS depuis le fichier JSON partagé."""
+    if not os.path.exists(NIPS_STATE_PATH):
+        return {
+            "enabled": False,
+            "blocked_ips": [],
+            "quarantined_accounts": [],
+            "reset_requested": False,
+        }
+    try:
+        with open(NIPS_STATE_PATH, "r", encoding="utf-8") as f:
+            data = json.load(f)
+            if isinstance(data, dict):
+                return data
+    except Exception:
+        pass
+    return {
+        "enabled": False,
+        "blocked_ips": [],
+        "quarantined_accounts": [],
+        "reset_requested": False,
+    }
+
+
+def _ecrire_nips_state(etat):
+    """Sauvegarde l'état NIPS dans le fichier partagé."""
+    try:
+        os.makedirs(os.path.dirname(NIPS_STATE_PATH), exist_ok=True)
+        with open(NIPS_STATE_PATH, "w", encoding="utf-8") as f:
+            json.dump(etat, f, indent=2)
+    except Exception:
+        pass
+
 # Classification des sévérités
 SEVERITE_MAP = {
     "DOS": "CRITIQUE",
@@ -190,11 +230,47 @@ def api_alerts_reset():
         return jsonify({"status": "error", "message": str(exc)}), 500
 
 
+@app.route("/api/nips/status")
+def api_nips_status():
+    """Retourne l'état courant du NIPS (actif, IPs bloquées, comptes sous quarantaine)."""
+    return jsonify(_lire_nips_state())
+
+
+@app.route("/api/nips/toggle", methods=["POST"])
+def api_nips_toggle():
+    """Bascule ou définit le mode actif de prévention NIPS."""
+    data = request.get_json(silent=True) or {}
+    state = _lire_nips_state()
+    if "enabled" in data:
+        state["enabled"] = bool(data["enabled"])
+    else:
+        state["enabled"] = not state.get("enabled", False)
+    _ecrire_nips_state(state)
+    return jsonify(state)
+
+
+@app.route("/api/nips/reset", methods=["POST"])
+def api_nips_reset():
+    """Réinitialise la protection NIPS : lève la quarantaine et demande la purge iptables."""
+    state = _lire_nips_state()
+    state["reset_requested"] = True
+    state["blocked_ips"] = []
+    state["quarantined_accounts"] = []
+    _ecrire_nips_state(state)
+    return jsonify({
+        "status": "success",
+        "message": "Protection NIPS réinitialisée — règles iptables purgées et accès restaurés.",
+        "state": state,
+    })
+
+
 @app.route("/api/stats")
 def api_stats():
     """Retourne la synthèse analytique complète."""
     alertes = lire_alertes()
-    return jsonify(calculer_statistiques(alertes))
+    stats = calculer_statistiques(alertes)
+    stats["nips"] = _lire_nips_state()
+    return jsonify(stats)
 
 
 @app.route("/api/stream")
@@ -202,20 +278,26 @@ def api_stream():
     """Flux SSE (Server-Sent Events) pour diffuser les alertes en direct."""
     def event_stream():
         derniers_count = -1
+        dernier_nips_state = None
 
         while True:
             try:
                 alertes = lire_alertes()
                 count = len(alertes)
+                nips_curr = _lire_nips_state()
+                nips_str = json.dumps(nips_curr, sort_keys=True)
 
                 # Émission immédiate au premier branchement ou lors d'une nouveauté
-                if count != derniers_count:
+                if count != derniers_count or nips_str != dernier_nips_state:
                     derniers_count = count
+                    dernier_nips_state = nips_str
                     stats = calculer_statistiques(alertes)
+                    stats["nips"] = nips_curr
                     payload = {
                         "type": "update",
                         "total": count,
                         "stats": stats,
+                        "nips": nips_curr,
                         "nouveau": alertes[-5:] if count > 0 else [],
                     }
                     yield f"data: {json.dumps(payload)}\n\n"
@@ -226,7 +308,7 @@ def api_stream():
             except Exception as e:
                 yield f"data: {json.dumps({'type': 'error', 'message': str(e)})}\n\n"
 
-            time.sleep(1.5)
+            time.sleep(1.2)
 
     response = Response(event_stream(), mimetype="text/event-stream")
     response.headers["Cache-Control"] = "no-cache"
@@ -486,6 +568,18 @@ def api_ssh_connect():
     target = os.getenv("TARGET_HOST", "metasploitable")
     port = int(os.getenv("SSH_PORT", "22"))
 
+    # Vérification de sécurité NIPS : compte sous quarantaine suite à brute-force
+    nips_state = _lire_nips_state()
+    if nips_state.get("enabled"):
+        quarantined = nips_state.get("quarantined_accounts", [])
+        if user in quarantined:
+            return jsonify({
+                "status": "quarantined",
+                "error": f"Accès SSH bloqué par le NIPS : le compte '{user}' a été placé en quarantaine de sécurité suite à une attaque par force brute.",
+                "utilisateur": user,
+                "nips_bloque": True,
+            }), 403
+
     token = str(uuid.uuid4())
     _ssh_pending[token] = {
         "utilisateur": user,
@@ -526,6 +620,15 @@ def ws_join_session(data):
     target = session["target"]
     port = session["port"]
     sid = request.sid
+
+    # Vérification NIPS dynamique
+    nips_state = _lire_nips_state()
+    if nips_state.get("enabled") and utilisateur in nips_state.get("quarantined_accounts", []):
+        emit("terminal_output", {
+            "data": f"\r\n\x1b[31m[NIPS ACTIVE PROTECTION] Accès révoqué : le compte '{utilisateur}' a été placé sous quarantaine de sécurité suite à une attaque par force brute.\x1b[0m\r\n\r\n\x1b[33m[Conseil] Réinitialisez la protection NIPS depuis le SIEM pour autoriser de nouvelles sessions.\x1b[0m\r\n"
+        })
+        emit("terminal_error", {"message": f"Compte {utilisateur} sous quarantaine NIPS"})
+        return
 
     try:
         client = paramiko.SSHClient()

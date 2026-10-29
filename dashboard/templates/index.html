@@ -185,6 +185,136 @@
             background: var(--critique-bg) !important;
         }
 
+        /* ── Neobrutalist Slider Switch (NIPS) ── */
+        .nips-control-box {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 6px 12px;
+            background: var(--bg-card);
+            border: 2px solid var(--border);
+            border-radius: 6px;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .nips-label {
+            font-size: 0.8rem;
+            font-weight: 800;
+            font-family: 'Space Grotesk', sans-serif;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .switch-toggle {
+            position: relative;
+            display: inline-block;
+            width: 44px;
+            height: 24px;
+            margin: 0;
+            cursor: pointer;
+        }
+
+        .switch-toggle input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider-round {
+            position: absolute;
+            cursor: pointer;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: var(--border);
+            transition: .2s ease;
+            border-radius: 24px;
+            border: 2px solid var(--border);
+        }
+
+        .slider-round:before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            left: 2px;
+            bottom: 2px;
+            background-color: #ffffff;
+            transition: .2s ease;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider-round {
+            background-color: var(--main);
+        }
+
+        input:checked + .slider-round:before {
+            transform: translateX(20px);
+            background-color: #000000;
+        }
+
+        .nips-status-badge {
+            font-size: 0.75rem;
+            font-weight: 800;
+            font-family: 'JetBrains Mono', monospace;
+            padding: 2px 6px;
+            border-radius: 4px;
+            border: 1px solid var(--border);
+            background: var(--bg);
+        }
+
+        .nips-status-badge.active {
+            background: var(--main);
+            color: #000000;
+        }
+
+        /* ── Bannière NIPS (Alerte blocage / Quarantaine) ── */
+        .nips-banner {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 18px;
+            background: var(--critique-bg);
+            border: 2px solid var(--critique);
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .nips-banner-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .nips-shield-tag {
+            font-size: 0.75rem;
+            font-weight: 800;
+            background: var(--critique);
+            color: #ffffff;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-family: 'Space Grotesk', sans-serif;
+            letter-spacing: 0.5px;
+        }
+
+        .nips-banner-text {
+            font-size: 0.88rem;
+            font-weight: 700;
+            color: var(--text);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .btn-reset-nips {
+            background: var(--critique) !important;
+            color: #ffffff !important;
+            border-color: #000000 !important;
+        }
+
+        .btn-reset-nips:hover {
+            opacity: 0.9;
+        }
+
         .status-badge {
             display: flex;
             align-items: center;
@@ -574,6 +704,14 @@
             <span class="brand-tag">Supervision NIDS / NIPS</span>
         </div>
         <div class="header-meta">
+            <div class="nips-control-box">
+                <span class="nips-label">NIPS</span>
+                <label class="switch-toggle" title="Activer / Désactiver la prévention NIPS (blocage iptables)">
+                    <input type="checkbox" id="nips-slider" onchange="basculerNIPS(this.checked)">
+                    <span class="slider-round"></span>
+                </label>
+                <span class="nips-status-badge" id="nips-badge">OFF</span>
+            </div>
             <a href="/attaques" class="btn-attack-link">Panneau d'Attaques</a>
             <button class="btn-link btn-reset" id="btn-reset-db" onclick="reinitialiserBase()">Vider la base</button>
             <button class="btn-link" id="theme-toggle">Thème</button>
@@ -583,6 +721,14 @@
             </div>
         </div>
     </header>
+
+    <div id="nips-banner" class="nips-banner" style="display: none;">
+        <div class="nips-banner-left">
+            <span class="nips-shield-tag">BOUCLIER NIPS ACTIF</span>
+            <span class="nips-banner-text" id="nips-banner-text">Attaque bloquée</span>
+        </div>
+        <button class="btn-link btn-reset-nips" onclick="reinitialiserNIPS()">Réinitialiser la protection</button>
+    </div>
 
     <div class="kpi-grid">
         <div class="card kpi-card">
@@ -806,6 +952,72 @@
                 }).join('');
             } else {
                 liveFeed.innerHTML = '<div style="text-align: center; color: var(--text-muted); padding: 32px; font-weight: 700;">En attente d\'alertes NIDS…</div>';
+            }
+
+            if (stats.nips) {
+                updateNIPSUI(stats.nips);
+            }
+        }
+
+        function updateNIPSUI(nips) {
+            if (!nips) return;
+            const slider = document.getElementById('nips-slider');
+            const badge = document.getElementById('nips-badge');
+            const banner = document.getElementById('nips-banner');
+            const bannerText = document.getElementById('nips-banner-text');
+
+            if (slider) slider.checked = !!nips.enabled;
+            if (badge) {
+                badge.textContent = nips.enabled ? 'ACTIF' : 'OFF';
+                badge.className = 'nips-status-badge' + (nips.enabled ? ' active' : '');
+            }
+
+            const blockedIps = nips.blocked_ips || [];
+            const quarantined = nips.quarantined_accounts || [];
+
+            if (nips.enabled && (blockedIps.length > 0 || quarantined.length > 0)) {
+                let msg = '';
+                if (blockedIps.length > 0) {
+                    msg += `IP bloquée(s) : ${blockedIps.join(', ')} (iptables DROP)`;
+                }
+                if (quarantined.length > 0) {
+                    msg += (msg ? ' • ' : '') + `Compte(s) sous quarantaine : ${quarantined.join(', ')} (Accès révoqué)`;
+                }
+                if (bannerText) bannerText.textContent = msg;
+                if (banner) banner.style.display = 'flex';
+            } else {
+                if (banner) banner.style.display = 'none';
+            }
+        }
+
+        async function basculerNIPS(actif) {
+            try {
+                const res = await fetch('/api/nips/toggle', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ enabled: actif })
+                });
+                const nips = await res.json();
+                updateNIPSUI(nips);
+            } catch (err) {
+                console.error("Erreur toggle NIPS:", err);
+            }
+        }
+
+        async function reinitialiserNIPS() {
+            if (!confirm("Voulez-vous réinitialiser la protection NIPS ? Cela va purger les règles iptables DROP et lever la quarantaine des comptes pour permettre de relancer des attaques.")) {
+                return;
+            }
+            try {
+                const res = await fetch('/api/nips/reset', { method: 'POST' });
+                const data = await res.json();
+                if (res.ok) {
+                    updateNIPSUI(data.state);
+                } else {
+                    alert("Erreur réinitialisation NIPS : " + (data.message || 'inconnue'));
+                }
+            } catch (err) {
+                alert("Erreur réseau : " + err.message);
             }
         }
 

@@ -43,6 +43,7 @@ def mock_config(tmp_path):
     cfg.ALERT_JSON = os.path.join(cfg.DATA_DIR, "nids_alerts.json")
     cfg.KEY_FILE = os.path.join(cfg.DATA_DIR, "secret.key")
     cfg.ENCRYPTED_REPORT = os.path.join(cfg.DATA_DIR, "nids_alerts.enc")
+    cfg.NIPS_STATE_FILE = os.path.join(cfg.DATA_DIR, "nips_state.json")
 
     # Seuils bas pour tester facilement
     cfg.SCAN_THRESHOLD = 3

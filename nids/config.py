@@ -54,6 +54,7 @@ class Config:
     # Si activé, le NIPS bloque activement les adresses IP malveillantes
     NIPS_ENABLED = os.getenv("NIPS_ENABLED", "false").lower() in ("true", "1", "yes")
     BLOCK_COMMAND = os.getenv("NIPS_BLOCK_CMD", "iptables -I INPUT -s {ip} -j DROP")
+    NIPS_STATE_FILE = os.path.join(DATA_DIR, "nips_state.json")
 
     # ------------------------------------------------------------------
     # Seuils de Détection (Anomalies)
