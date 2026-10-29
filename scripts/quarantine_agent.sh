@@ -8,38 +8,36 @@ echo "[QUARANTINE AGENT] Démarrage du moniteur de quarantaine sur Metasploitabl
 
 while true; do
     if [ -f "$STATE_FILE" ]; then
-        # Vérifier si nips est actif et si msfadmin est en quarantaine
-        ENABLED=$(grep -o '"enabled": *true' "$STATE_FILE" 2>/dev/null)
-        MSF_QUARANTINED=$(grep -o '"quarantined_accounts": *\[[^]]*"msfadmin"[^]]*\]' "$STATE_FILE" 2>/dev/null)
+        STATUS_INFO=$(perl -e '
+            local $/;
+            if (open(my $f, "<", "'"$STATE_FILE"'")) {
+                my $c = <$f>;
+                my $en = ($c =~ /"enabled"\s*:\s*true/i) ? 1 : 0;
+                my $msf = 0;
+                if ($en && $c =~ /"quarantined_accounts"\s*:\s*\[([^\]]*)\]/s) {
+                    my $accs = $1;
+                    $msf = ($accs =~ /"msfadmin"/i) ? 1 : 0;
+                }
+                print "$en $msf\n";
+            } else {
+                print "0 0\n";
+            }
+        ' 2>/dev/null)
 
-        if [ -n "$ENABLED" ] && [ -n "$MSF_QUARANTINED" ]; then
-            # Compte sous quarantaine : verrouiller si ce n'est pas déjà fait
-            STATUS=$(passwd -S msfadmin 2>/dev/null | awk '{print $2}')
-            if [ "$STATUS" != "L" ]; then
+        ENABLED=$(echo "$STATUS_INFO" | awk '{print $1}')
+        MSF_QUARANTINED=$(echo "$STATUS_INFO" | awk '{print $2}')
+        CURRENT_STATUS=$(passwd -S msfadmin 2>/dev/null | awk '{print $2}')
+
+        if [ "$ENABLED" = "1" ] && [ "$MSF_QUARANTINED" = "1" ]; then
+            if [ "$CURRENT_STATUS" != "L" ]; then
                 passwd -l msfadmin >/dev/null 2>&1
                 pkill -u msfadmin -9 >/dev/null 2>&1
-                echo "[QUARANTINE AGENT] Compte msfadmin verrouillé sur le système (passwd -l)"
+                echo "[QUARANTINE AGENT] Compte msfadmin verrouillé sur Metasploitable 2 (passwd -l)"
             fi
         else
-            # Compte hors quarantaine : déverrouiller si verrouillé
-            STATUS=$(passwd -S msfadmin 2>/dev/null | awk '{print $2}')
-            if [ "$STATUS" = "L" ]; then
+            if [ "$CURRENT_STATUS" = "L" ]; then
                 passwd -u msfadmin >/dev/null 2>&1
-                echo "[QUARANTINE AGENT] Compte msfadmin déverrouillé sur le système (passwd -u)"
-            fi
-        fi
-
-        # Même logique pour root
-        ROOT_QUARANTINED=$(grep -o '"quarantined_accounts": *\[[^]]*"root"[^]]*\]' "$STATE_FILE" 2>/dev/null)
-        if [ -n "$ENABLED" ] && [ -n "$ROOT_QUARANTINED" ]; then
-            STATUS_ROOT=$(passwd -S root 2>/dev/null | awk '{print $2}')
-            if [ "$STATUS_ROOT" != "L" ]; then
-                passwd -l root >/dev/null 2>&1
-            fi
-        else
-            STATUS_ROOT=$(passwd -S root 2>/dev/null | awk '{print $2}')
-            if [ "$STATUS_ROOT" = "L" ]; then
-                passwd -u root >/dev/null 2>&1
+                echo "[QUARANTINE AGENT] Compte msfadmin déverrouillé sur Metasploitable 2 (passwd -u)"
             fi
         fi
     fi
