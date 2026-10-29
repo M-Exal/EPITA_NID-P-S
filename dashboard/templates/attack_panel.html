@@ -524,6 +524,19 @@
                 <span>scripts/run_scan_ports.py</span>
             </div>
             <button class="btn-launch" onclick="lancerAttaque('SCAN_PORTS', this)">Lancer l'attaque</button>
+            <div id="dos-port-selector" style="display:none; margin-top:12px; border:2px solid var(--border); border-radius:6px; padding:12px; background:var(--bg); box-shadow:var(--shadow-sm);">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                    <span style="font-weight:800; font-size:0.82rem; text-transform:uppercase; letter-spacing:0.05em;">Ports ouverts — cibles DoS</span>
+                    <div style="display:flex; gap:8px;">
+                        <button onclick="toggleAllPorts(true)" style="font-size:0.72rem; font-weight:800; padding:2px 8px; border:2px solid var(--border); border-radius:4px; background:var(--bg-card); cursor:pointer; color:var(--text);">Tout</button>
+                        <button onclick="toggleAllPorts(false)" style="font-size:0.72rem; font-weight:800; padding:2px 8px; border:2px solid var(--border); border-radius:4px; background:var(--bg-card); cursor:pointer; color:var(--text);">Aucun</button>
+                    </div>
+                </div>
+                <div id="ports-checkbox-list" style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:12px;"></div>
+                <button id="btn-dos-selection" onclick="lancerDosSurSelection(this)" class="btn-launch" style="background:var(--critique); color:#ffffff; border-color:var(--critique);">
+                    Lancer DoS sur sélection
+                </button>
+            </div>
             <div class="status-indicator status-idle">
                 <span class="status-dot-sm"></span>
                 <span class="status-text">En attente</span>
@@ -819,6 +832,71 @@
             lancerAttaque('all_attacks', btnAll);
         }
 
+        // ── Sélection DoS multi-ports ──
+        function toggleAllPorts(checked) {
+            document.querySelectorAll('#ports-checkbox-list input[type="checkbox"]').forEach(cb => {
+                cb.checked = checked;
+            });
+        }
+
+        async function chargerPortsOuverts() {
+            try {
+                const resp = await fetch('/api/attaques/ports_ouverts');
+                if (!resp.ok) return;
+                const data = await resp.json();
+                const ports = data.ports || [];
+                const liste = document.getElementById('ports-checkbox-list');
+                const selector = document.getElementById('dos-port-selector');
+                if (!liste || !selector || ports.length === 0) return;
+                liste.innerHTML = ports.map(port => `
+                    <label style="display:inline-flex; align-items:center; gap:6px; padding:5px 10px; border:2px solid var(--border); border-radius:6px; background:var(--bg-card); font-family:'JetBrains Mono',monospace; font-size:0.82rem; font-weight:800; cursor:pointer; box-shadow:var(--shadow-sm);">
+                        <input type="checkbox" value="${port}" checked style="accent-color:var(--critique); width:14px; height:14px;">
+                        <span>${port}</span>
+                    </label>
+                `).join('');
+                selector.style.display = 'block';
+            } catch (_) {}
+        }
+
+        async function lancerDosSurSelection(btn) {
+            const checkboxes = document.querySelectorAll('#ports-checkbox-list input[type="checkbox"]:checked');
+            const ports = Array.from(checkboxes).map(cb => parseInt(cb.value));
+            if (ports.length === 0) {
+                showToast('Sélectionnez au moins un port', 'error');
+                return;
+            }
+            if (btn) btn.disabled = true;
+            showToast(`DoS lancé sur ${ports.length} port(s) : ${ports.join(', ')}`, 'success');
+
+            const dosCard = document.querySelector('.attack-card[data-attack="DOS"]');
+            if (dosCard) {
+                setStatus(dosCard, 'running');
+                const desc = dosCard.querySelector('.attack-description');
+                if (desc) desc.textContent = `Inondation SYN en cours sur les ports : ${ports.join(', ')}`;
+                const dosBtn = dosCard.querySelector('.btn-launch');
+                if (dosBtn) { dosBtn.disabled = true; dosBtn.textContent = 'En cours…'; }
+            }
+
+            try {
+                const resp = await fetch('/api/attaques/lancer', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ attaque: 'DOS', ports }),
+                });
+                const data = await resp.json();
+                if (!resp.ok) {
+                    showToast(data.error || 'Erreur lors du lancement DoS', 'error');
+                    if (btn) btn.disabled = false;
+                } else {
+                    showToast(`DoS démarré sur ${ports.length} port(s) (PID: ${data.pid || 'OK'})`, 'success');
+                    setTimeout(pollStatus, 300);
+                }
+            } catch (err) {
+                showToast(`Erreur réseau : ${err.message}`, 'error');
+                if (btn) btn.disabled = false;
+            }
+        }
+
         // ── Polling du statut et extraction des logs en temps réel (identique à main) ──
         async function pollStatus() {
             try {
@@ -860,6 +938,12 @@
                         if (btn) {
                             btn.disabled = false;
                             btn.textContent = 'Relancer';
+                        }
+                        if (type === 'SCAN_PORTS') {
+                            const selector = document.getElementById('dos-port-selector');
+                            if (!selector || selector.style.display === 'none') {
+                                chargerPortsOuverts();
+                            }
                         }
                     } else {
                         setStatus(card, 'idle');
