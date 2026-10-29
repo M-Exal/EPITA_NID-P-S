@@ -128,19 +128,19 @@ def test_api_ssh_connect(client):
 
 
 def test_api_ssh_connect_quarantined(client):
-    """Vérifie que /api/attaques/ssh_connect bloque un compte en quarantaine si le NIPS est actif."""
+    """Vérifie que /api/attaques/ssh_connect ne bloque pas l'attaquant au niveau HTTP (dissimulation)."""
     client.post("/api/nips/toggle", json={"enabled": True})
-    # Simuler quarantaine
     import app
     st = app._lire_nips_state()
     st["quarantined_accounts"] = ["msfadmin"]
     app._ecrire_nips_state(st)
 
+    # L'attaquant peut cliquer sur le bouton et obtenir un token pour le terminal (rejet réel SSH sur Metasploitable)
     res = client.post("/api/attaques/ssh_connect", json={"utilisateur": "msfadmin"})
-    assert res.status_code == 403
+    assert res.status_code == 200
     data = res.get_json()
-    assert data["status"] == "quarantined"
-    assert data["nips_bloque"] is True
+    assert data["status"] == "ready"
+    assert "token" in data
 
 
 def test_api_attaques_lancer_validation(client):
@@ -247,13 +247,13 @@ def test_nips_quarantine_blocks_ssh_connect(client, tmp_path, monkeypatch):
             "reset_requested": False,
         }, f)
 
-    # Tentative de connexion avec le compte sous quarantaine
+    # L'attaquant peut demander une session sans avertissement de quarantaine
     res = client.post("/api/attaques/ssh_connect", json={
         "utilisateur": "msfadmin",
         "mot_de_passe": "msfadmin",
     })
-    assert res.status_code == 403
-    assert res.get_json()["status"] == "quarantined"
+    assert res.status_code == 200
+    assert res.get_json()["status"] == "ready"
 
     # Réinitialisation de la protection NIPS
     res_reset = client.post("/api/nips/reset")

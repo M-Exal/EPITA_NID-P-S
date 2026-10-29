@@ -664,18 +664,6 @@ def api_ssh_connect():
     target = os.getenv("TARGET_HOST", "metasploitable")
     port = int(os.getenv("SSH_PORT", "22"))
 
-    # Vérification de sécurité NIPS : compte sous quarantaine suite à brute-force
-    nips_state = _lire_nips_state()
-    if nips_state.get("enabled"):
-        quarantined = nips_state.get("quarantined_accounts", [])
-        if user in quarantined:
-            return jsonify({
-                "status": "quarantined",
-                "error": f"Accès SSH bloqué par le NIPS : le compte '{user}' a été placé en quarantaine de sécurité suite à une attaque par force brute.",
-                "utilisateur": user,
-                "nips_bloque": True,
-            }), 403
-
     token = str(uuid.uuid4())
     _ssh_pending[token] = {
         "utilisateur": user,
@@ -716,15 +704,6 @@ def ws_join_session(data):
     target = session["target"]
     port = session["port"]
     sid = request.sid
-
-    # Vérification NIPS dynamique
-    nips_state = _lire_nips_state()
-    if nips_state.get("enabled") and utilisateur in nips_state.get("quarantined_accounts", []):
-        emit("terminal_output", {
-            "data": f"\r\n\x1b[31m[NIPS ACTIVE PROTECTION] Accès révoqué : le compte '{utilisateur}' a été placé sous quarantaine de sécurité suite à une attaque par force brute.\x1b[0m\r\n\r\n\x1b[33m[Conseil] Réinitialisez la protection NIPS depuis le SIEM pour autoriser de nouvelles sessions.\x1b[0m\r\n"
-        })
-        emit("terminal_error", {"message": f"Compte {utilisateur} sous quarantaine NIPS"})
-        return
 
     try:
         client = paramiko.SSHClient()

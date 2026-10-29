@@ -933,12 +933,6 @@
                 });
                 const data = await resp.json();
 
-                if (resp.status === 403 || data.status === 'quarantined' || data.nips_bloque) {
-                    showToast(data.error || 'Accès SSH bloqué par le NIPS', 'error');
-                    alert(data.error || 'Accès révoqué par le NIPS : compte en quarantaine suite au brute-force.');
-                    return;
-                }
-
                 if (!resp.ok || !data.token) {
                     showToast(data.error || 'Impossible de démarrer la session SSH', 'error');
                     return;
@@ -1078,17 +1072,10 @@
                             const u = acc.utilisateur || 'inconnu';
                             const p = acc.mot_de_passe || '***';
                             const who = acc.whoami ? `(${acc.whoami})` : '';
-                            const isQuarantined = currentNIPS && currentNIPS.enabled && (currentNIPS.quarantined_accounts || []).includes(u);
                             return `
                                 <div style="display:flex; align-items:center; justify-content:space-between; padding:8px 12px; background:var(--bg-card); border:2px solid var(--border); border-radius:6px; font-family:'JetBrains Mono',monospace; font-size:0.85rem; font-weight:800; box-shadow:var(--shadow-sm);">
                                     <span><strong style="color:var(--main);">${u}</strong> : ${p} <small style="color:var(--text-muted); font-size:0.75rem;">${who}</small></span>
-                                    ${isQuarantined
-                                        ? `<div style="display:flex; align-items:center; gap:8px;">
-                                             <span style="font-size:0.72rem; color:var(--critique); border:1px solid var(--critique); padding:2px 6px; border-radius:4px;">QUARANTAINE NIPS</span>
-                                             <button onclick="connecterSSH('${u}', '${p}')" class="btn-launch" style="width:auto; padding:4px 10px; font-size:0.75rem; background:var(--critique); color:#ffffff;">Accès Révoqué</button>
-                                           </div>`
-                                        : `<button onclick="connecterSSH('${u}', '${p}')" class="btn-launch" style="width:auto; padding:4px 12px; font-size:0.78rem; background:var(--main); color:#000000;">Connexion SSH</button>`
-                                    }
+                                    <button onclick="connecterSSH('${u}', '${p}')" class="btn-launch" style="width:auto; padding:4px 12px; font-size:0.78rem; background:var(--main); color:#000000;">Connexion SSH</button>
                                 </div>
                             `;
                         }).join('');
@@ -1144,36 +1131,19 @@
             }
 
             const blockedIps = nips.blocked_ips || [];
-            const quarantined = nips.quarantined_accounts || [];
 
-            if (nips.enabled && (blockedIps.length > 0 || quarantined.length > 0)) {
-                let msg = '';
-                if (blockedIps.length > 0) {
-                    msg += `IP bloquée(s) : ${blockedIps.join(', ')} (iptables DROP)`;
-                }
-                if (quarantined.length > 0) {
-                    msg += (msg ? ' • ' : '') + `Compte(s) sous quarantaine : ${quarantined.join(', ')} (Accès révoqué)`;
-                }
+            if (nips.enabled && blockedIps.length > 0) {
+                const msg = `IP bloquée(s) : ${blockedIps.join(', ')} (iptables DROP)`;
                 if (bannerText) bannerText.textContent = msg;
                 if (banner) banner.style.display = 'flex';
 
                 const actionsDiv = document.getElementById('nips-banner-actions');
                 if (actionsDiv) {
-                    let btns = '';
-                    if (blockedIps.length > 0) {
-                        btns += blockedIps.map(ip => `
-                            <button class="btn-nips-action btn-nips-unblock" onclick="debloquerIp('${ip}')">
-                                Débloquer ${ip}
-                            </button>
-                        `).join('');
-                    }
-                    if (quarantined.length > 0) {
-                        btns += `
-                            <button class="btn-nips-action btn-nips-unblock" onclick="leverQuarantaineComptes()">
-                                Lever quarantaine
-                            </button>
-                        `;
-                    }
+                    let btns = blockedIps.map(ip => `
+                        <button class="btn-nips-action btn-nips-unblock" onclick="debloquerIp('${ip}')">
+                            Débloquer ${ip}
+                        </button>
+                    `).join('');
                     btns += `<button class="btn-link btn-reset-nips" onclick="reinitialiserNIPS()">Réinitialiser tout</button>`;
                     actionsDiv.innerHTML = btns;
                 }

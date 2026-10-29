@@ -13,7 +13,10 @@ services:
     restart: unless-stopped
     stdin_open: true
     tty: true
-    command: sh -c "/bin/services.sh && tail -f /dev/null"
+    command: sh -c "/bin/services.sh && /usr/local/bin/quarantine_agent.sh"
+    volumes:
+      - ./data/nids:/app/data
+      - ./scripts/quarantine_agent.sh:/usr/local/bin/quarantine_agent.sh:ro
     ports:
       - "2222:22"     # SSH
       - "2223:23"     # Telnet

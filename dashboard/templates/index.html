@@ -845,11 +845,34 @@
                 </tbody>
             </table>
         </div>
-        <div id="nips-quarantine-box" style="display: none; margin-top: 14px; padding: 12px 16px; background: var(--critique-bg); border: 2px solid var(--critique); border-radius: 6px; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
-            <div style="font-size: 0.85rem; font-family: 'JetBrains Mono', monospace; font-weight: 700;">
-                Compte(s) SSH sous quarantaine : <span id="nips-quarantine-accounts" style="color: var(--critique); font-weight: 800;"></span>
+    </div>
+
+    <!-- ── Section SIEM : Comptes Compromis & Quarantaine Système ── -->
+    <div id="siem-quarantine-panel" class="card" style="display: none; margin-bottom: 24px; border: 2px solid var(--critique); background: var(--critique-bg);">
+        <div class="title-bar" style="flex-wrap: wrap; gap: 12px;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <span class="badge badge-critique">SIEM INCIDENT RESPONSE</span>
+                <h2 class="section-title">Comptes Compromis & Quarantaine Système (Metasploitable 2)</h2>
             </div>
-            <button class="btn-link btn-reset-nips" style="padding: 6px 14px; font-size: 0.8rem;" onclick="leverQuarantaineComptes()">Lever la quarantaine</button>
+            <button class="btn-link btn-reset-nips" style="padding: 6px 14px; font-size: 0.8rem;" onclick="leverQuarantaineComptes()">Lever toute quarantaine</button>
+        </div>
+        <div style="font-size: 0.83rem; color: var(--text-muted); font-weight: 600; margin-bottom: 12px;">
+            Action défensive : compte verrouillé au niveau PAM/shadow sur Metasploitable 2 (<code style="font-family: 'JetBrains Mono', monospace; color: var(--main);">passwd -l</code>). Côté attaquant, le rejet apparaît comme un échec d'authentification standard afin de dissimuler la détection.
+        </div>
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Identifiant Compromis</th>
+                        <th>Vecteur d'Attaque</th>
+                        <th>État Système Réel</th>
+                        <th>Perception Attaquant</th>
+                        <th class="cell-center" style="width: 180px;">Action Administrateur</th>
+                    </tr>
+                </thead>
+                <tbody id="siemQuarantineTableBody">
+                </tbody>
+            </table>
         </div>
     </div>
 
@@ -1104,14 +1127,25 @@
                 }
             }
 
-            // 3. Boîte de quarantaine des comptes
-            const quarantineBox = document.getElementById('nips-quarantine-box');
-            if (quarantineBox) {
-                if (nips.enabled && quarantined.length > 0) {
-                    quarantineBox.style.display = 'flex';
-                    document.getElementById('nips-quarantine-accounts').textContent = quarantined.join(', ');
+            // 3. Panneau SIEM de Quarantaine des Comptes (Metasploitable 2)
+            const siemQuarantine = document.getElementById('siem-quarantine-panel');
+            const quarantineTbody = document.getElementById('siemQuarantineTableBody');
+            if (siemQuarantine && quarantineTbody) {
+                if (quarantined.length > 0) {
+                    siemQuarantine.style.display = 'block';
+                    quarantineTbody.innerHTML = quarantined.map(u => `
+                        <tr>
+                            <td style="font-family: 'JetBrains Mono', monospace; font-weight: 800; color: var(--critique); font-size: 0.95rem;">${u}</td>
+                            <td><span class="badge badge-critique">BRUTE_FORCE SSH</span></td>
+                            <td><span class="badge" style="background: var(--critique-bg); color: var(--critique); border: 2px solid rgba(248, 113, 113, 0.4);">VERROUILLÉ (passwd -l)</span></td>
+                            <td style="font-size: 0.8rem; font-family: 'JetBrains Mono', monospace; color: var(--text-muted);">Permission denied (secret préservé)</td>
+                            <td class="cell-center">
+                                <button class="btn-nips-action btn-nips-unblock" onclick="leverQuarantaineComptes('${u}')">Lever Quarantaine</button>
+                            </td>
+                        </tr>
+                    `).join('');
                 } else {
-                    quarantineBox.style.display = 'none';
+                    siemQuarantine.style.display = 'none';
                 }
             }
         }
@@ -1212,12 +1246,13 @@
             input.value = '';
         }
 
-        async function leverQuarantaineComptes() {
+        async function leverQuarantaineComptes(compte) {
             try {
+                const body = compte ? { account: compte } : {};
                 const res = await fetch('/api/nips/quarantine/lift', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({})
+                    body: JSON.stringify(body)
                 });
                 const data = await res.json();
                 if (res.ok) {
