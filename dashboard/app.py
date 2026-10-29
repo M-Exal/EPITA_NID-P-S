@@ -676,7 +676,7 @@ def api_acces_valides():
 
 
 def _recuperer_ports_ouverts() -> list:
-    """Lit les ports ouverts découverts lors du dernier scan."""
+    """Lit les ports ouverts découverts (priorité au NULL Scan RFC 793, fallback Scan TCP)."""
     repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
     candidats = [
         "/app/data/pentest/pentest_results.json",
@@ -690,13 +690,31 @@ def _recuperer_ports_ouverts() -> list:
             try:
                 with open(chemin, "r", encoding="utf-8") as f:
                     data = json.load(f)
-                ports = data.get("attaques", {}).get("scan_ports", {}).get("ports_ouverts", [])
+                attaques = data.get("attaques", {})
+                ports = attaques.get("null_scan", {}).get("ports_ouverts")
+                if not ports:
+                    ports = attaques.get("scan_ports", {}).get("ports_ouverts", [])
                 if ports:
                     return [int(p) for p in ports]
             except Exception:
                 pass
 
     sources = list(_attaques_en_cours.values()) + list(reversed(_attaques_terminees))
+    # Recherche prioritaire dans les logs de null_scan
+    for item in sources:
+        if "null" in str(item.get("log", "")).lower() or "null" in str(item.get("attaque", "")).lower():
+            log_path = item.get("log")
+            if log_path and os.path.isfile(log_path):
+                try:
+                    with open(log_path, "r", encoding="utf-8", errors="replace") as f:
+                        contenu = f.read()
+                    matches = re.findall(r"Port\s+(\d+)\/tcp\s+OUVERT", contenu, re.IGNORECASE)
+                    if matches:
+                        return sorted({int(p) for p in matches})
+                except Exception:
+                    pass
+
+    # Fallback dans les logs de scan_ports
     for item in sources:
         if "scan" not in str(item.get("log", "")):
             continue
@@ -713,10 +731,65 @@ def _recuperer_ports_ouverts() -> list:
     return []
 
 
+def _recuperer_bannieres() -> dict:
+    """Lit les bannières / versions de services découvertes lors du scan TCP Connect."""
+    repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+    candidats = [
+        "/app/data/pentest/pentest_results.json",
+        "/app/data/pentest_results.json",
+        "/tmp/pentest_results.json",
+        os.path.join(repo_root, "data", "pentest", "pentest_results.json"),
+        os.path.join(repo_root, "data", "pentest_results.json"),
+    ]
+    for chemin in candidats:
+        if os.path.isfile(chemin):
+            try:
+                with open(chemin, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                bannieres = data.get("attaques", {}).get("scan_ports", {}).get("bannieres", {})
+                if bannieres:
+                    return bannieres
+            except Exception:
+                pass
+    return {}
+
+
+def _recuperer_os_detecte() -> str:
+    """Lit le résultat de l'OS Fingerprinting du NULL scan."""
+    repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+    candidats = [
+        "/app/data/pentest/pentest_results.json",
+        "/app/data/pentest_results.json",
+        "/tmp/pentest_results.json",
+        os.path.join(repo_root, "data", "pentest", "pentest_results.json"),
+        os.path.join(repo_root, "data", "pentest_results.json"),
+    ]
+    for chemin in candidats:
+        if os.path.isfile(chemin):
+            try:
+                with open(chemin, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                os_det = data.get("attaques", {}).get("null_scan", {}).get("os_detecte", "")
+                if os_det:
+                    return os_det
+            except Exception:
+                pass
+    return ""
+
+
 @app.route("/api/attaques/ports_ouverts")
 def api_ports_ouverts():
-    """Retourne les ports ouverts découverts lors du dernier scan de ports."""
-    return jsonify({"ports": _recuperer_ports_ouverts()})
+    """Retourne les ports ouverts découverts (priorité au NULL scan RFC 793)."""
+    return jsonify({
+        "ports": _recuperer_ports_ouverts(),
+        "os_detecte": _recuperer_os_detecte(),
+    })
+
+
+@app.route("/api/attaques/services")
+def api_services():
+    """Retourne les bannières applicatives découvertes lors du scan TCP."""
+    return jsonify({"services": _recuperer_bannieres()})
 
 
 @app.route("/api/attaques/ssh_connect", methods=["POST"])
@@ -900,6 +973,9 @@ def api_status_attaques():
         "en_cours": en_cours,
         "terminees": terminees,
         "acces_valides": _recuperer_acces_valides(),
+        "services": _recuperer_bannieres(),
+        "ports_ouverts": _recuperer_ports_ouverts(),
+        "os_detecte": _recuperer_os_detecte(),
     })
 
 

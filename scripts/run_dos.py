@@ -67,7 +67,17 @@ def main():
         if not ports:
             ports = [Config.DOS_PORT]
     else:
-        ports = [Config.DOS_PORT]
+        # Si aucun port spécifié, vérifier si null_scan (ou scan_ports) a découvert des ports ouverts
+        p_check = Pentester(cfg=Config)
+        ouverts = (
+            p_check.resultats.get("attaques", {}).get("null_scan", {}).get("ports_ouverts")
+            or p_check.resultats.get("attaques", {}).get("scan_ports", {}).get("ports_ouverts", [])
+        )
+        if ouverts:
+            ports = ouverts
+            print(f"[*] Ports ciblés récupérés depuis le scan NULL RFC 793 ({len(ports)} ports)", flush=True)
+        else:
+            ports = [Config.DOS_PORT]
 
     print(f"[*] Cible : {cible}", flush=True)
     print(f"[*] Ports ciblés : {ports}", flush=True)

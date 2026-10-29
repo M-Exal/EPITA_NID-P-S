@@ -42,11 +42,19 @@ def main():
     pentester = Pentester(cfg=Config)
 
     try:
-        pentester.null_scan()
+        ouverts = pentester.null_scan()
+        pentester.sauvegarder()
         stats = pentester.resultats["attaques"].get("null_scan", {})
         statut = stats.get('status', 'inconnu')
         nb_pkts = stats.get('paquets_envoyes', 0)
+        fermes = stats.get('ports_fermes', [])
+        os_det = stats.get('os_detecte', 'Non déterminé')
+
+        print(f"[+] Ports OUVERTS (silence RFC 793) : {ouverts}", flush=True)
+        print(f"[-] Ports FERMÉS (RST reçu) : {fermes}", flush=True)
+        print(f"[+] Fingerprinting OS : {os_det}", flush=True)
         print(f"[+] Résultat NULL : {statut} ({nb_pkts} paquets)", flush=True)
+        print(f"[*] {len(ouverts)} port(s) ouvert(s) configurés pour l'attaque DoS.", flush=True)
     except Exception as exc:
         print(f"[!] Erreur durant l'attaque : {exc}", file=sys.stderr, flush=True)
         sys.exit(1)

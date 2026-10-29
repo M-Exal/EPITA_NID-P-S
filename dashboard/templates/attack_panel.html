@@ -694,15 +694,16 @@
     <div class="attack-grid">
         <article class="attack-card" data-attack="SCAN_PORTS">
             <div class="card-header-row">
-                <div class="attack-name">Scan de Ports TCP</div>
+                <div class="attack-name">Scan TCP & Bannières</div>
                 <span class="sev-badge sev-MOYENNE">Moyenne</span>
             </div>
-            <p class="attack-description">Scan SYN/CONNECT pour cartographier les 18 ports sensibles de la cible.</p>
+            <p class="attack-description">Connexion TCP et Banner Grabbing pour identifier les versions exactes des services en écoute.</p>
             <div class="attack-meta">
                 <span>MODULE</span>
                 <span>scripts/run_scan_ports.py</span>
             </div>
             <button class="btn-launch" onclick="lancerAttaque('SCAN_PORTS', this)">Lancer l'attaque</button>
+            <div id="scan-services-list" style="display:none; margin-top:10px; padding:8px; border-top:1px solid var(--border); max-height:160px; overflow-y:auto; font-size:0.75rem; font-family:'JetBrains Mono',monospace;"></div>
             <div class="status-indicator status-idle">
                 <span class="status-dot-sm"></span>
                 <span class="status-text">En attente</span>
@@ -728,15 +729,16 @@
 
         <article class="attack-card" data-attack="NULL_SCAN">
             <div class="card-header-row">
-                <div class="attack-name">Scan Furtif NULL</div>
+                <div class="attack-name">Scan Furtif NULL (RFC 793)</div>
                 <span class="sev-badge sev-HAUTE">Haute</span>
             </div>
-            <p class="attack-description">Envoi de paquets TCP sans aucun flag pour évasion de détection (RFC 793).</p>
+            <p class="attack-description">Cartographie furtive des ports (silence=ouvert, RST=fermé) & OS Fingerprinting. Découvre les ports pour le DoS.</p>
             <div class="attack-meta">
                 <span>MODULE</span>
                 <span>scripts/run_null_scan.py</span>
             </div>
             <button class="btn-launch" onclick="lancerAttaque('NULL_SCAN', this)">Lancer l'attaque</button>
+            <div id="null-scan-details" style="display:none; margin-top:10px; padding:8px; border-top:1px solid var(--border); font-size:0.75rem; font-family:'JetBrains Mono',monospace;"></div>
             <div class="status-indicator status-idle">
                 <span class="status-dot-sm"></span>
                 <span class="status-text">En attente</span>
@@ -783,7 +785,7 @@
             <button class="btn-launch" onclick="lancerAttaque('DOS', this)">Lancer l'attaque</button>
             <div id="dos-port-selector" style="display:none; margin-top:10px; padding:10px; border-top:1px solid var(--border);">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-                    <span style="font-weight:800; font-size:0.72rem; text-transform:uppercase; letter-spacing:0.04em; color:var(--critique);">Ports cibles</span>
+                    <span style="font-weight:800; font-size:0.72rem; text-transform:uppercase; letter-spacing:0.04em; color:var(--critique);">Ports cibles (NULL Scan RFC 793)</span>
                     <div style="display:flex; gap:4px;">
                         <button onclick="toggleAllPorts(true)" style="font-size:0.65rem; font-weight:700; padding:2px 6px; border:1px solid var(--border); border-radius:3px; background:var(--bg); cursor:pointer; color:var(--text);">Tout</button>
                         <button onclick="toggleAllPorts(false)" style="font-size:0.65rem; font-weight:700; padding:2px 6px; border:1px solid var(--border); border-radius:3px; background:var(--bg); cursor:pointer; color:var(--text);">Aucun</button>
@@ -1032,14 +1034,23 @@
                 const ports = data.ports || [];
                 const liste = document.getElementById('ports-checkbox-list');
                 const selector = document.getElementById('dos-port-selector');
-                if (!liste || !selector || ports.length === 0) return;
-                liste.innerHTML = ports.map(port => `
-                    <label style="display:inline-flex; align-items:center; gap:4px; padding:3px 8px; border:1px solid var(--border); border-radius:4px; background:var(--bg); font-family:'JetBrains Mono',monospace; font-size:0.75rem; font-weight:700; cursor:pointer;">
-                        <input type="checkbox" value="${port}" checked style="accent-color:var(--critique); width:12px; height:12px;">
-                        <span>${port}</span>
-                    </label>
-                `).join('');
-                selector.style.display = 'block';
+                if (liste && selector && ports.length > 0) {
+                    liste.innerHTML = ports.map(port => `
+                        <label style="display:inline-flex; align-items:center; gap:4px; padding:3px 8px; border:1px solid var(--border); border-radius:4px; background:var(--bg); font-family:'JetBrains Mono',monospace; font-size:0.75rem; font-weight:700; cursor:pointer;">
+                            <input type="checkbox" value="${port}" checked style="accent-color:var(--critique); width:12px; height:12px;">
+                            <span>${port}</span>
+                        </label>
+                    `).join('');
+                    selector.style.display = 'block';
+                }
+                const nullDetails = document.getElementById('null-scan-details');
+                if (nullDetails && data.os_detecte) {
+                    nullDetails.style.display = 'block';
+                    nullDetails.innerHTML = `
+                        <div style="font-weight:800; font-size:0.7rem; text-transform:uppercase; color:var(--text); margin-bottom:4px;">OS Fingerprinting (RFC 793) :</div>
+                        <div style="color:var(--critique); font-weight:800;">${data.os_detecte}</div>
+                    `;
+                }
             } catch (_) {}
         }
 
@@ -1124,11 +1135,8 @@
                             btn.disabled = false;
                             btn.textContent = 'Relancer';
                         }
-                        if (type === 'SCAN_PORTS') {
-                            const selector = document.getElementById('dos-port-selector');
-                            if (!selector || selector.style.display === 'none') {
-                                chargerPortsOuverts();
-                            }
+                        if (type === 'NULL_SCAN' || type === 'SCAN_PORTS') {
+                            chargerPortsOuverts();
                         }
                     } else {
                         setStatus(card, 'idle');
@@ -1172,6 +1180,35 @@
                     } else {
                         bruteCredsBox.style.display = 'none';
                     }
+                }
+
+                // 4b. Affichage dynamique des services (Scan de ports) et OS (Scan NULL)
+                const services = data.services || {};
+                const servicesBox = document.getElementById('scan-services-list');
+                if (servicesBox) {
+                    const entries = Object.entries(services);
+                    if (entries.length > 0) {
+                        servicesBox.style.display = 'block';
+                        servicesBox.innerHTML = `
+                            <div style="font-weight:800; font-size:0.7rem; text-transform:uppercase; color:var(--text); margin-bottom:6px;">Services & Versions identifiés :</div>
+                            ${entries.map(([port, b]) => `
+                                <div style="display:flex; gap:6px; align-items:baseline; padding:2px 0;">
+                                    <span style="font-weight:800; color:var(--main); min-width:32px;">:${port}</span>
+                                    <span style="color:var(--text); word-break:break-all;">${b}</span>
+                                </div>
+                            `).join('')}
+                        `;
+                    }
+                }
+
+                const osDet = data.os_detecte || '';
+                const nullDetails = document.getElementById('null-scan-details');
+                if (nullDetails && osDet) {
+                    nullDetails.style.display = 'block';
+                    nullDetails.innerHTML = `
+                        <div style="font-weight:800; font-size:0.7rem; text-transform:uppercase; color:var(--text); margin-bottom:4px;">OS Fingerprinting (RFC 793) :</div>
+                        <div style="color:var(--critique); font-weight:800;">${osDet}</div>
+                    `;
                 }
 
                 // 5. Affichage des logs en temps réel (identique à main)
