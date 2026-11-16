@@ -187,3 +187,46 @@ def test_synthese_texte_avec_comptes_et_bannieres(tmp_path):
     assert "/etc/passwd" in texte
     assert "Linux 2.6.X" in texte
 
+
+def test_generer_graphiques_avec_donnees(tmp_path):
+    """Vérifie que generer_graphiques exporte bien les 5 visuels PNG haute résolution."""
+    alerts_file = tmp_path / "nids_alerts.json"
+    alerts = [
+        {"type": "SCAN_PORTS", "src_ip": "192.168.1.10", "severite": "MOYENNE", "timestamp": "2026-10-29T10:15:00"},
+        {"type": "BRUTE_FORCE", "src_ip": "192.168.1.50", "severite": "ELEVEE", "timestamp": "2026-10-29T10:16:00"},
+        {"type": "SQL_INJECTION", "src_ip": "192.168.1.50", "severite": "CRITIQUE", "timestamp": "2026-10-29T10:17:00"},
+    ]
+    alerts_file.write_text(json.dumps(alerts), encoding="utf-8")
+
+    dossier_sortie = tmp_path / "analysis_graphs"
+    analyzer = LogAnalyzer(nids_alerts=alerts_file)
+    fichiers = analyzer.generer_graphiques(dossier_sortie=dossier_sortie)
+
+    assert len(fichiers) == 5
+    noms = {f.name for f in fichiers}
+    assert "alertes_par_type.png" in noms
+    assert "timeline_alertes.png" in noms
+    assert "top_sources_ips.png" in noms
+    assert "activite_cible_metasploitable.png" in noms
+    assert "matrice_detection_pentest.png" in noms
+
+    for f in fichiers:
+        assert f.exists()
+        assert f.stat().st_size > 1000  # Fichier image non vide
+
+
+def test_generer_graphiques_vide(tmp_path):
+    """Vérifie la robustesse de la génération graphique en cas de données vides."""
+    empty_alerts = tmp_path / "empty_alerts.json"
+    empty_alerts.write_text("[]", encoding="utf-8")
+
+    dossier_sortie = tmp_path / "empty_graphs"
+    analyzer = LogAnalyzer(nids_alerts=empty_alerts)
+    fichiers = analyzer.generer_graphiques(dossier_sortie=dossier_sortie)
+
+    assert len(fichiers) == 5
+    for f in fichiers:
+        assert f.exists()
+        assert f.stat().st_size > 1000
+
+

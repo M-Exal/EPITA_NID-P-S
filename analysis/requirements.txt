@@ -1,1 +1,2 @@
-# Analyseur de journaux (utilise la bibliothèque standard)
+# Analyse forensique et génération de graphiques pour rapport et soutenance
+matplotlib>=3.8.0

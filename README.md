@@ -236,9 +236,19 @@ python3 analysis/analyze.py
 # Sortie au format JSON :
 python3 analysis/analyze.py --json
 
+# Génération des graphiques d'analyse (PNG) pour le rapport et la soutenance :
+python3 analysis/analyze.py --graphs
+
 # Synchronisation directe depuis le conteneur actif :
 python3 analysis/analyze.py --sync-docker
 ```
+
+Les graphiques exportés dans `data/analysis/` comprennent :
+* `alertes_par_type.png` : Répartition des détections NIDS par catégorie d'attaque.
+* `timeline_alertes.png` : Chronologie temporelle des alertes au cours de la séquence de pentest.
+* `top_sources_ips.png` : Adresses IP attaquantes et statut d'isolement NIPS.
+* `activite_cible_metasploitable.png` : Traces SSH (`auth.log`) et signatures web (`access.log`).
+* `matrice_detection_pentest.png` : Corrélation multi-sources et taux global de détection.
 
 ---
 

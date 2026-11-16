@@ -21,6 +21,14 @@ from datetime import datetime
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
+try:
+    import matplotlib
+    matplotlib.use("Agg")  # Backend headless adapté à l'exécution sans display (Docker / CI)
+    import matplotlib.pyplot as plt
+    HAS_MATPLOTLIB = True
+except Exception:
+    HAS_MATPLOTLIB = False
+
 TZ_PARIS = ZoneInfo("Europe/Paris")
 
 # Cartographie de corrélation : Clé du pentest -> Type d'alerte NIDS attendu
@@ -648,7 +656,257 @@ class LogAnalyzer:
         return "\n".join(lignes)
 
     # ------------------------------------------------------------------
-    # 7. Outils auxiliaires (synchronisation Docker et export)
+    # 7. Visualisation Graphique (Issue #5 : Graphiques matplotlib pour rapport & soutenance)
+    # ------------------------------------------------------------------
+    def generer_graphiques(self, dossier_sortie=None, rapport=None):
+        """Génère la suite complète de graphiques PNG haute résolution pour le rapport et la soutenance."""
+        if not HAS_MATPLOTLIB:
+            print("[!] Matplotlib non disponible. Installez-le avec : pip install matplotlib")
+            return []
+
+        if dossier_sortie is None:
+            sortie = self.racine_projet / "data" / "analysis"
+        else:
+            sortie = Path(dossier_sortie)
+
+        sortie.mkdir(parents=True, exist_ok=True)
+
+        if rapport is None:
+            rapport = self.generer_rapport()
+
+        fichiers = []
+        palette_primaire = ["#c0392b", "#e67e22", "#f39c12", "#2980b9", "#8e44ad", "#16a085", "#27ae60", "#2c3e50"]
+
+        # 1. Graphique : Répartition des Alertes NIDS par Type
+        f1 = self._tracer_alertes_par_type(rapport, sortie, palette_primaire)
+        if f1:
+            fichiers.append(f1)
+
+        # 2. Graphique : Timeline chronologique des alertes
+        f2 = self._tracer_timeline_alertes(rapport, sortie)
+        if f2:
+            fichiers.append(f2)
+
+        # 3. Graphique : Top adresses IP sources d'attaques
+        f3 = self._tracer_top_sources(rapport, sortie)
+        if f3:
+            fichiers.append(f3)
+
+        # 4. Graphique : Activité forensique de la cible Metasploitable 2
+        f4 = self._tracer_activite_cible(rapport, sortie)
+        if f4:
+            fichiers.append(f4)
+
+        # 5. Graphique : Matrice de corrélation Pentest vs Détection NIDS
+        f5 = self._tracer_matrice_correlation(rapport, sortie)
+        if f5:
+            fichiers.append(f5)
+
+        return fichiers
+
+    def _tracer_alertes_par_type(self, rapport, sortie, palette):
+        """Diagramme en barres horizontales des alertes par catégorie."""
+        types = rapport.get("nids", {}).get("types", {})
+        fig, ax = plt.subplots(figsize=(9, 5.5), dpi=300)
+
+        if not types:
+            ax.text(0.5, 0.5, "Aucune alerte enregistrée", ha="center", va="center", fontsize=14, color="#7f8c8d")
+            ax.set_title("Répartition des Alertes NIDS par Type d'Attaque", fontsize=14, fontweight="bold")
+        else:
+            labels = list(types.keys())
+            valeurs = list(types.values())
+            y_pos = range(len(labels))
+            couleurs = [palette[i % len(palette)] for i in range(len(labels))]
+
+            barres = ax.barh(y_pos, valeurs, color=couleurs, edgecolor="#2c3e50", height=0.6, alpha=0.9)
+            ax.set_yticks(y_pos)
+            ax.set_yticklabels(labels, fontsize=11, fontweight="semibold")
+            ax.invert_yaxis()
+            ax.set_xlabel("Nombre d'alertes détectées", fontsize=11, fontweight="semibold")
+            ax.set_title("Répartition des Alertes NIDS par Vecteur d'Attaque", fontsize=13, fontweight="bold", pad=15)
+
+            # Annotation du compte au bout de chaque barre
+            max_val = max(valeurs) if valeurs else 1
+            for b in barres:
+                w = b.get_width()
+                ax.text(w + (max_val * 0.02), b.get_y() + b.get_height() / 2, f"{int(w)}",
+                        va="center", ha="left", fontsize=10, fontweight="bold", color="#2c3e50")
+            ax.set_xlim(0, max_val * 1.15)
+
+        ax.grid(axis="x", linestyle="--", alpha=0.5)
+        fig.tight_layout()
+        dest = sortie / "alertes_par_type.png"
+        fig.savefig(dest)
+        plt.close(fig)
+        return dest
+
+    def _tracer_timeline_alertes(self, rapport, sortie):
+        """Chronologie temporelle de l'activité malveillante."""
+        timeline = rapport.get("nids", {}).get("timeline", [])
+        fig, ax = plt.subplots(figsize=(10, 5), dpi=300)
+
+        if not timeline:
+            ax.text(0.5, 0.5, "Aucune donnée temporelle disponible", ha="center", va="center", fontsize=14, color="#7f8c8d")
+            ax.set_title("Chronologie des Détections NIDS au Cours du Pentest", fontsize=14, fontweight="bold")
+        else:
+            minutes = [t["minute"] for t in timeline]
+            totaux = [t["total"] for t in timeline]
+
+            ax.plot(minutes, totaux, marker="o", color="#e74c3c", linewidth=2.5, markersize=7, label="Alertes / minute")
+            ax.fill_between(minutes, totaux, color="#e74c3c", alpha=0.2)
+            ax.set_title("Chronologie des Détections NIDS au Cours de la Séquence d'Attaques", fontsize=13, fontweight="bold", pad=15)
+            ax.set_xlabel("Horodatage (Minute)", fontsize=11, fontweight="semibold")
+            ax.set_ylabel("Nombre d'alertes", fontsize=11, fontweight="semibold")
+            plt.xticks(rotation=45, ha="right", fontsize=9)
+
+            for i, txt in enumerate(totaux):
+                ax.annotate(str(txt), (minutes[i], totaux[i]), textcoords="offset points", xytext=(0, 7),
+                            ha="center", fontsize=9, fontweight="bold", color="#c0392b")
+
+            max_y = max(totaux) if totaux else 1
+            ax.set_ylim(0, max_y * 1.25)
+            ax.legend(loc="upper left")
+
+        ax.grid(True, linestyle="--", alpha=0.5)
+        fig.tight_layout()
+        dest = sortie / "timeline_alertes.png"
+        fig.savefig(dest)
+        plt.close(fig)
+        return dest
+
+    def _tracer_top_sources(self, rapport, sortie):
+        """Distribution des adresses IP malveillantes sources."""
+        sources = rapport.get("nids", {}).get("top_sources", {})
+        fig, ax = plt.subplots(figsize=(8, 5), dpi=300)
+
+        if not sources:
+            ax.text(0.5, 0.5, "Aucune adresse IP source enregistrée", ha="center", va="center", fontsize=14, color="#7f8c8d")
+            ax.set_title("Top des Adresses IP Sources Détectées", fontsize=14, fontweight="bold")
+        else:
+            ips = list(sources.keys())
+            comptes = list(sources.values())
+            y_pos = range(len(ips))
+
+            barres = ax.barh(y_pos, comptes, color="#34495e", edgecolor="#2c3e50", height=0.5, alpha=0.85)
+            ax.set_yticks(y_pos)
+            ax.set_yticklabels(ips, fontsize=10, family="monospace")
+            ax.invert_yaxis()
+            ax.set_xlabel("Nombre d'alertes générées", fontsize=11, fontweight="semibold")
+            ax.set_title("Top des Adresses IP Sources Détectées par le NIDS", fontsize=13, fontweight="bold", pad=15)
+
+            max_val = max(comptes) if comptes else 1
+            for b in barres:
+                w = b.get_width()
+                ax.text(w + (max_val * 0.02), b.get_y() + b.get_height() / 2, f"{int(w)} alerte(s)",
+                        va="center", ha="left", fontsize=9, fontweight="bold", color="#2c3e50")
+            ax.set_xlim(0, max_val * 1.25)
+
+        ax.grid(axis="x", linestyle="--", alpha=0.5)
+        fig.tight_layout()
+        dest = sortie / "top_sources_ips.png"
+        fig.savefig(dest)
+        plt.close(fig)
+        return dest
+
+    def _tracer_activite_cible(self, rapport, sortie):
+        """Activité de la cible Metasploitable 2 (Authentification SSH vs Signatures Web)."""
+        meta = rapport.get("metasploitable", {})
+        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 5), dpi=300)
+
+        # 1. Sous-graphe SSH
+        ssh_data = {
+            "Échecs auth": meta.get("logins_echoues", 0),
+            "Succès auth": meta.get("logins_reussis", 0),
+            "Sessions PAM": meta.get("sessions", 0),
+        }
+        labels_ssh = list(ssh_data.keys())
+        val_ssh = list(ssh_data.values())
+        c_ssh = ["#e74c3c", "#2ecc71", "#3498db"]
+
+        bars1 = ax1.bar(labels_ssh, val_ssh, color=c_ssh, edgecolor="#2c3e50", width=0.55, alpha=0.9)
+        ax1.set_title("Activité SSH (auth.log)", fontsize=12, fontweight="bold")
+        ax1.set_ylabel("Nombre d'événements", fontsize=10, fontweight="semibold")
+        max_ssh = max(val_ssh) if val_ssh and max(val_ssh) > 0 else 1
+        ax1.set_ylim(0, max_ssh * 1.25)
+        for b in bars1:
+            h = b.get_height()
+            ax1.text(b.get_x() + b.get_width() / 2, h + (max_ssh * 0.03), f"{int(h)}",
+                     ha="center", va="bottom", fontsize=10, fontweight="bold")
+        ax1.grid(axis="y", linestyle="--", alpha=0.5)
+
+        # 2. Sous-graphe Web Apache
+        sig_web = meta.get("http", {}).get("signatures_web", {})
+        web_data = {
+            "Injections SQL": sig_web.get("sqli", 0),
+            "XSS Réfléchi": sig_web.get("xss", 0),
+            "Path Traversal": sig_web.get("path_traversal", 0),
+        }
+        labels_web = list(web_data.keys())
+        val_web = list(web_data.values())
+        c_web = ["#d35400", "#9b59b6", "#16a085"]
+
+        bars2 = ax2.bar(labels_web, val_web, color=c_web, edgecolor="#2c3e50", width=0.55, alpha=0.9)
+        ax2.set_title("Traces Web Vulnérables (access.log)", fontsize=12, fontweight="bold")
+        max_web = max(val_web) if val_web and max(val_web) > 0 else 1
+        ax2.set_ylim(0, max_web * 1.25)
+        for b in bars2:
+            h = b.get_height()
+            ax2.text(b.get_x() + b.get_width() / 2, h + (max_web * 0.03), f"{int(h)}",
+                     ha="center", va="bottom", fontsize=10, fontweight="bold")
+        ax2.grid(axis="y", linestyle="--", alpha=0.5)
+
+        fig.suptitle("Traces Forensiques Collectées sur la Cible Metasploitable 2", fontsize=14, fontweight="bold", y=1.02)
+        fig.tight_layout()
+        dest = sortie / "activite_cible_metasploitable.png"
+        fig.savefig(dest, bbox_inches="tight")
+        plt.close(fig)
+        return dest
+
+    def _tracer_matrice_correlation(self, rapport, sortie):
+        """Corrélation croisée : Attaques exécutées vs Détectées NIDS vs Tracées Cible."""
+        corr = rapport.get("correlation", {})
+        matrice = corr.get("matrice_correlation", [])
+        fig, ax = plt.subplots(figsize=(11, 6), dpi=300)
+
+        if not matrice:
+            ax.text(0.5, 0.5, "Aucune donnée de corrélation disponible", ha="center", va="center", fontsize=14, color="#7f8c8d")
+            ax.set_title("Corrélation Croisée : Pentest vs NIDS vs Cible", fontsize=14, fontweight="bold")
+        else:
+            scenarios = [m["attaque_pentest"].replace("_", " ").title() for m in matrice]
+            det_nids = [1 if m["detectee_par_nids"] else 0 for m in matrice]
+            trc_cible = [1 if m["trace_enregistree_honeypot"] else 0 for m in matrice]
+
+            import numpy as np
+            x = np.arange(len(scenarios))
+            largeur = 0.35
+
+            bars_nids = ax.bar(x - largeur / 2, det_nids, largeur, label="Détectée par le NIDS",
+                               color="#27ae60", edgecolor="#1e824c", alpha=0.9)
+            bars_cible = ax.bar(x + largeur / 2, trc_cible, largeur, label="Tracée sur Honeypot/Cible",
+                                color="#2980b9", edgecolor="#1a5276", alpha=0.9)
+
+            ax.set_ylabel("Statut de Détection (1 = Validé, 0 = Non détecté)", fontsize=10, fontweight="semibold")
+            ax.set_title(
+                f"Corrélation Croisée Multi-Sources — Taux Global NIDS : {corr.get('taux_detection_pct', 0)}% "
+                f"({corr.get('attaques_detectees_nids', 0)}/{corr.get('total_attaques_pentest', 0)})",
+                fontsize=13, fontweight="bold", pad=15,
+            )
+            ax.set_xticks(x)
+            ax.set_xticklabels(scenarios, rotation=35, ha="right", fontsize=9, fontweight="semibold")
+            ax.set_ylim(0, 1.35)
+            ax.set_yticks([0, 1])
+            ax.set_yticklabels(["NON", "OUI"], fontsize=10, fontweight="bold")
+            ax.legend(loc="upper right", frameon=True)
+            ax.grid(axis="y", linestyle="--", alpha=0.5)
+
+        fig.tight_layout()
+        dest = sortie / "matrice_detection_pentest.png"
+        fig.savefig(dest)
+        plt.close(fig)
+        return dest
+
+    # ------------------------------------------------------------------
+    # 8. Outils auxiliaires (synchronisation Docker et export)
     # ------------------------------------------------------------------
     def synchroniser_depuis_docker(self, container_name="metasploitable2"):
         """Extrait directement les journaux depuis le conteneur Metasploitable si actif."""
@@ -681,6 +939,8 @@ def main():
     parser.add_argument("--sync-docker", action="store_true", help="Synchronise les logs depuis le conteneur metasploitable2")
     parser.add_argument("--json", action="store_true", help="Afficher la sortie brute au format JSON")
     parser.add_argument("--output", default=None, help="Enregistrer le rapport JSON dans un fichier")
+    parser.add_argument("--graphs", action="store_true", help="Générer les graphiques PNG dans data/analysis/ pour le rapport et la soutenance")
+    parser.add_argument("--graphs-dir", default=None, help="Dossier de destination des graphiques (défaut : data/analysis/)")
     args = parser.parse_args()
 
     analyzer = LogAnalyzer(
@@ -694,6 +954,12 @@ def main():
 
     rapport = analyzer.generer_rapport()
 
+    if args.graphs:
+        fichiers = analyzer.generer_graphiques(dossier_sortie=args.graphs_dir, rapport=rapport)
+        print(f"[+] {len(fichiers)} graphiques générés avec succès pour la soutenance :")
+        for f in fichiers:
+            print(f"    • {f}")
+
     if args.output:
         with open(args.output, "w", encoding="utf-8") as f:
             json.dump(rapport, f, indent=2, ensure_ascii=False)
@@ -701,7 +967,7 @@ def main():
 
     if args.json:
         print(json.dumps(rapport, indent=2, ensure_ascii=False))
-    else:
+    elif not args.graphs:
         print(analyzer.generer_synthese_texte(rapport))
 
 
