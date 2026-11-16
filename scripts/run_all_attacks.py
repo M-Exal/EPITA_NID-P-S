@@ -159,28 +159,35 @@ def generer_rapport_fin_de_campagne():
             except Exception as e_enc:
                 print(f"[!] Erreur de chiffrement du rapport : {e_enc}", flush=True)
 
-        # Expédition par mail si SMTP configuré
+        # Expédition par mail si Resend ou SMTP configuré
+        resend_key = os.getenv("RESEND_API_KEY", "")
         smtp_user = os.getenv("SMTP_USER", "")
-        report_receiver = os.getenv("REPORT_RECEIVER", "")
-        if smtp_user and report_receiver and fichier_chiffre and os.path.isfile(fichier_chiffre):
+        report_receiver = os.getenv("ALERT_EMAIL_TO") or os.getenv("REPORT_RECEIVER", "")
+        report_sender = os.getenv("ALERT_EMAIL_FROM") or os.getenv("REPORT_SENDER", smtp_user or "CyBear NIDS <onboarding@resend.dev>")
+
+        if (resend_key or smtp_user) and report_receiver and fichier_chiffre and os.path.isfile(fichier_chiffre):
             try:
                 from send_report import envoyer_rapport_chiffre
 
                 class EmailCfg:
                     ENCRYPTED_REPORT = fichier_chiffre
-                    REPORT_SENDER = os.getenv("REPORT_SENDER", smtp_user)
+                    RESEND_API_KEY = resend_key
+                    ALERT_EMAIL_TO = report_receiver
+                    ALERT_EMAIL_FROM = report_sender
+                    REPORT_SENDER = report_sender
                     REPORT_RECEIVER = report_receiver
                     SMTP_HOST = os.getenv("SMTP_HOST", "smtp.gmail.com")
                     SMTP_PORT = int(os.getenv("SMTP_PORT", "587"))
                     SMTP_USER = smtp_user
                     SMTP_PASSWORD = os.getenv("SMTP_PASSWORD", "")
 
-                print(f"[*] Tentative d'envoi du rapport chiffré à {report_receiver} via SMTP...", flush=True)
+                mode = "Resend API" if resend_key else "SMTP"
+                print(f"[*] Envoi automatique du rapport chiffré à {report_receiver} via {mode}...", flush=True)
                 envoyer_rapport_chiffre(EmailCfg)
             except Exception as e_mail:
                 print(f"[!] Erreur lors de l'envoi du mail de rapport : {e_mail}", flush=True)
         else:
-            print("[i] Envoi de mail désactivé ou non configuré dans .env (SMTP_USER / REPORT_RECEIVER manquants).", flush=True)
+            print("[i] Envoi de mail désactivé ou non configuré dans .env (RESEND_API_KEY ou SMTP requis).", flush=True)
             print("    Le rapport chiffré reste consultable et déchiffrable via mail/decrypt_report.py.", flush=True)
 
     except Exception as exc:

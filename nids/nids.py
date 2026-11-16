@@ -70,8 +70,11 @@ class NIDSService:
             )
             print(f"[+] Rapport d'alertes chiffré généré : {self.cfg.ENCRYPTED_REPORT} ({taille} octets)")
 
-        # Envoi optionnel par mail si configuré
-        if self.cfg.SMTP_USER and self.cfg.REPORT_RECEIVER:
+        # Envoi optionnel par mail si configuré (Resend ou SMTP)
+        doit_envoyer = (
+            getattr(self.cfg, "RESEND_API_KEY", "") or getattr(self.cfg, "SMTP_USER", "")
+        ) and (getattr(self.cfg, "ALERT_EMAIL_TO", "") or getattr(self.cfg, "REPORT_RECEIVER", ""))
+        if doit_envoyer:
             try:
                 # Import dynamique pour ne pas bloquer si mail n'est pas configuré
                 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "mail")))

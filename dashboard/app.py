@@ -1107,11 +1107,14 @@ def api_envoyer_rapport_mail():
         return jsonify({"success": False, "message": "Rapport chiffré introuvable (exécutez d'abord la suite d'attaques)."}), 404
 
     smtp_user = os.getenv("SMTP_USER", "")
-    report_receiver = os.getenv("REPORT_RECEIVER", "")
-    if not smtp_user or not report_receiver:
+    resend_key = os.getenv("RESEND_API_KEY", "")
+    report_receiver = os.getenv("ALERT_EMAIL_TO") or os.getenv("REPORT_RECEIVER", "")
+    report_sender = os.getenv("ALERT_EMAIL_FROM") or os.getenv("REPORT_SENDER", smtp_user or "CyBear NIDS <onboarding@resend.dev>")
+
+    if not report_receiver or (not resend_key and not smtp_user):
         return jsonify({
             "success": False,
-            "message": "Configuration SMTP incomplète dans .env (SMTP_USER et REPORT_RECEIVER requis)."
+            "message": "Configuration courriel incomplète dans .env (RESEND_API_KEY ou SMTP_USER avec destinataire requis)."
         }), 400
 
     try:
@@ -1122,7 +1125,10 @@ def api_envoyer_rapport_mail():
 
         class EmailCfg:
             ENCRYPTED_REPORT = enc_path
-            REPORT_SENDER = os.getenv("REPORT_SENDER", smtp_user)
+            RESEND_API_KEY = resend_key
+            ALERT_EMAIL_TO = report_receiver
+            ALERT_EMAIL_FROM = report_sender
+            REPORT_SENDER = report_sender
             REPORT_RECEIVER = report_receiver
             SMTP_HOST = os.getenv("SMTP_HOST", "smtp.gmail.com")
             SMTP_PORT = int(os.getenv("SMTP_PORT", "587"))
@@ -1131,8 +1137,9 @@ def api_envoyer_rapport_mail():
 
         ok = envoyer_rapport_chiffre(EmailCfg)
         if ok:
-            return jsonify({"success": True, "message": f"Rapport chiffré envoyé avec succès à {report_receiver}."})
-        return jsonify({"success": False, "message": "Échec de l'envoi SMTP (vérifiez les identifiants)."}), 500
+            mode = "Resend API" if resend_key else "SMTP"
+            return jsonify({"success": True, "message": f"Rapport chiffré envoyé avec succès à {report_receiver} (via {mode})."})
+        return jsonify({"success": False, "message": "Échec de l'envoi du courriel (vérifiez les identifiants)."}), 500
     except Exception as e:
         return jsonify({"success": False, "message": f"Erreur : {e}"}), 500
 

@@ -54,6 +54,8 @@ def mock_config(tmp_path):
     cfg.BRUTE_WINDOW = 5
     cfg.ALERT_COOLDOWN = 10
     cfg.NIPS_ENABLED = True
+    cfg.RESEND_API_KEY = ""
+    cfg.SMTP_USER = ""
     return cfg
 
 

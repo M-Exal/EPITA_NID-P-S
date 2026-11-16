@@ -368,6 +368,8 @@ def test_api_rapport_envoyer_mail_manquant(client, monkeypatch):
     """Vérifie le comportement de /api/rapport/envoyer-mail sans configuration ou sans rapport."""
     monkeypatch.setenv("SMTP_USER", "")
     monkeypatch.setenv("REPORT_RECEIVER", "")
+    monkeypatch.setenv("RESEND_API_KEY", "")
+    monkeypatch.setenv("ALERT_EMAIL_TO", "")
     res = client.post("/api/rapport/envoyer-mail")
     # Retourne 404 si fichier non trouvé ou 400 si SMTP non configuré
     assert res.status_code in (400, 404)

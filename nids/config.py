@@ -94,14 +94,17 @@ class Config:
     ]
 
     # ------------------------------------------------------------------
-    # Envoi de rapport par email
+    # Envoi de rapport et alertes par email (Resend API & SMTP)
     # ------------------------------------------------------------------
+    RESEND_API_KEY = os.getenv("RESEND_API_KEY", "")
+    ALERT_EMAIL_TO = os.getenv("ALERT_EMAIL_TO", os.getenv("REPORT_RECEIVER", ""))
+    ALERT_EMAIL_FROM = os.getenv("ALERT_EMAIL_FROM", os.getenv("REPORT_SENDER", "CyBear NIDS <onboarding@resend.dev>"))
     SMTP_HOST = os.getenv("SMTP_HOST", "smtp.gmail.com")
     SMTP_PORT = int(os.getenv("SMTP_PORT", "587"))
     SMTP_USER = os.getenv("SMTP_USER", "")
     SMTP_PASSWORD = os.getenv("SMTP_PASSWORD", "")
-    REPORT_SENDER = os.getenv("REPORT_SENDER", "")
-    REPORT_RECEIVER = os.getenv("REPORT_RECEIVER", "")
+    REPORT_SENDER = os.getenv("REPORT_SENDER", ALERT_EMAIL_FROM)
+    REPORT_RECEIVER = os.getenv("REPORT_RECEIVER", ALERT_EMAIL_TO)
     NIDS_FERNET_KEY = os.getenv("NIDS_FERNET_KEY", "")
 
     # ------------------------------------------------------------------
