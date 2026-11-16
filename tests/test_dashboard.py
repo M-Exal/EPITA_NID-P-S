@@ -385,8 +385,10 @@ def test_api_analysis_graph_file(client):
         assert res.content_type == "image/png"
 
 
-def test_api_analysis_generer_graphiques(client):
+def test_api_analysis_generer_graphiques(client, monkeypatch, tmp_path):
     """Vérifie la régénération à chaud des graphiques via POST."""
+    test_analysis_dir = tmp_path / "analysis"
+    monkeypatch.setattr("app._get_analysis_dir", lambda: str(test_analysis_dir))
     res = client.post("/api/analysis/generer-graphiques")
     assert res.status_code == 200
     data = res.get_json()

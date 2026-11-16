@@ -392,45 +392,51 @@ def api_stats():
     return jsonify(stats)
 
 
+def _creer_log_analyzer():
+    """Instancie un LogAnalyzer correctement configuré avec tous les chemins d'environnement et fallbacks."""
+    for p in [os.path.join(REPO_ROOT, "analysis"), "/app/analysis"]:
+        if os.path.isdir(p) and p not in sys.path:
+            sys.path.insert(0, p)
+    from analyze import LogAnalyzer
+
+    candidats_logs = [
+        os.getenv("METASPLOITABLE_LOG_DIR"),
+        "/app/data/metasploitable_logs",
+        os.path.abspath(os.path.join(REPO_ROOT, "data", "metasploitable", "log")),
+        os.path.abspath(os.path.join(os.path.dirname(__file__), "data", "metasploitable_logs")),
+    ]
+    target_dir = next((p for p in candidats_logs if p and os.path.isdir(p)), None)
+
+    candidats_pentest = [
+        os.getenv("PENTEST_RESULTS_JSON"),
+        "/app/data/pentest/pentest_results.json",
+        "/app/data/pentest_results.json",
+        os.path.abspath(os.path.join(REPO_ROOT, "data", "pentest", "pentest_results.json")),
+        os.path.abspath(os.path.join(REPO_ROOT, "data", "nids", "pentest_results.json")),
+        "/tmp/pentest_results.json",
+    ]
+    pentest_results = next((p for p in candidats_pentest if p and os.path.isfile(p)), None)
+
+    candidats_alerts = [
+        ALERT_JSON_PATH,
+        os.getenv("NIDS_ALERT_JSON"),
+        "/app/data/nids_alerts.json",
+        os.path.abspath(os.path.join(REPO_ROOT, "data", "nids", "nids_alerts.json")),
+    ]
+    alerts_file = next((p for p in candidats_alerts if p and os.path.isfile(p)), ALERT_JSON_PATH)
+
+    return LogAnalyzer(
+        target_dir=target_dir,
+        nids_alerts=alerts_file,
+        pentest_results=pentest_results,
+    )
+
+
 @app.route("/api/analyse")
 def api_analyse():
     """Retourne l'analyse forensique consolidée des alertes NIDS et journaux cibles."""
-    candidats_analysis = [
-        os.path.join(os.path.dirname(__file__), "..", "analysis"),
-        os.path.join(os.path.dirname(__file__), "analysis"),
-        "/app/analysis",
-    ]
-    for c in candidats_analysis:
-        c_abs = os.path.abspath(c)
-        if os.path.isdir(c_abs) and c_abs not in sys.path:
-            sys.path.insert(0, c_abs)
-
     try:
-        from analyze import LogAnalyzer
-
-        candidats_logs = [
-            os.getenv("METASPLOITABLE_LOG_DIR"),
-            "/app/data/metasploitable_logs",
-            os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "data", "metasploitable", "log")),
-            os.path.abspath(os.path.join(os.path.dirname(__file__), "data", "metasploitable_logs")),
-        ]
-        target_dir = next((p for p in candidats_logs if p and os.path.isdir(p)), None)
-
-        candidats_pentest = [
-            os.getenv("PENTEST_RESULTS_JSON"),
-            "/app/data/pentest/pentest_results.json",
-            "/app/data/pentest_results.json",
-            os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "data", "pentest", "pentest_results.json")),
-            os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "data", "nids", "pentest_results.json")),
-            "/tmp/pentest_results.json",
-        ]
-        pentest_results = next((p for p in candidats_pentest if p and os.path.isfile(p)), None)
-
-        analyzer = LogAnalyzer(
-            target_dir=target_dir,
-            nids_alerts=ALERT_JSON_PATH,
-            pentest_results=pentest_results,
-        )
+        analyzer = _creer_log_analyzer()
         rapport = analyzer.generer_rapport()
         return jsonify(rapport)
     except Exception as e:
@@ -465,11 +471,7 @@ def api_analysis_graph_file(filename):
     if not os.path.isfile(chemin):
         # Tentative de génération automatique si le fichier manque
         try:
-            for p in [os.path.join(REPO_ROOT, "analysis"), "/app/analysis"]:
-                if os.path.isdir(p) and p not in sys.path:
-                    sys.path.insert(0, p)
-            from analyze import LogAnalyzer
-            analyzer = LogAnalyzer()
+            analyzer = _creer_log_analyzer()
             analyzer.generer_graphiques(dossier_sortie=dossier)
         except Exception:
             pass
@@ -545,11 +547,7 @@ def api_generer_graphiques():
     """Régénère à la demande les graphiques haute résolution via LogAnalyzer."""
     dossier = _get_analysis_dir()
     try:
-        for p in [os.path.join(REPO_ROOT, "analysis"), "/app/analysis"]:
-            if os.path.isdir(p) and p not in sys.path:
-                sys.path.insert(0, p)
-        from analyze import LogAnalyzer
-        analyzer = LogAnalyzer()
+        analyzer = _creer_log_analyzer()
         fichiers = analyzer.generer_graphiques(dossier_sortie=dossier)
         return jsonify({
             "success": True,

@@ -1834,31 +1834,31 @@
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px;">
                     <a href="/api/analysis/graphs/alertes_par_type.png" target="_blank" style="text-decoration: none;">
                         <div class="card" style="margin: 0; padding: 8px; text-align: center;">
-                            <img src="/api/analysis/graphs/alertes_par_type.png" style="width: 100%; border-radius: 4px;" alt="Types">
+                            <img src="/api/analysis/graphs/alertes_par_type.png?t=${Date.now()}" style="width: 100%; border-radius: 4px;" alt="Types">
                             <div style="font-size: 0.72rem; font-weight: 700; margin-top: 4px;">Alertes par Type</div>
                         </div>
                     </a>
                     <a href="/api/analysis/graphs/timeline_alertes.png" target="_blank" style="text-decoration: none;">
                         <div class="card" style="margin: 0; padding: 8px; text-align: center;">
-                            <img src="/api/analysis/graphs/timeline_alertes.png" style="width: 100%; border-radius: 4px;" alt="Timeline">
+                            <img src="/api/analysis/graphs/timeline_alertes.png?t=${Date.now()}" style="width: 100%; border-radius: 4px;" alt="Timeline">
                             <div style="font-size: 0.72rem; font-weight: 700; margin-top: 4px;">Timeline Alertes</div>
                         </div>
                     </a>
                     <a href="/api/analysis/graphs/top_sources_ips.png" target="_blank" style="text-decoration: none;">
                         <div class="card" style="margin: 0; padding: 8px; text-align: center;">
-                            <img src="/api/analysis/graphs/top_sources_ips.png" style="width: 100%; border-radius: 4px;" alt="Top IPs">
+                            <img src="/api/analysis/graphs/top_sources_ips.png?t=${Date.now()}" style="width: 100%; border-radius: 4px;" alt="Top IPs">
                             <div style="font-size: 0.72rem; font-weight: 700; margin-top: 4px;">Top IPs Sources</div>
                         </div>
                     </a>
                     <a href="/api/analysis/graphs/activite_cible_metasploitable.png" target="_blank" style="text-decoration: none;">
                         <div class="card" style="margin: 0; padding: 8px; text-align: center;">
-                            <img src="/api/analysis/graphs/activite_cible_metasploitable.png" style="width: 100%; border-radius: 4px;" alt="Cible">
+                            <img src="/api/analysis/graphs/activite_cible_metasploitable.png?t=${Date.now()}" style="width: 100%; border-radius: 4px;" alt="Cible">
                             <div style="font-size: 0.72rem; font-weight: 700; margin-top: 4px;">Traces Cible</div>
                         </div>
                     </a>
                     <a href="/api/analysis/graphs/matrice_detection_pentest.png" target="_blank" style="text-decoration: none;">
                         <div class="card" style="margin: 0; padding: 8px; text-align: center;">
-                            <img src="/api/analysis/graphs/matrice_detection_pentest.png" style="width: 100%; border-radius: 4px;" alt="Matrice">
+                            <img src="/api/analysis/graphs/matrice_detection_pentest.png?t=${Date.now()}" style="width: 100%; border-radius: 4px;" alt="Matrice">
                             <div style="font-size: 0.72rem; font-weight: 700; margin-top: 4px;">Matrice Corrélation</div>
                         </div>
                     </a>
@@ -1892,28 +1892,29 @@
                 if (!data.success || !data.graphiques) return;
 
                 listeGraphiquesActuelle = data.graphiques;
-                const timestampCache = forcer ? `?t=${Date.now()}` : '';
-
-                container.innerHTML = data.graphiques.map(g => `
+                container.innerHTML = data.graphiques.map(g => {
+                    const cacheBuster = g.mtime ? `?v=${g.mtime}` : `?t=${Date.now()}`;
+                    const imgUrl = `${g.url}${cacheBuster}`;
+                    return `
                     <div class="graph-card">
                         <div class="graph-header">
                             <span class="graph-title">${g.titre}</span>
                             <span class="badge" style="background: ${g.badge_color}; color: #000; font-size: 0.68rem; padding: 2px 6px;">${g.badge}</span>
                         </div>
-                        <div class="graph-img-wrapper" onclick="ouvrirLightbox('${g.url}${timestampCache}', '${g.titre}', '${g.badge}')" title="Cliquez pour agrandir en plein écran (Soutenance)">
-                            <img src="${g.url}${timestampCache}" alt="${g.titre}" loading="lazy" onerror="this.onerror=null; this.src='/static/img/favicon.svg';">
+                        <div class="graph-img-wrapper" onclick="ouvrirLightbox('${imgUrl}', '${g.titre}', '${g.badge}')" title="Cliquez pour agrandir en plein écran (Soutenance)">
+                            <img src="${imgUrl}" alt="${g.titre}" loading="eager" onerror="this.onerror=null; this.src='/static/img/favicon.svg';">
                             <span class="graph-zoom-badge">🔍 ZOOM HD</span>
                         </div>
                         <div class="graph-desc">${g.description}</div>
                         <div class="graph-footer">
                             <span>${g.taille_ko ? g.taille_ko + ' Ko (300 DPI)' : 'HD Raster'}</span>
                             <div style="display: flex; gap: 6px;">
-                                <button class="btn-sm-action" onclick="ouvrirLightbox('${g.url}${timestampCache}', '${g.titre}', '${g.badge}')">Agrandir</button>
+                                <button class="btn-sm-action" onclick="ouvrirLightbox('${imgUrl}', '${g.titre}', '${g.badge}')">Agrandir</button>
                                 <a href="${g.url}" download="${g.filename}" class="btn-sm-action">Télécharger</a>
                             </div>
                         </div>
                     </div>
-                `).join('');
+                `}).join('');
             } catch (e) {
                 console.error("Erreur de chargement des graphiques :", e);
                 container.innerHTML = `<div style="grid-column: 1 / -1; color: var(--critique); text-align: center; padding: 20px;">Erreur lors du chargement des graphiques : ${e.message}</div>`;
