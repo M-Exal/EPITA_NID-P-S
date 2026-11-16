@@ -133,3 +133,57 @@ def test_analyse_correlation_et_taux_detection(tmp_path):
     texte = analyzer.generer_synthese_texte(rapport)
     assert "RAPPORT DE SYNTHESE FORENSIQUE" in texte
     assert "100.0%" in texte
+
+
+def test_synthese_texte_avec_comptes_et_bannieres(tmp_path):
+    alerts_file = tmp_path / "alerts.json"
+    pentest_file = tmp_path / "pentest.json"
+
+    pentest_data = {
+        "cible": "metasploitable",
+        "attaques": {
+            "null_scan": {
+                "ports_ouverts": [21, 22, 80],
+                "os_detecte": "Linux 2.6.X (Ubuntu / Metasploitable) [TTL=64]",
+            },
+            "scan_ports": {
+                "ports_ouverts": [21, 22, 80],
+                "bannieres": {
+                    "21": "vsFTPd 2.3.4",
+                    "22": "OpenSSH 4.7p1",
+                    "80": "Apache 2.2.8",
+                },
+            },
+            "brute_force_ssh": {
+                "acces_valides": [
+                    {"utilisateur": "msfadmin", "mot_de_passe": "msfadmin", "whoami": "msfadmin"},
+                    {"utilisateur": "user", "mot_de_passe": "user", "whoami": "user"},
+                ],
+            },
+            "sql_injection": {
+                "reponses": [
+                    {"extraits_bdd": ["admin  →  5f4dcc3b5aa765d61d8327deb882cf99"]},
+                ],
+            },
+            "path_traversal": {
+                "reponses": [
+                    {"code_http": 200, "payload": "../../../../etc/passwd"},
+                ],
+            },
+        },
+    }
+    pentest_file.write_text(json.dumps(pentest_data), encoding="utf-8")
+    alerts_file.write_text("[]", encoding="utf-8")
+
+    analyzer = LogAnalyzer(nids_alerts=alerts_file, pentest_results=pentest_file)
+    texte = analyzer.generer_synthese_texte()
+
+    assert "msfadmin:msfadmin" in texte
+    assert "user:user" in texte
+    assert "admin  →  5f4dcc3b5aa765d61d8327deb882cf99" in texte
+    assert "vsFTPd 2.3.4" in texte
+    assert "OpenSSH 4.7p1" in texte
+    assert "Apache 2.2.8" in texte
+    assert "/etc/passwd" in texte
+    assert "Linux 2.6.X" in texte
+

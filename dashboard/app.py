@@ -416,7 +416,9 @@ def api_analyse():
         candidats_pentest = [
             os.getenv("PENTEST_RESULTS_JSON"),
             "/app/data/pentest/pentest_results.json",
+            "/app/data/pentest_results.json",
             os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "data", "pentest", "pentest_results.json")),
+            os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "data", "nids", "pentest_results.json")),
             "/tmp/pentest_results.json",
         ]
         pentest_results = next((p for p in candidats_pentest if p and os.path.isfile(p)), None)
@@ -1042,6 +1044,99 @@ def ws_disconnect():
             pass
 
 
+def _recuperer_attaques_executees() -> list:
+    """Retourne la liste des clés d'attaques enregistrées dans pentest_results.json."""
+    repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+    candidats = [
+        "/app/data/pentest/pentest_results.json",
+        "/app/data/pentest_results.json",
+        "/tmp/pentest_results.json",
+        os.path.join(repo_root, "data", "pentest", "pentest_results.json"),
+        os.path.join(repo_root, "data", "nids", "pentest_results.json"),
+        os.path.join(repo_root, "data", "pentest_results.json"),
+    ]
+    for chemin in candidats:
+        if os.path.isfile(chemin):
+            try:
+                with open(chemin, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                return list(data.get("attaques", {}).keys())
+            except Exception:
+                pass
+    return []
+
+
+@app.route("/api/rapport/texte")
+def api_rapport_texte():
+    """Retourne la synthèse textuelle du rapport forensique."""
+    repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+    candidats = [
+        "/app/data/rapport_forensique.txt",
+        "/tmp/rapport_forensique.txt",
+        os.path.join(repo_root, "data", "nids", "rapport_forensique.txt"),
+        os.path.join(repo_root, "data", "pentest", "rapport_forensique.txt"),
+    ]
+    for c in candidats:
+        if os.path.isfile(c):
+            try:
+                with open(c, "r", encoding="utf-8") as f:
+                    return f.read(), 200, {"Content-Type": "text/plain; charset=utf-8"}
+            except Exception:
+                pass
+
+    try:
+        from analyze import LogAnalyzer
+        analyzer = LogAnalyzer()
+        rapport = analyzer.generer_rapport()
+        return analyzer.generer_synthese_texte(rapport), 200, {"Content-Type": "text/plain; charset=utf-8"}
+    except Exception as e:
+        return f"Erreur génération rapport : {e}", 500, {"Content-Type": "text/plain; charset=utf-8"}
+
+
+@app.route("/api/rapport/envoyer-mail", methods=["POST"])
+def api_envoyer_rapport_mail():
+    """Déclenche l'envoi du rapport chiffré par email via SMTP."""
+    repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+    candidats_enc = [
+        "/app/data/nids_alerts.enc",
+        "/tmp/nids_alerts.enc",
+        os.path.join(repo_root, "data", "nids", "nids_alerts.enc"),
+    ]
+    enc_path = next((p for p in candidats_enc if p and os.path.isfile(p)), None)
+    if not enc_path:
+        return jsonify({"success": False, "message": "Rapport chiffré introuvable (exécutez d'abord la suite d'attaques)."}), 404
+
+    smtp_user = os.getenv("SMTP_USER", "")
+    report_receiver = os.getenv("REPORT_RECEIVER", "")
+    if not smtp_user or not report_receiver:
+        return jsonify({
+            "success": False,
+            "message": "Configuration SMTP incomplète dans .env (SMTP_USER et REPORT_RECEIVER requis)."
+        }), 400
+
+    try:
+        for p in [os.path.join(repo_root, "mail"), "/app/mail"]:
+            if os.path.isdir(p) and p not in sys.path:
+                sys.path.append(p)
+        from send_report import envoyer_rapport_chiffre
+
+        class EmailCfg:
+            ENCRYPTED_REPORT = enc_path
+            REPORT_SENDER = os.getenv("REPORT_SENDER", smtp_user)
+            REPORT_RECEIVER = report_receiver
+            SMTP_HOST = os.getenv("SMTP_HOST", "smtp.gmail.com")
+            SMTP_PORT = int(os.getenv("SMTP_PORT", "587"))
+            SMTP_USER = smtp_user
+            SMTP_PASSWORD = os.getenv("SMTP_PASSWORD", "")
+
+        ok = envoyer_rapport_chiffre(EmailCfg)
+        if ok:
+            return jsonify({"success": True, "message": f"Rapport chiffré envoyé avec succès à {report_receiver}."})
+        return jsonify({"success": False, "message": "Échec de l'envoi SMTP (vérifiez les identifiants)."}), 500
+    except Exception as e:
+        return jsonify({"success": False, "message": f"Erreur : {e}"}), 500
+
+
 @app.route("/api/attaques/status")
 def api_status_attaques():
     """Retourne l'état de toutes les attaques (en cours + terminées) et les accès valides."""
@@ -1064,6 +1159,16 @@ def api_status_attaques():
         t_data["log_extrait"] = _lire_log(t.get("log", ""))
         terminees.append(t_data)
 
+    repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+    rapport_disponible = any(
+        os.path.isfile(p) for p in [
+            "/app/data/rapport_forensique.txt",
+            "/tmp/rapport_forensique.txt",
+            os.path.join(repo_root, "data", "nids", "rapport_forensique.txt"),
+            os.path.join(repo_root, "data", "pentest", "rapport_forensique.txt"),
+        ]
+    )
+
     return jsonify({
         "en_cours": en_cours,
         "terminees": terminees,
@@ -1071,6 +1176,8 @@ def api_status_attaques():
         "services": _recuperer_bannieres(),
         "ports_ouverts": _recuperer_ports_ouverts(),
         "os_detecte": _recuperer_os_detecte(),
+        "attaques_executees": _recuperer_attaques_executees(),
+        "rapport_disponible": rapport_disponible,
     })
 
 

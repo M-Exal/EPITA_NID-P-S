@@ -110,11 +110,13 @@ services:
       - FTP_PORT=21
     volumes:
       - ./data/nids:/app/data
+      - ./data/pentest:/app/data/pentest
       - ./data/metasploitable/log:/app/data/metasploitable_logs
       - ./dashboard:/app
       - ./scripts:/app/scripts
       - ./pentest:/app/pentest
       - ./analysis:/app/analysis
+      - ./mail:/app/mail
     networks:
       - honeynet
     depends_on:

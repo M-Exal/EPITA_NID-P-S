@@ -356,4 +356,22 @@ def test_api_analyse(client):
     assert "correlation" in data
 
 
+def test_api_rapport_texte(client):
+    """Vérifie que la route /api/rapport/texte retourne la synthèse forensique au format texte brut."""
+    res = client.get("/api/rapport/texte")
+    assert res.status_code == 200
+    assert "text/plain" in res.content_type
+    assert "RAPPORT DE SYNTHESE FORENSIQUE" in res.get_data(as_text=True)
+
+
+def test_api_rapport_envoyer_mail_manquant(client, monkeypatch):
+    """Vérifie le comportement de /api/rapport/envoyer-mail sans configuration ou sans rapport."""
+    monkeypatch.setenv("SMTP_USER", "")
+    monkeypatch.setenv("REPORT_RECEIVER", "")
+    res = client.post("/api/rapport/envoyer-mail")
+    # Retourne 404 si fichier non trouvé ou 400 si SMTP non configuré
+    assert res.status_code in (400, 404)
+
+
+
 

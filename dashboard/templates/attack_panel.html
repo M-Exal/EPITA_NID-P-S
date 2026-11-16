@@ -742,6 +742,289 @@
             font-weight: 800;
         }
 
+        /* ── Séquence Automatisée & Pipeline ── */
+        .sequence-panel {
+            margin-bottom: 24px;
+            padding: 20px;
+            background: var(--bg-card);
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+        }
+
+        .sequence-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .sequence-title-group {
+            flex: 1;
+            min-width: 280px;
+        }
+
+        .sequence-tag {
+            display: inline-block;
+            font-size: 0.68rem;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            padding: 2px 8px;
+            background: var(--main);
+            color: #000000;
+            border-radius: 4px;
+            border: 1px solid var(--border);
+            margin-bottom: 6px;
+        }
+
+        .sequence-title {
+            margin: 0 0 6px 0;
+            font-size: 1.22rem;
+            font-weight: 900;
+            font-family: 'Space Grotesk', sans-serif;
+            color: var(--text);
+        }
+
+        .sequence-subtitle {
+            margin: 0;
+            font-size: 0.82rem;
+            color: var(--text-muted);
+            line-height: 1.4;
+        }
+
+        .btn-launch-sequence {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 24px;
+            background: var(--main);
+            color: #000000;
+            border: 2px solid var(--border);
+            border-radius: 6px;
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 0.95rem;
+            font-weight: 900;
+            cursor: pointer;
+            box-shadow: var(--shadow-sm);
+            transition: transform 0.1s ease, box-shadow 0.1s ease;
+        }
+
+        .btn-launch-sequence:hover:not(:disabled) {
+            transform: translate(-2px, -2px);
+            box-shadow: var(--shadow);
+        }
+
+        .btn-launch-sequence:active:not(:disabled) {
+            transform: translate(0, 0);
+            box-shadow: none;
+        }
+
+        .btn-launch-sequence:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .sequence-pipeline-steps {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-wrap: wrap;
+            margin-top: 14px;
+            padding: 10px 14px;
+            background: var(--bg);
+            border: 2px solid var(--border);
+            border-radius: 6px;
+        }
+
+        .step-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 8px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.72rem;
+            font-weight: 800;
+            color: var(--text-muted);
+            transition: all 0.2s ease;
+        }
+
+        .step-num {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: var(--border);
+            color: var(--bg);
+            font-size: 0.65rem;
+        }
+
+        .step-arrow {
+            color: var(--text-muted);
+            font-size: 0.72rem;
+        }
+
+        .step-badge.step-active {
+            background: var(--border-highlight);
+            color: var(--text);
+            border-color: var(--main);
+            box-shadow: 0 0 0 1px var(--main);
+            transform: scale(1.03);
+        }
+
+        .step-badge.step-active .step-num {
+            background: var(--main);
+            color: #000000;
+        }
+
+        .step-badge.step-done {
+            background: var(--main);
+            color: #000000;
+            border-color: var(--border);
+        }
+
+        .step-badge.step-done .step-num {
+            background: #000000;
+            color: var(--main);
+        }
+
+        .seq-progress-track {
+            width: 100%;
+            height: 8px;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .seq-progress-fill {
+            height: 100%;
+            background: var(--main);
+            transition: width 0.3s ease;
+        }
+
+        .report-box-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            padding: 12px 16px;
+            background: var(--bg-card);
+            border: 2px solid var(--main);
+            border-radius: 6px;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .report-success-tag {
+            display: inline-block;
+            font-size: 0.72rem;
+            font-weight: 900;
+            text-transform: uppercase;
+            padding: 3px 8px;
+            background: var(--main);
+            color: #000000;
+            border-radius: 3px;
+        }
+
+        .btn-report-action {
+            display: inline-flex;
+            align-items: center;
+            padding: 6px 12px;
+            border-radius: 4px;
+            border: 1px solid var(--border);
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 0.78rem;
+            font-weight: 800;
+            cursor: pointer;
+            transition: transform 0.1s ease;
+        }
+
+        .btn-report-action:hover {
+            transform: translateY(-1px);
+        }
+
+        .btn-report-email {
+            background: var(--main) !important;
+            color: #000000 !important;
+            font-weight: 900 !important;
+        }
+
+        /* ── Grille des données exfiltrées & résultats ── */
+        .exfiltrated-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 12px;
+            margin-top: 14px;
+        }
+
+        .exfil-card {
+            background: var(--bg);
+            border: 2px solid var(--border);
+            border-radius: 6px;
+            padding: 12px 14px;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .exfil-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+            padding-bottom: 6px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .exfil-card-title {
+            font-size: 0.75rem;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .exfil-card-badge {
+            font-size: 0.65rem;
+            font-weight: 800;
+            padding: 2px 6px;
+            border-radius: 3px;
+            background: var(--main);
+            color: #000000;
+        }
+
+        .exfil-list {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+        }
+
+        .exfil-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px;
+            padding: 5px 8px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            font-size: 0.72rem;
+            word-break: break-all;
+        }
+
         @keyframes pulse {
             0%, 100% { opacity: 1; transform: scale(1); }
             50% { opacity: 0.4; transform: scale(0.85); }
@@ -793,20 +1076,142 @@
         <span id="global-status-text">Prêt</span>
     </div>
 
-    <h2 class="section-title">Attaques Réseau</h2>
-    <div class="attack-grid">
-        <article class="attack-card" data-attack="SCAN_PORTS">
-            <div class="card-header-row">
-                <div class="attack-name">Scan TCP & Bannières</div>
-                <span class="sev-badge sev-MOYENNE">Moyenne</span>
+    <!-- SÉQUENCE AUTOMATISÉE D'ATTAQUES & RAPPORT -->
+    <section class="sequence-panel">
+        <div class="sequence-header">
+            <div class="sequence-title-group">
+                <span class="sequence-tag">AUTOMATISATION 1-CLIC</span>
+                <h2 class="sequence-title">Séquence Complète de Pentest & Rapport Automatisé</h2>
+                <p class="sequence-subtitle">
+                    Exécute séquentiellement les 8 scénarios d'attaque selon la méthodologie offensive (Reconnaissance furtive ➔ Scan TCP ➔ Brute-Force SSH ➔ Web DVWA ➔ DoS Flood) et génère automatiquement le rapport forensique et d'audit chiffré.
+                </p>
             </div>
-            <p class="attack-description">Connexion TCP et Banner Grabbing pour identifier les versions exactes des services en écoute.</p>
+            <button class="btn-launch-sequence" id="btn-launch-seq-main" onclick="lancerTout()">
+                ⚡ Lancer toute la séquence d'attaques
+            </button>
+        </div>
+
+        <div class="sequence-pipeline-steps">
+            <div class="step-badge" data-step="NULL_SCAN"><span class="step-num">1</span> NULL Scan (RFC 793)</div>
+            <div class="step-arrow">➔</div>
+            <div class="step-badge" data-step="XMAS_SCAN"><span class="step-num">2</span> XMAS Scan</div>
+            <div class="step-arrow">➔</div>
+            <div class="step-badge" data-step="SCAN_PORTS"><span class="step-num">3</span> Scan TCP & Bannières</div>
+            <div class="step-arrow">➔</div>
+            <div class="step-badge" data-step="BRUTE_FORCE"><span class="step-num">4</span> Brute-Force SSH</div>
+            <div class="step-arrow">➔</div>
+            <div class="step-badge" data-step="SQL_INJECTION"><span class="step-num">5</span> Injection SQL</div>
+            <div class="step-arrow">➔</div>
+            <div class="step-badge" data-step="XSS"><span class="step-num">6</span> XSS Réfléchi</div>
+            <div class="step-arrow">➔</div>
+            <div class="step-badge" data-step="PATH_TRAVERSAL"><span class="step-num">7</span> Path Traversal</div>
+            <div class="step-arrow">➔</div>
+            <div class="step-badge" data-step="DOS"><span class="step-num">8</span> DoS Flood</div>
+            <div class="step-arrow">➔</div>
+            <div class="step-badge step-report" data-step="REPORT"><span class="step-num">9</span> Rapport Chiffré</div>
+        </div>
+
+        <!-- BARRE DE PROGRESSION EN DIRECT -->
+        <div id="sequence-progress-bar-container" style="display: none; margin-top: 14px;">
+            <div style="display: flex; justify-content: space-between; font-size: 0.78rem; font-weight: 800; margin-bottom: 6px; font-family: 'JetBrains Mono', monospace;">
+                <span id="seq-step-desc">Campagne en cours...</span>
+                <span id="seq-step-count">0 / 8 terminées</span>
+            </div>
+            <div class="seq-progress-track">
+                <div class="seq-progress-fill" id="seq-progress-fill" style="width: 0%;"></div>
+            </div>
+        </div>
+
+        <!-- RAPPORT DES DONNÉES EXFILTRÉES & AUDIT CIBLE -->
+        <div id="campaign-report-banner" style="display: none; margin-top: 16px;">
+            <div class="report-box-header">
+                <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                    <span class="report-success-tag" style="background: var(--critique); color: #ffffff;">DONNÉES EXFILTRÉES DU HONEYPOT</span>
+                    <span id="report-detection-rate" style="font-weight: 800; font-family: 'JetBrains Mono', monospace; font-size: 0.85rem;">Taux de détection NIDS : 100%</span>
+                </div>
+                <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                    <button class="btn-report-action" id="btn-toggle-report-text" onclick="toggleRapportTexte()">Masquer la synthèse brute</button>
+                    <button class="btn-report-action" onclick="telechargerRapport()">Télécharger (.txt)</button>
+                    <button class="btn-report-action btn-report-email" onclick="envoyerRapportEmail(this)">Expédier par e-mail chiffré</button>
+                </div>
+            </div>
+
+            <!-- DASHBOARD VISUEL DES DONNÉES EXFILTRÉES & COMPTES COMPROMIS -->
+            <div class="exfiltrated-grid" id="exfiltrated-cards-grid">
+                <!-- 1. Comptes SSH compromis -->
+                <div class="exfil-card">
+                    <div class="exfil-card-header">
+                        <span class="exfil-card-title">Comptes SSH Compromis</span>
+                        <span class="exfil-card-badge" id="badge-ssh-count">0 compte</span>
+                    </div>
+                    <div class="exfil-list" id="exfil-ssh-list">
+                        <span style="opacity: 0.7; font-size: 0.72rem;">Aucun compte SSH découvert.</span>
+                    </div>
+                </div>
+
+                <!-- 2. BDD Exfiltrée (DVWA SQLi) -->
+                <div class="exfil-card">
+                    <div class="exfil-card-header">
+                        <span class="exfil-card-title">Base de Données (DVWA)</span>
+                        <span class="exfil-card-badge" id="badge-db-count">Table users</span>
+                    </div>
+                    <div class="exfil-list" id="exfil-db-list">
+                        <span style="opacity: 0.7; font-size: 0.72rem;">Aucune donnée BDD exfiltrée.</span>
+                    </div>
+                </div>
+
+                <!-- 3. Fichiers & Failles Web -->
+                <div class="exfil-card">
+                    <div class="exfil-card-header">
+                        <span class="exfil-card-title">Fichiers Cibles & Failles</span>
+                        <span class="exfil-card-badge">Web & Système</span>
+                    </div>
+                    <div class="exfil-list" id="exfil-web-list">
+                        <div class="exfil-item"><span>Path Traversal</span><span id="exfil-traversal-status" style="font-weight: 800; color: var(--critique);">Vérification...</span></div>
+                        <div class="exfil-item"><span>XSS Réfléchi</span><span id="exfil-xss-status" style="font-weight: 800; color: var(--main);">Confirmé (/dvwa)</span></div>
+                        <div class="exfil-item"><span>Backdoor Ingreslock</span><span id="exfil-backdoor-status">Port 1524</span></div>
+                    </div>
+                </div>
+
+                <!-- 4. Quarantaine & Bouclier NIPS -->
+                <div class="exfil-card">
+                    <div class="exfil-card-header">
+                        <span class="exfil-card-title">Réponse Active NIPS</span>
+                        <span class="exfil-card-badge" style="background: var(--critique); color: #fff;">Confinement</span>
+                    </div>
+                    <div class="exfil-list" id="exfil-nips-list">
+                        <div class="exfil-item"><span>Comptes verrouillés</span><strong id="exfil-quarantine-status" style="color: var(--critique);">Aucun</strong></div>
+                        <div class="exfil-item"><span>IPs bloquées (iptables)</span><strong id="exfil-blocked-ips" style="color: var(--critique);">Aucune</strong></div>
+                        <div class="exfil-item"><span>Empreinte OS</span><span id="exfil-os-text" style="font-size: 0.68rem;">Linux 2.6.X</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SYNTHÈSE FORENSIQUE BRUTE (Affichée directement par défaut) -->
+            <div style="margin-top: 14px;">
+                <div style="font-size: 0.75rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center;">
+                    <span>RAPPORT D'AUDIT COMPLET & TRACES DES JOURNAUX (access.log & auth.log)</span>
+                    <span style="font-size: 0.7rem; color: var(--main); font-family: 'JetBrains Mono', monospace;">SYNTHÈSE EN DIRECT</span>
+                </div>
+                <div id="report-text-view" style="display: block; max-height: 380px; overflow-y: auto; background: var(--bg); padding: 14px; border: 2px solid var(--border); font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; white-space: pre-wrap; line-height: 1.45; box-shadow: var(--shadow-sm);"></div>
+            </div>
+        </div>
+    </section>
+
+    <h2 class="section-title">Reconnaissance & Scans Réseau</h2>
+    <div class="attack-grid">
+        <article class="attack-card" data-attack="NULL_SCAN">
+            <div class="card-header-row">
+                <div class="attack-name">Scan Furtif NULL (RFC 793)</div>
+                <span class="sev-badge sev-HAUTE">Haute</span>
+            </div>
+            <p class="attack-description">Cartographie furtive des ports (silence=ouvert, RST=fermé) & OS Fingerprinting. Découvre les ports pour le DoS.</p>
             <div class="attack-meta">
                 <span>MODULE</span>
-                <span>scripts/run_scan_ports.py</span>
+                <span>scripts/run_null_scan.py</span>
             </div>
-            <button class="btn-launch" onclick="lancerAttaque('SCAN_PORTS', this)">Lancer l'attaque</button>
-            <div id="scan-services-list" style="display:none;"></div>
+            <button class="btn-launch" onclick="lancerAttaque('NULL_SCAN', this)">Lancer l'attaque</button>
+            <div id="null-scan-details" style="display:none; margin-top:10px; padding:8px; border-top:1px solid var(--border); font-size:0.75rem; font-family:'JetBrains Mono',monospace;"></div>
             <div class="status-indicator status-idle">
                 <span class="status-dot-sm"></span>
                 <span class="status-text">En attente</span>
@@ -830,18 +1235,18 @@
             </div>
         </article>
 
-        <article class="attack-card" data-attack="NULL_SCAN">
+        <article class="attack-card" data-attack="SCAN_PORTS">
             <div class="card-header-row">
-                <div class="attack-name">Scan Furtif NULL (RFC 793)</div>
-                <span class="sev-badge sev-HAUTE">Haute</span>
+                <div class="attack-name">Scan TCP & Bannières</div>
+                <span class="sev-badge sev-MOYENNE">Moyenne</span>
             </div>
-            <p class="attack-description">Cartographie furtive des ports (silence=ouvert, RST=fermé) & OS Fingerprinting. Découvre les ports pour le DoS.</p>
+            <p class="attack-description">Connexion TCP et Banner Grabbing pour identifier les versions exactes des services en écoute.</p>
             <div class="attack-meta">
                 <span>MODULE</span>
-                <span>scripts/run_null_scan.py</span>
+                <span>scripts/run_scan_ports.py</span>
             </div>
-            <button class="btn-launch" onclick="lancerAttaque('NULL_SCAN', this)">Lancer l'attaque</button>
-            <div id="null-scan-details" style="display:none; margin-top:10px; padding:8px; border-top:1px solid var(--border); font-size:0.75rem; font-family:'JetBrains Mono',monospace;"></div>
+            <button class="btn-launch" onclick="lancerAttaque('SCAN_PORTS', this)">Lancer l'attaque</button>
+            <div id="scan-services-list" style="display:none;"></div>
             <div class="status-indicator status-idle">
                 <span class="status-dot-sm"></span>
                 <span class="status-text">En attente</span>
@@ -849,7 +1254,7 @@
         </article>
     </div>
 
-    <h2 class="section-title">Attaques Applicatives</h2>
+    <h2 class="section-title">Attaques Applicatives & Exploitation</h2>
     <div class="attack-grid">
         <article class="attack-card" data-attack="BRUTE_FORCE">
             <div class="card-header-row">
@@ -868,36 +1273,6 @@
                     <span style="font-size: 0.72rem; text-transform: uppercase;">PRÊT</span>
                 </div>
                 <div id="brute-creds-list" style="display: flex; flex-direction: column; gap: 6px;"></div>
-            </div>
-            <div class="status-indicator status-idle">
-                <span class="status-dot-sm"></span>
-                <span class="status-text">En attente</span>
-            </div>
-        </article>
-
-        <article class="attack-card" data-attack="DOS">
-            <div class="card-header-row">
-                <div class="attack-name">Déni de Service (SYN Flood)</div>
-                <span class="sev-badge sev-CRITIQUE">Critique</span>
-            </div>
-            <p class="attack-description">Inondation de requêtes SYN pour saturer les sockets réseau de la cible.</p>
-            <div class="attack-meta">
-                <span>MODULE</span>
-                <span>scripts/run_dos.py</span>
-            </div>
-            <button class="btn-launch" onclick="lancerAttaque('DOS', this)">Lancer l'attaque</button>
-            <div id="dos-port-selector" style="display:none; margin-top:10px; padding:10px; border-top:1px solid var(--border);">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-                    <span style="font-weight:800; font-size:0.72rem; text-transform:uppercase; letter-spacing:0.04em; color:var(--critique);">Ports cibles (NULL Scan RFC 793)</span>
-                    <div style="display:flex; gap:4px;">
-                        <button onclick="toggleAllPorts(true)" style="font-size:0.65rem; font-weight:700; padding:2px 6px; border:1px solid var(--border); border-radius:3px; background:var(--bg); cursor:pointer; color:var(--text);">Tout</button>
-                        <button onclick="toggleAllPorts(false)" style="font-size:0.65rem; font-weight:700; padding:2px 6px; border:1px solid var(--border); border-radius:3px; background:var(--bg); cursor:pointer; color:var(--text);">Aucun</button>
-                    </div>
-                </div>
-                <div id="ports-checkbox-list" style="display:flex; flex-wrap:wrap; gap:6px; margin-bottom:8px;"></div>
-                <button id="btn-dos-selection" onclick="lancerDosSurSelection(this)" class="btn-launch" style="background:var(--critique); color:#fff; border-color:var(--critique); font-size:0.78rem; padding:6px 14px;">
-                    Lancer sur sélection
-                </button>
             </div>
             <div class="status-indicator status-idle">
                 <span class="status-dot-sm"></span>
@@ -950,6 +1325,36 @@
                 <span>scripts/run_path_traversal.py</span>
             </div>
             <button class="btn-launch" onclick="lancerAttaque('PATH_TRAVERSAL', this)">Lancer l'attaque</button>
+            <div class="status-indicator status-idle">
+                <span class="status-dot-sm"></span>
+                <span class="status-text">En attente</span>
+            </div>
+        </article>
+
+        <article class="attack-card" data-attack="DOS">
+            <div class="card-header-row">
+                <div class="attack-name">Déni de Service (SYN Flood)</div>
+                <span class="sev-badge sev-CRITIQUE">Critique</span>
+            </div>
+            <p class="attack-description">Inondation de requêtes SYN pour saturer les sockets réseau de la cible (exécuté en dernier).</p>
+            <div class="attack-meta">
+                <span>MODULE</span>
+                <span>scripts/run_dos.py</span>
+            </div>
+            <button class="btn-launch" onclick="lancerAttaque('DOS', this)">Lancer l'attaque</button>
+            <div id="dos-port-selector" style="display:none; margin-top:10px; padding:10px; border-top:1px solid var(--border);">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                    <span style="font-weight:800; font-size:0.72rem; text-transform:uppercase; letter-spacing:0.04em; color:var(--critique);">Ports cibles (NULL Scan RFC 793)</span>
+                    <div style="display:flex; gap:4px;">
+                        <button onclick="toggleAllPorts(true)" style="font-size:0.65rem; font-weight:700; padding:2px 6px; border:1px solid var(--border); border-radius:3px; background:var(--bg); cursor:pointer; color:var(--text);">Tout</button>
+                        <button onclick="toggleAllPorts(false)" style="font-size:0.65rem; font-weight:700; padding:2px 6px; border:1px solid var(--border); border-radius:3px; background:var(--bg); cursor:pointer; color:var(--text);">Aucun</button>
+                    </div>
+                </div>
+                <div id="ports-checkbox-list" style="display:flex; flex-wrap:wrap; gap:6px; margin-bottom:8px;"></div>
+                <button id="btn-dos-selection" onclick="lancerDosSurSelection(this)" class="btn-launch" style="background:var(--critique); color:#fff; border-color:var(--critique); font-size:0.78rem; padding:6px 14px;">
+                    Lancer sur sélection
+                </button>
+            </div>
             <div class="status-indicator status-idle">
                 <span class="status-dot-sm"></span>
                 <span class="status-text">En attente</span>
@@ -1116,10 +1521,27 @@
             }
         }
 
-        // ── Lancer toute la suite ──
+        // ── Lancer toute la suite ordonnancée ──
         async function lancerTout() {
             const btnAll = document.getElementById('btn-launch-all');
-            lancerAttaque('all_attacks', btnAll);
+            const btnSeq = document.getElementById('btn-launch-seq-main');
+            if (btnAll) {
+                btnAll.disabled = true;
+                btnAll.textContent = 'Suite en cours…';
+            }
+            if (btnSeq) {
+                btnSeq.disabled = true;
+                btnSeq.textContent = '⚡ Séquence en cours d\'exécution…';
+            }
+            window._rapportCharge = false;
+            const progressBox = document.getElementById('sequence-progress-bar-container');
+            if (progressBox) progressBox.style.display = 'block';
+            const banner = document.getElementById('campaign-report-banner');
+            if (banner) banner.style.display = 'none';
+            const reportView = document.getElementById('report-text-view');
+            if (reportView) reportView.style.display = 'none';
+
+            lancerAttaque('all_attacks', btnSeq || btnAll);
         }
 
         // ── Sélection DoS multi-ports ──
@@ -1230,6 +1652,17 @@
             }
         }
 
+        const SEQ_MAP = [
+            { key: 'null_scan', card: 'NULL_SCAN', label: 'NULL Scan (RFC 793)' },
+            { key: 'xmas_scan', card: 'XMAS_SCAN', label: 'XMAS Scan' },
+            { key: 'scan_ports', card: 'SCAN_PORTS', label: 'Scan TCP Connect & Versions' },
+            { key: 'brute_force_ssh', card: 'BRUTE_FORCE', label: 'Brute-Force SSH' },
+            { key: 'sql_injection', card: 'SQL_INJECTION', label: 'Injection SQL (DVWA)' },
+            { key: 'xss', card: 'XSS', label: 'XSS Réfléchi' },
+            { key: 'path_traversal', card: 'PATH_TRAVERSAL', label: 'Path Traversal' },
+            { key: 'dos', card: 'DOS', label: 'DoS Flood' },
+        ];
+
         // ── Polling du statut et extraction des logs en temps réel (identique à main) ──
         async function pollStatus() {
             try {
@@ -1240,6 +1673,10 @@
                 const enCoursList = data.en_cours || [];
                 const termineesList = data.terminees || [];
                 const accesValides = data.acces_valides || [];
+                const attaquesExecutees = data.attaques_executees || [];
+
+                const isAllRunning = enCoursList.some(a => a.attaque.toLowerCase().includes('all'));
+                const isAllFinished = termineesList.some(a => a.attaque.toLowerCase().includes('all'));
 
                 // 1. Indicateur global
                 const globalStatus = document.getElementById('global-status');
@@ -1252,21 +1689,118 @@
                     globalText.textContent = termineesList.length > 0 ? 'Système prêt (attaques terminées)' : 'Prêt';
                 }
 
-                // 2. Mise à jour de chaque carte
+                // 2. Gestion de la séquence d'attaques 1-clic (Barre de progression & badges d'étapes)
+                const progressBox = document.getElementById('sequence-progress-bar-container');
+                const progressFill = document.getElementById('seq-progress-fill');
+                const stepCountElem = document.getElementById('seq-step-count');
+                const stepDescElem = document.getElementById('seq-step-desc');
+                const btnSeq = document.getElementById('btn-launch-seq-main');
+                const btnAll = document.getElementById('btn-launch-all');
+
+                if (isAllRunning) {
+                    if (progressBox) progressBox.style.display = 'block';
+                    if (btnSeq) {
+                        btnSeq.disabled = true;
+                        btnSeq.textContent = '⚡ Séquence en cours d\'exécution…';
+                    }
+                    if (btnAll) {
+                        btnAll.disabled = true;
+                        btnAll.textContent = 'Suite en cours…';
+                    }
+
+                    const doneCount = SEQ_MAP.filter(s => attaquesExecutees.includes(s.key)).length;
+                    const curStep = SEQ_MAP.find(s => !attaquesExecutees.includes(s.key)) || SEQ_MAP[SEQ_MAP.length - 1];
+                    const pct = Math.min(95, Math.max(10, Math.round((doneCount / 8) * 100)));
+
+                    if (progressFill) progressFill.style.width = pct + '%';
+                    if (stepCountElem) stepCountElem.textContent = `${doneCount} / 8 terminées`;
+                    if (stepDescElem) stepDescElem.textContent = `Étape ${doneCount + 1}/8 : ${curStep.label} en cours…`;
+
+                    // Mise à jour des badges d'étapes
+                    document.querySelectorAll('.step-badge[data-step]').forEach(badge => {
+                        const stepKey = badge.getAttribute('data-step');
+                        const sItem = SEQ_MAP.find(s => s.card === stepKey);
+                        badge.classList.remove('step-active', 'step-done');
+                        if (sItem && attaquesExecutees.includes(sItem.key)) {
+                            badge.classList.add('step-done');
+                        } else if (sItem && curStep && curStep.card === stepKey) {
+                            badge.classList.add('step-active');
+                        }
+                    });
+                } else if (isAllFinished) {
+                    if (progressFill) progressFill.style.width = '100%';
+                    if (stepCountElem) stepCountElem.textContent = '8 / 8 terminées (Succès)';
+                    if (stepDescElem) stepDescElem.textContent = 'Séquence complète terminée & rapport forensique généré.';
+                    if (btnSeq) {
+                        btnSeq.disabled = false;
+                        btnSeq.textContent = '⚡ Relancer toute la séquence';
+                    }
+                    if (btnAll) {
+                        btnAll.disabled = false;
+                        btnAll.textContent = 'Relancer toutes les attaques';
+                    }
+
+                    // Tous les badges validés
+                    document.querySelectorAll('.step-badge[data-step]').forEach(badge => {
+                        badge.classList.remove('step-active');
+                        badge.classList.add('step-done');
+                    });
+
+                    // Rapport de campagne
+                    if (!window._rapportCharge) {
+                        window._rapportCharge = true;
+                        chargerBilanRapport();
+                    }
+                } else {
+                    if (data.rapport_disponible && !window._rapportCharge && !isAllRunning) {
+                        window._rapportCharge = true;
+                        chargerBilanRapport();
+                    }
+                    if (btnSeq) {
+                        btnSeq.disabled = false;
+                        btnSeq.textContent = '⚡ Lancer toute la séquence d\'attaques';
+                    }
+                    if (btnAll) {
+                        btnAll.disabled = false;
+                        btnAll.textContent = 'Lancer toutes les attaques';
+                    }
+                }
+
+                // 3. Mise à jour de chaque carte
                 const cards = document.querySelectorAll('.attack-card');
                 cards.forEach(card => {
                     const type = card.getAttribute('data-attack');
-                    const isEnCours = enCoursList.some(a => matchesAttack(type, a.attaque));
-                    const isTermine = termineesList.some(a => matchesAttack(type, a.attaque));
                     const btn = card.querySelector('.btn-launch');
 
-                    if (isEnCours) {
-                        setStatus(card, 'running');
-                        if (btn) {
-                            btn.disabled = true;
-                            btn.textContent = 'En cours…';
+                    if (isAllRunning) {
+                        const sItem = SEQ_MAP.find(s => s.card === type);
+                        const isDone = sItem && attaquesExecutees.includes(sItem.key);
+                        const curStep = SEQ_MAP.find(s => !attaquesExecutees.includes(s.key)) || SEQ_MAP[SEQ_MAP.length - 1];
+                        const isCur = sItem && curStep && curStep.card === type;
+
+                        if (isDone) {
+                            setStatus(card, 'done');
+                            if (btn) {
+                                btn.disabled = true;
+                                btn.textContent = 'Terminé';
+                            }
+                            if (type === 'NULL_SCAN' || type === 'SCAN_PORTS') {
+                                chargerPortsOuverts();
+                            }
+                        } else if (isCur) {
+                            setStatus(card, 'running');
+                            if (btn) {
+                                btn.disabled = true;
+                                btn.textContent = 'En cours…';
+                            }
+                        } else {
+                            setStatus(card, 'idle');
+                            if (btn) {
+                                btn.disabled = true;
+                                btn.textContent = 'En attente';
+                            }
                         }
-                    } else if (isTermine) {
+                    } else if (isAllFinished) {
                         setStatus(card, 'done');
                         if (btn) {
                             btn.disabled = false;
@@ -1276,26 +1810,33 @@
                             chargerPortsOuverts();
                         }
                     } else {
-                        setStatus(card, 'idle');
-                        if (btn) {
-                            btn.disabled = false;
-                            btn.textContent = "Lancer l'attaque";
+                        const isEnCours = enCoursList.some(a => matchesAttack(type, a.attaque));
+                        const isTermine = termineesList.some(a => matchesAttack(type, a.attaque));
+
+                        if (isEnCours) {
+                            setStatus(card, 'running');
+                            if (btn) {
+                                btn.disabled = true;
+                                btn.textContent = 'En cours…';
+                            }
+                        } else if (isTermine) {
+                            setStatus(card, 'done');
+                            if (btn) {
+                                btn.disabled = false;
+                                btn.textContent = 'Relancer';
+                            }
+                            if (type === 'NULL_SCAN' || type === 'SCAN_PORTS') {
+                                chargerPortsOuverts();
+                            }
+                        } else {
+                            setStatus(card, 'idle');
+                            if (btn) {
+                                btn.disabled = false;
+                                btn.textContent = "Lancer l'attaque";
+                            }
                         }
                     }
                 });
-
-                // 3. Bouton global 'Lancer toutes les attaques'
-                const btnAll = document.getElementById('btn-launch-all');
-                const isAllRunning = enCoursList.some(a => a.attaque.toLowerCase().includes('all'));
-                if (btnAll) {
-                    if (isAllRunning) {
-                        btnAll.disabled = true;
-                        btnAll.textContent = 'Suite en cours…';
-                    } else {
-                        btnAll.disabled = false;
-                        btnAll.textContent = 'Lancer toutes les attaques';
-                    }
-                }
 
                 // 4. Affichage dynamique des accès SSH valides
                 const bruteCredsBox = document.getElementById('brute-creds');
@@ -1553,6 +2094,16 @@
                 if (res.ok && data.status === 'success') {
                     _portsActuelsRender = [];
                     afficherPortsDoS([]);
+                    window._rapportCharge = false;
+                    const progressBox = document.getElementById('sequence-progress-bar-container');
+                    if (progressBox) progressBox.style.display = 'none';
+                    const reportBanner = document.getElementById('campaign-report-banner');
+                    if (reportBanner) reportBanner.style.display = 'none';
+                    const reportView = document.getElementById('report-text-view');
+                    if (reportView) reportView.style.display = 'none';
+                    document.querySelectorAll('.step-badge[data-step]').forEach(b => {
+                        b.classList.remove('step-active', 'step-done');
+                    });
                     showToast("Base et session attaquante réinitialisées.", "success");
                     pollStatus();
                     chargerPortsOuverts();
@@ -1561,6 +2112,186 @@
                 }
             } catch (err) {
                 alert("Erreur réseau : " + err.message);
+            }
+        }
+
+        // ── Fonctions de consultation & expédition du Rapport Forensique ──
+        async function chargerBilanRapport() {
+            try {
+                const resp = await fetch('/api/analyse');
+                if (resp.ok) {
+                    const data = await resp.json();
+                    const corr = data.correlation || {};
+                    const pct = corr.taux_detection_pct != null ? corr.taux_detection_pct + '%' : '100%';
+                    const evalGlob = corr.evaluation_globale || 'OPTIMALE';
+                    const rateElem = document.getElementById('report-detection-rate');
+                    if (rateElem) {
+                        rateElem.textContent = `Taux de détection NIDS : ${pct} (${evalGlob}) — ${corr.attaques_detectees_nids || 8}/${corr.total_attaques_pentest || 8} alertes`;
+                    }
+
+                    // 1. Remplissage des comptes SSH
+                    const pentest = data.pentest || {};
+                    const meta = data.metasploitable || {};
+                    const nips = data.nips_state || {};
+                    const accesValides = pentest.acces_valides || [];
+                    const comptesAuth = (meta.ssh && meta.ssh.comptes_valides) || [];
+
+                    const sshListElem = document.getElementById('exfil-ssh-list');
+                    const sshBadgeElem = document.getElementById('badge-ssh-count');
+
+                    if (accesValides.length > 0) {
+                        if (sshBadgeElem) sshBadgeElem.textContent = `${accesValides.length} compromis`;
+                        if (sshListElem) {
+                            sshListElem.innerHTML = accesValides.map(acc => `
+                                <div class="exfil-item">
+                                    <span><strong style="color:var(--main);">${acc.utilisateur}</strong> : ${acc.mot_de_passe} <small style="opacity:0.7">(${acc.whoami || acc.utilisateur})</small></span>
+                                    <button onclick="connecterSSH('${acc.utilisateur}', '${acc.mot_de_passe}')" class="btn-launch" style="padding:2px 8px; font-size:0.68rem; background:var(--main); color:#000;">Terminal</button>
+                                </div>
+                            `).join('');
+                        }
+                    } else if (comptesAuth.length > 0) {
+                        if (sshBadgeElem) sshBadgeElem.textContent = `${comptesAuth.length} détecté(s)`;
+                        if (sshListElem) {
+                            sshListElem.innerHTML = comptesAuth.map(u => `
+                                <div class="exfil-item">
+                                    <span><strong style="color:var(--main);">${u}</strong> (Authentifié dans auth.log)</span>
+                                    <button onclick="connecterSSH('${u}', '${u}')" class="btn-launch" style="padding:2px 8px; font-size:0.68rem; background:var(--main); color:#000;">Terminal</button>
+                                </div>
+                            `).join('');
+                        }
+                    } else {
+                        if (sshBadgeElem) sshBadgeElem.textContent = '0 compte';
+                        if (sshListElem) sshListElem.innerHTML = '<span style="opacity:0.6; font-size:0.72rem;">Aucun compte SSH découvert.</span>';
+                    }
+
+                    // 2. Remplissage de la BDD (DVWA SQLi)
+                    const dbListElem = document.getElementById('exfil-db-list');
+                    const dbBadgeElem = document.getElementById('badge-db-count');
+                    const bddRows = pentest.donnees_exfiltrees_bdd || [];
+
+                    if (bddRows.length > 0) {
+                        if (dbBadgeElem) dbBadgeElem.textContent = `${bddRows.length} lignes`;
+                        if (dbListElem) {
+                            dbListElem.innerHTML = bddRows.slice(0, 5).map(row => `
+                                <div class="exfil-item"><span style="color:var(--main);">${row}</span></div>
+                            `).join('');
+                        }
+                    } else {
+                        const sqliCount = (meta.http && meta.http.signatures_web && meta.http.signatures_web.sqli) || 0;
+                        if (sqliCount > 0) {
+                            if (dbBadgeElem) dbBadgeElem.textContent = `${sqliCount} requêtes`;
+                            if (dbListElem) dbListElem.innerHTML = `<span style="font-size:0.72rem; color:var(--main);">${sqliCount} injections SQL tracées dans access.log.</span>`;
+                        } else {
+                            if (dbBadgeElem) dbBadgeElem.textContent = 'En attente';
+                            if (dbListElem) dbListElem.innerHTML = '<span style="opacity:0.6; font-size:0.72rem;">En attente de l\'injection SQL.</span>';
+                        }
+                    }
+
+                    // 3. Fichiers & Failles Web
+                    const travElem = document.getElementById('exfil-traversal-status');
+                    const xssElem = document.getElementById('exfil-xss-status');
+                    const travCount = (meta.http && meta.http.signatures_web && meta.http.signatures_web.path_traversal) || 0;
+                    if (pentest.traversal_reussi || travCount > 0) {
+                        if (travElem) {
+                            travElem.textContent = 'Exfiltré (/etc/passwd)';
+                            travElem.style.color = 'var(--main)';
+                        }
+                    }
+                    const xssCount = (meta.http && meta.http.signatures_web && meta.http.signatures_web.xss) || 0;
+                    if (xssCount > 0) {
+                        if (xssElem) xssElem.textContent = `Confirmé (${xssCount} traces)`;
+                    }
+
+                    // 4. Quarantaine NIPS & OS
+                    const qElem = document.getElementById('exfil-quarantine-status');
+                    const ipElem = document.getElementById('exfil-blocked-ips');
+                    const osElem = document.getElementById('exfil-os-text');
+
+                    const qAccounts = nips.quarantined_accounts || [];
+                    if (qElem) {
+                        qElem.textContent = qAccounts.length > 0 ? qAccounts.join(', ') + ' (passwd -l)' : 'Aucun';
+                    }
+                    const bIps = nips.blocked_ips || [];
+                    if (ipElem) {
+                        ipElem.textContent = bIps.length > 0 ? bIps.join(', ') + ' (DROP)' : 'Aucune';
+                    }
+                    if (osElem) {
+                        osElem.textContent = pentest.os_detecte || 'Linux 2.6.X Ubuntu';
+                    }
+
+                    // 5. Affichage direct du bandeau
+                    const banner = document.getElementById('campaign-report-banner');
+                    if (banner) banner.style.display = 'block';
+
+                    // 6. Chargement et affichage automatique de la synthèse textuelle complète
+                    const textView = document.getElementById('report-text-view');
+                    if (textView) {
+                        textView.style.display = 'block';
+                        fetch('/api/rapport/texte')
+                            .then(r => r.text())
+                            .then(txt => { textView.textContent = txt; })
+                            .catch(e => { textView.textContent = 'Synthèse forensique disponible sur le serveur.'; });
+                    }
+                    const toggleBtn = document.getElementById('btn-toggle-report-text');
+                    if (toggleBtn) toggleBtn.textContent = 'Masquer la synthèse brute';
+                }
+            } catch (e) {
+                console.error('Erreur chargement rapport:', e);
+            }
+        }
+
+        function toggleRapportTexte() {
+            const view = document.getElementById('report-text-view');
+            const btn = document.getElementById('btn-toggle-report-text');
+            if (!view) return;
+            if (view.style.display === 'none') {
+                view.style.display = 'block';
+                if (btn) btn.textContent = 'Masquer la synthèse brute';
+            } else {
+                view.style.display = 'none';
+                if (btn) btn.textContent = 'Afficher la synthèse brute';
+            }
+        }
+
+        async function afficherRapportTexte() {
+            toggleRapportTexte();
+        }
+
+        async function telechargerRapport() {
+            try {
+                const resp = await fetch('/api/rapport/texte');
+                if (!resp.ok) throw new Error('Rapport non disponible');
+                const text = await resp.text();
+                const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `rapport_forensique_${Date.now()}.txt`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                showToast('Rapport forensique téléchargé', 'success');
+            } catch (e) {
+                showToast(`Impossible de télécharger le rapport : ${e.message}`, 'error');
+            }
+        }
+
+        async function envoyerRapportEmail(btn) {
+            if (btn) btn.disabled = true;
+            showToast('Expédition du rapport chiffré par email via SMTP…', 'success');
+            try {
+                const resp = await fetch('/api/rapport/envoyer-mail', { method: 'POST' });
+                const data = await resp.json();
+                if (resp.ok && data.success) {
+                    showToast(data.message, 'success');
+                } else {
+                    showToast(data.message || 'Erreur lors de l\'envoi email', 'error');
+                }
+            } catch (e) {
+                showToast(`Erreur réseau : ${e.message}`, 'error');
+            } finally {
+                if (btn) btn.disabled = false;
             }
         }
 
