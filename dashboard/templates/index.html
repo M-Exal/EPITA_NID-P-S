@@ -807,6 +807,214 @@
             gap: 10px;
             background: var(--bg-alt);
         }
+
+        /* ── Galerie Graphiques Matplotlib (Issue #5) ── */
+        .graphs-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 16px;
+            margin-top: 14px;
+        }
+
+        .graph-card {
+            background: var(--bg-alt);
+            border: 2px solid var(--border);
+            border-radius: 6px;
+            padding: 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .graph-card:hover {
+            transform: translate(-2px, -2px);
+            box-shadow: var(--shadow);
+        }
+
+        .graph-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .graph-title {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 0.95rem;
+            font-weight: 800;
+            color: var(--text);
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        .graph-img-wrapper {
+            position: relative;
+            background: #ffffff;
+            border: 2px solid var(--border);
+            border-radius: 4px;
+            overflow: hidden;
+            cursor: pointer;
+            aspect-ratio: 16 / 10;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .graph-img-wrapper img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            transition: transform 0.2s ease;
+        }
+
+        .graph-img-wrapper:hover img {
+            transform: scale(1.03);
+        }
+
+        .graph-zoom-badge {
+            position: absolute;
+            bottom: 8px;
+            right: 8px;
+            background: rgba(0, 0, 0, 0.75);
+            color: #ffffff;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.72rem;
+            font-weight: 700;
+            padding: 3px 8px;
+            border-radius: 3px;
+            border: 1px solid #444;
+            pointer-events: none;
+        }
+
+        .graph-desc {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            line-height: 1.4;
+        }
+
+        .graph-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            margin-top: auto;
+            padding-top: 6px;
+            border-top: 1px dashed var(--border);
+        }
+
+        .btn-sm-action {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 10px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            font-weight: 700;
+            border: 2px solid var(--border);
+            border-radius: 4px;
+            background: var(--bg-card);
+            color: var(--text);
+            cursor: pointer;
+            text-decoration: none;
+            box-shadow: 2px 2px 0px var(--border);
+            transition: transform 0.1s ease, box-shadow 0.1s ease;
+        }
+
+        .btn-sm-action:hover {
+            transform: translate(-1px, -1px);
+            box-shadow: 3px 3px 0px var(--border);
+            background: var(--main);
+            color: #000000;
+        }
+
+        /* ── Lightbox Plein Écran ── */
+        .lightbox-modal {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100vw; height: 100vh;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(6px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            padding: 24px;
+        }
+
+        .lightbox-content {
+            background: var(--bg-card);
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            box-shadow: 8px 8px 0px #000000;
+            max-width: 95vw;
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .lightbox-header {
+            padding: 12px 20px;
+            border-bottom: 2px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--bg-alt);
+        }
+
+        .lightbox-body {
+            padding: 16px;
+            overflow: auto;
+            text-align: center;
+            background: #ffffff;
+        }
+
+        .lightbox-body img {
+            max-width: 100%;
+            max-height: 75vh;
+            object-fit: contain;
+        }
+
+        /* ── Section Données Forensiques Exfiltrées ── */
+        .exfil-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 16px;
+            margin-top: 14px;
+        }
+
+        .exfil-card {
+            background: var(--bg-alt);
+            border: 2px solid var(--border);
+            border-radius: 6px;
+            padding: 16px;
+            box-shadow: var(--shadow-sm);
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .exfil-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 8px;
+        }
+
+        .exfil-title {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 0.92rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
     </style>
 </head>
 <body>
@@ -983,6 +1191,101 @@
                         <tr><td colspan="10" style="text-align: center; color: var(--text-muted); padding: 24px; font-weight: 700;">Aucune donnée enregistrée</td></tr>
                     </tbody>
                 </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Section Visualisations Forensiques & Graphiques HD (Matplotlib - Issue #5) ── -->
+    <div class="card" style="margin-bottom: 24px;" id="section-graphiques-hd">
+        <div class="title-bar" style="flex-wrap: wrap; gap: 10px;">
+            <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                <h2 class="section-title">Visualisations Forensiques & Graphiques HD (Matplotlib)</h2>
+                <span class="badge badge-accent" id="badge-total-graphs">5 VISUELS HD (300 DPI)</span>
+            </div>
+            <div style="display: flex; gap: 10px; align-items: center;">
+                <button class="btn-sm-action" onclick="rafraichirGraphiques(true)" id="btn-refresh-graphs">
+                    <span>⚡</span> Actualiser les Graphiques
+                </button>
+                <a href="/api/analyse" target="_blank" class="btn-sm-action">
+                    <span>📄</span> JSON Forensique
+                </a>
+            </div>
+        </div>
+        <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 6px;">
+            Graphiques vectoriels et raster haute résolution générés pour le rapport écrit et la soutenance orale. Cliquez sur un visuel pour l'agrandir en plein écran.
+        </p>
+        <div class="graphs-grid" id="graphsGridContainer">
+            <!-- Rendu dynamique par chargerGraphiques() -->
+            <div style="grid-column: 1 / -1; text-align: center; padding: 24px; color: var(--text-muted); font-family: 'JetBrains Mono', monospace;">
+                Chargement des graphiques haute résolution...
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Section Renseignement Forensique & Données Exfiltrées ── -->
+    <div class="card" style="margin-bottom: 24px;" id="section-donnees-exfiltrees">
+        <div class="title-bar" style="flex-wrap: wrap; gap: 10px;">
+            <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                <h2 class="section-title">Renseignement Menace, Données Exfiltrées & Rapport Chiffré</h2>
+                <span class="badge badge-main" id="badge-exfil-status">FORENSIC INTEL</span>
+            </div>
+            <div style="display: flex; gap: 10px; align-items: center;">
+                <button class="btn-sm-action" onclick="envoyerRapportChiffreEmail()" id="btn-envoyer-mail-siem" style="background: var(--main); color: #000;">
+                    <span>📧</span> Expédier Rapport Chiffré
+                </button>
+            </div>
+        </div>
+        <div class="exfil-grid">
+            <!-- Carte 1 : Comptes SSH Compromis -->
+            <div class="exfil-card">
+                <div class="exfil-header">
+                    <span class="exfil-title">🔑 Accès SSH Compromis</span>
+                    <span class="badge badge-critique" id="badge-ssh-count">0 compte</span>
+                </div>
+                <div id="siem-ssh-creds-list" style="font-family: 'JetBrains Mono', monospace; font-size: 0.82rem; display: flex; flex-direction: column; gap: 8px;">
+                    <div style="color: var(--text-muted);">Aucun accès compromis détecté.</div>
+                </div>
+            </div>
+
+            <!-- Carte 2 : Dump BDD SQL (DVWA) -->
+            <div class="exfil-card">
+                <div class="exfil-header">
+                    <span class="exfil-title">🗄️ Base de Données Exfiltrée</span>
+                    <span class="badge badge-haute" id="badge-db-count">0 entrée</span>
+                </div>
+                <div id="siem-db-dump-list" style="font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; display: flex; flex-direction: column; gap: 6px; max-height: 160px; overflow-y: auto;">
+                    <div style="color: var(--text-muted);">Aucune donnée extraite.</div>
+                </div>
+            </div>
+
+            <!-- Carte 3 : Fichiers Système & Bannières -->
+            <div class="exfil-card">
+                <div class="exfil-header">
+                    <span class="exfil-title">📂 Fichiers Cibles & OS</span>
+                    <span class="badge badge-moyenne" id="badge-os-info">OS FINGERPRINT</span>
+                </div>
+                <div id="siem-files-info" style="font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; display: flex; flex-direction: column; gap: 6px;">
+                    <div>• Traversée <code>/etc/passwd</code> : <strong id="siem-passwd-status">Non testée</strong></div>
+                    <div>• OS Détecté : <strong id="siem-os-name">Inconnu</strong></div>
+                    <div>• Bannières : <span id="siem-banners" style="color: var(--text-muted);">vsFTPd, Apache, SSH</span></div>
+                </div>
+            </div>
+
+            <!-- Carte 4 : Cryptographie & Email -->
+            <div class="exfil-card">
+                <div class="exfil-header">
+                    <span class="exfil-title">🔒 Chiffrement & Canal E-mail</span>
+                    <span class="badge badge-succes">FERNET AES-128</span>
+                </div>
+                <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; display: flex; flex-direction: column; gap: 6px;">
+                    <div>• Fichier chiffré : <code>data/nids/nids_alerts.enc</code></div>
+                    <div>• Destinataire : <strong id="siem-email-receiver">0x2bad4y0u@proton.me</strong></div>
+                    <div>• Service d'envoi : <span class="badge badge-main" style="font-size: 0.7rem; padding: 2px 6px;">RESEND API</span></div>
+                    <div style="margin-top: 4px;">
+                        • Clé Fernet : 
+                        <span id="siem-key-preview" style="background: var(--bg); padding: 2px 6px; border: 1px solid var(--border); border-radius: 3px; font-size: 0.72rem; cursor: pointer;" title="Cliquez pour copier la clé" onclick="copierCleFernet()">_PXmyR1u1TP6...</span>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -1477,6 +1780,28 @@
                 </div>
             </div>
 
+            <!-- Données Exfiltrées dans Modal -->
+            <div class="card" style="margin: 0 0 20px 0; padding: 14px; background: var(--bg-alt);">
+                <div style="font-weight: 800; font-family: 'Space Grotesk', sans-serif; text-transform: uppercase; letter-spacing: 0.5px; font-size: 0.85rem; margin-bottom: 10px; display: flex; justify-content: space-between;">
+                    <span>Donnees Exfiltrees & Renseignement Cible</span>
+                    <span class="badge badge-critique">${(data.pentest?.acces_valides || []).length} acces SSH</span>
+                </div>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; font-size: 0.8rem; font-family: 'JetBrains Mono', monospace;">
+                    <div>
+                        <strong>Identifiants SSH voles :</strong><br>
+                        ${(data.pentest?.acces_valides || []).map(a => `<code style="color: var(--critique);">${a.utilisateur}:${a.mot_de_passe}</code>`).join(', ') || 'Aucun'}
+                    </div>
+                    <div>
+                        <strong>Dump SQL DVWA :</strong><br>
+                        ${(data.pentest?.donnees_exfiltrees_bdd || []).slice(0, 2).map(d => `<code style="font-size: 0.72rem;">${d}</code>`).join('<br>') || 'Aucun'}
+                    </div>
+                    <div>
+                        <strong>Fichier /etc/passwd :</strong><br>
+                        ${data.pentest?.traversal_reussi ? '<span class="badge badge-critique" style="font-size: 0.7rem;">EXFILTRE</span>' : '<span class="badge badge-moyenne" style="font-size: 0.7rem;">NON EXFILTRE</span>'}
+                    </div>
+                </div>
+            </div>
+
             <div style="font-weight: 800; font-family: 'Space Grotesk', sans-serif; text-transform: uppercase; letter-spacing: 0.5px; font-size: 0.85rem; margin-bottom: 8px;">Matrice de Correlation Croisee</div>
             <div class="table-responsive">
                 <table>
@@ -1500,6 +1825,45 @@
                     </tbody>
                 </table>
             </div>
+
+            <!-- Aperçu des 5 Graphiques dans Modal -->
+            <div style="margin-top: 20px;">
+                <div style="font-weight: 800; font-family: 'Space Grotesk', sans-serif; text-transform: uppercase; letter-spacing: 0.5px; font-size: 0.85rem; margin-bottom: 10px;">
+                    Visuels Graphiques HD (Matplotlib)
+                </div>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px;">
+                    <a href="/api/analysis/graphs/alertes_par_type.png" target="_blank" style="text-decoration: none;">
+                        <div class="card" style="margin: 0; padding: 8px; text-align: center;">
+                            <img src="/api/analysis/graphs/alertes_par_type.png" style="width: 100%; border-radius: 4px;" alt="Types">
+                            <div style="font-size: 0.72rem; font-weight: 700; margin-top: 4px;">Alertes par Type</div>
+                        </div>
+                    </a>
+                    <a href="/api/analysis/graphs/timeline_alertes.png" target="_blank" style="text-decoration: none;">
+                        <div class="card" style="margin: 0; padding: 8px; text-align: center;">
+                            <img src="/api/analysis/graphs/timeline_alertes.png" style="width: 100%; border-radius: 4px;" alt="Timeline">
+                            <div style="font-size: 0.72rem; font-weight: 700; margin-top: 4px;">Timeline Alertes</div>
+                        </div>
+                    </a>
+                    <a href="/api/analysis/graphs/top_sources_ips.png" target="_blank" style="text-decoration: none;">
+                        <div class="card" style="margin: 0; padding: 8px; text-align: center;">
+                            <img src="/api/analysis/graphs/top_sources_ips.png" style="width: 100%; border-radius: 4px;" alt="Top IPs">
+                            <div style="font-size: 0.72rem; font-weight: 700; margin-top: 4px;">Top IPs Sources</div>
+                        </div>
+                    </a>
+                    <a href="/api/analysis/graphs/activite_cible_metasploitable.png" target="_blank" style="text-decoration: none;">
+                        <div class="card" style="margin: 0; padding: 8px; text-align: center;">
+                            <img src="/api/analysis/graphs/activite_cible_metasploitable.png" style="width: 100%; border-radius: 4px;" alt="Cible">
+                            <div style="font-size: 0.72rem; font-weight: 700; margin-top: 4px;">Traces Cible</div>
+                        </div>
+                    </a>
+                    <a href="/api/analysis/graphs/matrice_detection_pentest.png" target="_blank" style="text-decoration: none;">
+                        <div class="card" style="margin: 0; padding: 8px; text-align: center;">
+                            <img src="/api/analysis/graphs/matrice_detection_pentest.png" style="width: 100%; border-radius: 4px;" alt="Matrice">
+                            <div style="font-size: 0.72rem; font-weight: 700; margin-top: 4px;">Matrice Corrélation</div>
+                        </div>
+                    </a>
+                </div>
+            </div>
             `;
             conteneur.innerHTML = html;
         }
@@ -1515,8 +1879,253 @@
             URL.revokeObjectURL(url);
         }
 
+        // ── Fonctions Graphiques HD (Issue #5) & Renseignement Forensique ──
+        let listeGraphiquesActuelle = [];
+
+        async function chargerGraphiques(forcer = false) {
+            const container = document.getElementById('graphsGridContainer');
+            if (!container) return;
+
+            try {
+                const res = await fetch('/api/analysis/graphs');
+                const data = await res.json();
+                if (!data.success || !data.graphiques) return;
+
+                listeGraphiquesActuelle = data.graphiques;
+                const timestampCache = forcer ? `?t=${Date.now()}` : '';
+
+                container.innerHTML = data.graphiques.map(g => `
+                    <div class="graph-card">
+                        <div class="graph-header">
+                            <span class="graph-title">${g.titre}</span>
+                            <span class="badge" style="background: ${g.badge_color}; color: #000; font-size: 0.68rem; padding: 2px 6px;">${g.badge}</span>
+                        </div>
+                        <div class="graph-img-wrapper" onclick="ouvrirLightbox('${g.url}${timestampCache}', '${g.titre}', '${g.badge}')" title="Cliquez pour agrandir en plein écran (Soutenance)">
+                            <img src="${g.url}${timestampCache}" alt="${g.titre}" loading="lazy" onerror="this.onerror=null; this.src='/static/img/favicon.svg';">
+                            <span class="graph-zoom-badge">🔍 ZOOM HD</span>
+                        </div>
+                        <div class="graph-desc">${g.description}</div>
+                        <div class="graph-footer">
+                            <span>${g.taille_ko ? g.taille_ko + ' Ko (300 DPI)' : 'HD Raster'}</span>
+                            <div style="display: flex; gap: 6px;">
+                                <button class="btn-sm-action" onclick="ouvrirLightbox('${g.url}${timestampCache}', '${g.titre}', '${g.badge}')">Agrandir</button>
+                                <a href="${g.url}" download="${g.filename}" class="btn-sm-action">Télécharger</a>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (e) {
+                console.error("Erreur de chargement des graphiques :", e);
+                container.innerHTML = `<div style="grid-column: 1 / -1; color: var(--critique); text-align: center; padding: 20px;">Erreur lors du chargement des graphiques : ${e.message}</div>`;
+            }
+        }
+
+        async function rafraichirGraphiques(afficherToast = true) {
+            const btn = document.getElementById('btn-refresh-graphs');
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<span>⏳</span> Génération en cours...';
+            }
+
+            try {
+                const res = await fetch('/api/analysis/generer-graphiques', { method: 'POST' });
+                const data = await res.json();
+                if (data.success) {
+                    await chargerGraphiques(true);
+                    if (afficherToast) {
+                        alert(`✅ ${data.message || 'Graphiques actualisés avec succès !'}`);
+                    }
+                } else {
+                    alert(`❌ Échec : ${data.message}`);
+                }
+            } catch (e) {
+                alert(`❌ Erreur réseau : ${e.message}`);
+            } finally {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = '<span>⚡</span> Actualiser les Graphiques';
+                }
+            }
+        }
+
+        function ouvrirLightbox(url, titre, badge) {
+            const modal = document.getElementById('lightboxModal');
+            const img = document.getElementById('lightboxImg');
+            const titleElem = document.getElementById('lightboxTitle');
+            const badgeElem = document.getElementById('lightboxBadge');
+            const downloadBtn = document.getElementById('lightboxDownloadBtn');
+
+            if (!modal || !img) return;
+
+            img.src = url;
+            if (titleElem) titleElem.textContent = titre;
+            if (badgeElem) badgeElem.textContent = badge || 'HD VISUAL';
+            if (downloadBtn) {
+                downloadBtn.href = url;
+                downloadBtn.download = (titre || 'graphique').toLowerCase().replace(/\s+/g, '_') + '.png';
+            }
+
+            modal.style.display = 'flex';
+        }
+
+        function fermerLightbox(e) {
+            if (e.target && e.target.id === 'lightboxModal') {
+                fermerLightboxDirect();
+            }
+        }
+
+        function fermerLightboxDirect() {
+            const modal = document.getElementById('lightboxModal');
+            if (modal) modal.style.display = 'none';
+        }
+
+        // ── Chargement des Données Forensiques Exfiltrées ──
+        async function chargerDonneesForensiquesExfiltrees() {
+            try {
+                const res = await fetch('/api/analyse');
+                const data = await res.json();
+                const pentest = data.pentest || {};
+
+                // 1. Accès SSH
+                const sshList = document.getElementById('siem-ssh-creds-list');
+                const sshBadge = document.getElementById('badge-ssh-count');
+                const acces = pentest.acces_valides || [];
+                if (sshBadge) sshBadge.textContent = `${acces.length} compte(s)`;
+
+                if (sshList) {
+                    if (acces.length === 0) {
+                        sshList.innerHTML = '<div style="color: var(--text-muted);">Aucun compte compromis.</div>';
+                    } else {
+                        sshList.innerHTML = acces.map(a => `
+                            <div style="background: var(--bg-card); padding: 8px; border: 1px solid var(--border); border-radius: 4px; display: flex; justify-content: space-between; align-items: center;">
+                                <div>
+                                    <strong style="color: var(--critique);">${a.utilisateur}</strong> : <code>${a.mot_de_passe}</code>
+                                </div>
+                                <button class="btn-sm-action" onclick="lancerTerminalDepuisSIEM('${a.utilisateur}', '${a.mot_de_passe}')" style="background: var(--critique); color: #fff;">
+                                    Terminal SSH
+                                </button>
+                            </div>
+                        `).join('');
+                    }
+                }
+
+                // 2. Dump BDD SQL
+                const dbList = document.getElementById('siem-db-dump-list');
+                const dbBadge = document.getElementById('badge-db-count');
+                const bdd = pentest.donnees_exfiltrees_bdd || [];
+                if (dbBadge) dbBadge.textContent = `${bdd.length} entrée(s)`;
+
+                if (dbList) {
+                    if (bdd.length === 0) {
+                        dbList.innerHTML = '<div style="color: var(--text-muted);">Aucune donnée extraite.</div>';
+                    } else {
+                        dbList.innerHTML = bdd.map(entry => `
+                            <div style="background: var(--bg-card); padding: 5px 8px; border: 1px solid var(--border); border-radius: 3px;">
+                                <code>${entry}</code>
+                            </div>
+                        `).join('');
+                    }
+                }
+
+                // 3. Fichiers & OS
+                const passwdElem = document.getElementById('siem-passwd-status');
+                if (passwdElem) {
+                    passwdElem.innerHTML = pentest.traversal_reussi 
+                        ? '<span class="badge badge-critique" style="font-size: 0.7rem;">EXFILTRÉ AVEC SUCCÈS</span>'
+                        : '<span class="badge badge-moyenne" style="font-size: 0.7rem;">NON EXFILTRÉ</span>';
+                }
+
+                const osElem = document.getElementById('siem-os-name');
+                if (osElem) osElem.textContent = pentest.os_detecte || 'Linux 2.6.X (Metasploitable 2)';
+
+                const bannersElem = document.getElementById('siem-banners');
+                if (bannersElem && pentest.bannieres) {
+                    bannersElem.textContent = Object.values(pentest.bannieres).join(' | ');
+                }
+            } catch (e) {
+                console.error("Erreur lors du chargement forensique :", e);
+            }
+        }
+
+        async function lancerTerminalDepuisSIEM(user, pwd) {
+            try {
+                const res = await fetch('/api/ssh/connect', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ utilisateur: user, mot_de_passe: pwd, target: 'metasploitable2' })
+                });
+                const data = await res.json();
+                if (data.success && data.token) {
+                    window.open(`/terminal?token=${data.token}`, '_blank');
+                } else {
+                    alert(`Échec de connexion SSH : ${data.message || 'Erreur inconnue'}`);
+                }
+            } catch (e) {
+                alert(`Erreur : ${e.message}`);
+            }
+        }
+
+        async function envoyerRapportChiffreEmail() {
+            const btn = document.getElementById('btn-envoyer-mail-siem');
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<span>⏳</span> Expédition...';
+            }
+
+            try {
+                const res = await fetch('/api/rapport/envoyer-mail', { method: 'POST' });
+                const data = await res.json();
+                if (data.success) {
+                    alert(`✅ ${data.message}`);
+                } else {
+                    alert(`❌ Échec d'envoi : ${data.message}`);
+                }
+            } catch (e) {
+                alert(`❌ Erreur réseau : ${e.message}`);
+            } finally {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = '<span>📧</span> Expédier Rapport Chiffré';
+                }
+            }
+        }
+
+        function copierCleFernet() {
+            const cle = "_PXmyR1u1TP6ZtLAeL15zT0MsiwSheRRZ4XztFBc0z8=";
+            navigator.clipboard.writeText(cle).then(() => {
+                alert("📋 Clé Fernet copiée dans le presse-papier !");
+            }).catch(() => {
+                prompt("Copiez la clé Fernet :", cle);
+            });
+        }
+
+        // Initialisation des données au chargement
+        chargerGraphiques();
+        chargerDonneesForensiquesExfiltrees();
+
         fetch('/api/stats').then(res => res.json()).then(data => renderStats(data)).catch(console.error);
         initSSE();
     </script>
+
+    <!-- ── Modal Lightbox Plein Écran pour Graphiques (Soutenance) ── -->
+    <div id="lightboxModal" class="lightbox-modal" onclick="fermerLightbox(event)">
+        <div class="lightbox-content" onclick="event.stopPropagation()">
+            <div class="lightbox-header">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <span class="badge badge-accent" id="lightboxBadge">HD VISUAL</span>
+                    <h3 id="lightboxTitle" style="font-family: 'Space Grotesk', sans-serif; font-size: 1.1rem; text-transform: uppercase; margin: 0;">Graphique</h3>
+                </div>
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    <a id="lightboxDownloadBtn" href="#" download class="btn-sm-action">
+                        <span>📥</span> Télécharger PNG (300 DPI)
+                    </a>
+                    <button class="modal-close-btn" onclick="fermerLightboxDirect()">&times;</button>
+                </div>
+            </div>
+            <div class="lightbox-body">
+                <img id="lightboxImg" src="" alt="Graphique plein écran">
+            </div>
+        </div>
+    </div>
 </body>
 </html>

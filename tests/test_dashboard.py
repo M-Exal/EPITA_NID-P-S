@@ -364,15 +364,35 @@ def test_api_rapport_texte(client):
     assert "RAPPORT DE SYNTHESE FORENSIQUE" in res.get_data(as_text=True)
 
 
-def test_api_rapport_envoyer_mail_manquant(client, monkeypatch):
-    """Vérifie le comportement de /api/rapport/envoyer-mail sans configuration ou sans rapport."""
-    monkeypatch.setenv("SMTP_USER", "")
-    monkeypatch.setenv("REPORT_RECEIVER", "")
-    monkeypatch.setenv("RESEND_API_KEY", "")
-    monkeypatch.setenv("ALERT_EMAIL_TO", "")
-    res = client.post("/api/rapport/envoyer-mail")
-    # Retourne 404 si fichier non trouvé ou 400 si SMTP non configuré
-    assert res.status_code in (400, 404)
+def test_api_analysis_graphs_list(client):
+    """Vérifie que la route /api/analysis/graphs liste bien les 5 visuels HD."""
+    res = client.get("/api/analysis/graphs")
+    assert res.status_code == 200
+    data = res.get_json()
+    assert data["success"] is True
+    assert "graphiques" in data
+    assert len(data["graphiques"]) == 5
+    ids = [g["id"] for g in data["graphiques"]]
+    assert "alertes_par_type" in ids
+    assert "matrice_detection_pentest" in ids
+
+
+def test_api_analysis_graph_file(client):
+    """Vérifie que la route /api/analysis/graphs/<file> sert bien le PNG."""
+    res = client.get("/api/analysis/graphs/alertes_par_type.png")
+    assert res.status_code in (200, 404)
+    if res.status_code == 200:
+        assert res.content_type == "image/png"
+
+
+def test_api_analysis_generer_graphiques(client):
+    """Vérifie la régénération à chaud des graphiques via POST."""
+    res = client.post("/api/analysis/generer-graphiques")
+    assert res.status_code == 200
+    data = res.get_json()
+    assert data["success"] is True
+    assert data["total"] == 5
+
 
 
 

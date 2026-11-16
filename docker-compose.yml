@@ -111,6 +111,7 @@ services:
     volumes:
       - ./data/nids:/app/data
       - ./data/pentest:/app/data/pentest
+      - ./data/analysis:/app/data/analysis
       - ./data/metasploitable/log:/app/data/metasploitable_logs
       - ./dashboard:/app
       - ./scripts:/app/scripts

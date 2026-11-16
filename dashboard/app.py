@@ -20,7 +20,7 @@ from zoneinfo import ZoneInfo
 
 import paramiko
 from cryptography.hazmat.primitives import hashes
-from flask import Flask, Response, jsonify, render_template, request
+from flask import Flask, Response, jsonify, render_template, request, send_from_directory
 from flask_socketio import SocketIO, emit
 
 app = Flask(__name__)
@@ -42,6 +42,9 @@ try:
         Transport._preferred_keys = Transport._preferred_keys + ("ssh-rsa",)
 except Exception:
     pass
+
+# Répertoire racine du projet
+REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 
 # Fuseau horaire de référence pour tous les horodatages ISO (conteneurs en UTC)
 TZ_PARIS = ZoneInfo("Europe/Paris")
@@ -433,6 +436,128 @@ def api_analyse():
     except Exception as e:
         app.logger.error("Erreur analyse forensique : %s", e, exc_info=True)
         return jsonify({"status": "error", "message": str(e)}), 500
+
+
+def _get_analysis_dir():
+    """Résout le chemin du répertoire de stockage des graphiques d'analyse."""
+    candidats = [
+        os.path.join(REPO_ROOT, "data", "analysis"),
+        "/app/data/analysis",
+        os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "data", "analysis")),
+    ]
+    for c in candidats:
+        if os.path.isdir(c):
+            return c
+    dest = os.path.join(REPO_ROOT, "data", "analysis")
+    os.makedirs(dest, exist_ok=True)
+    return dest
+
+
+@app.route("/api/analysis/graphs/<filename>")
+def api_analysis_graph_file(filename):
+    """Sert un graphique PNG généré par LogAnalyzer pour le tableau de bord SIEM."""
+    dossier = _get_analysis_dir()
+    nom_securise = os.path.basename(filename)
+    if not nom_securise.endswith(".png"):
+        return jsonify({"error": "Extension invalide"}), 400
+
+    chemin = os.path.join(dossier, nom_securise)
+    if not os.path.isfile(chemin):
+        # Tentative de génération automatique si le fichier manque
+        try:
+            for p in [os.path.join(REPO_ROOT, "analysis"), "/app/analysis"]:
+                if os.path.isdir(p) and p not in sys.path:
+                    sys.path.insert(0, p)
+            from analyze import LogAnalyzer
+            analyzer = LogAnalyzer()
+            analyzer.generer_graphiques(dossier_sortie=dossier)
+        except Exception:
+            pass
+
+    if os.path.isfile(chemin):
+        return send_from_directory(dossier, nom_securise, mimetype="image/png")
+    return jsonify({"error": "Graphique introuvable"}), 404
+
+
+@app.route("/api/analysis/graphs")
+def api_analysis_graphs_list():
+    """Fournit la liste des 5 visuels haute résolution générés pour la soutenance."""
+    dossier = _get_analysis_dir()
+    meta_graphiques = [
+        {
+            "id": "alertes_par_type",
+            "filename": "alertes_par_type.png",
+            "titre": "Répartition des Alertes par Vecteur",
+            "badge": "NIDS VECTORS",
+            "badge_color": "var(--critique)",
+            "description": "Histogramme des signatures et anomalies détectées par catégorie d'attaque.",
+        },
+        {
+            "id": "timeline_alertes",
+            "filename": "timeline_alertes.png",
+            "titre": "Chronologie Temporelle des Détections",
+            "badge": "TIMELINE",
+            "badge_color": "var(--haute)",
+            "description": "Courbe d'intensité des attaques interceptées par minute au cours du pentest.",
+        },
+        {
+            "id": "top_sources_ips",
+            "filename": "top_sources_ips.png",
+            "titre": "Cartographie des IP Sources",
+            "badge": "THREAT ACTORS",
+            "badge_color": "var(--accent)",
+            "description": "Volume des attaques par adresse IP et corrélation avec l'isolement NIPS.",
+        },
+        {
+            "id": "activite_cible_metasploitable",
+            "filename": "activite_cible_metasploitable.png",
+            "titre": "Traces Forensiques Metasploitable 2",
+            "badge": "HONEYPOT LOGS",
+            "badge_color": "var(--moyenne)",
+            "description": "Analyse croisée des échecs SSH (auth.log) et empreintes web Apache (access.log).",
+        },
+        {
+            "id": "matrice_detection_pentest",
+            "filename": "matrice_detection_pentest.png",
+            "titre": "Matrice de Corrélation & Taux Global",
+            "badge": "CORRELATION 100%",
+            "badge_color": "var(--succes)",
+            "description": "Comparaison Attaques Lancées vs Alertes NIDS vs Traces Cible avec taux d'efficacité.",
+        },
+    ]
+
+    for g in meta_graphiques:
+        fpath = os.path.join(dossier, g["filename"])
+        g["existe"] = os.path.isfile(fpath)
+        g["url"] = f"/api/analysis/graphs/{g['filename']}"
+        if g["existe"]:
+            g["mtime"] = os.path.getmtime(fpath)
+            g["taille_ko"] = round(os.path.getsize(fpath) / 1024, 1)
+        else:
+            g["mtime"] = None
+            g["taille_ko"] = 0
+
+    return jsonify({"success": True, "graphiques": meta_graphiques})
+
+
+@app.route("/api/analysis/generer-graphiques", methods=["POST"])
+def api_generer_graphiques():
+    """Régénère à la demande les graphiques haute résolution via LogAnalyzer."""
+    dossier = _get_analysis_dir()
+    try:
+        for p in [os.path.join(REPO_ROOT, "analysis"), "/app/analysis"]:
+            if os.path.isdir(p) and p not in sys.path:
+                sys.path.insert(0, p)
+        from analyze import LogAnalyzer
+        analyzer = LogAnalyzer()
+        fichiers = analyzer.generer_graphiques(dossier_sortie=dossier)
+        return jsonify({
+            "success": True,
+            "message": f"{len(fichiers)} graphiques régénérés avec succès.",
+            "total": len(fichiers),
+        })
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)}), 500
 
 
 @app.route("/api/stream")
